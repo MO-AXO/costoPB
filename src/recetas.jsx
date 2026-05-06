@@ -558,23 +558,107 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate, onDel
         </div>
 
         <div className="card">
-          <div className="card-head"><div className="card-title">Parámetros</div></div>
-          <div className="card-body" style={{display: 'flex', flexDirection: 'column', gap: 12}}>
-            <ParamField label="Mano de obra (min)" value={receta.laborMinutes} onChange={(v) => onUpdate({ laborMinutes: v })} suffix="min" />
+          <div className="card-head"><div className="card-title">Parámetros de operación</div></div>
+          <div className="card-body" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+            <ParamField label="Minutos de mano de obra" value={receta.laborMinutes} onChange={(v) => onUpdate({ laborMinutes: v })} suffix="min" />
             <ParamField label="Food cost objetivo" value={receta.targetFoodCost} onChange={(v) => onUpdate({ targetFoodCost: v })} suffix="%" />
-            <div className="hint" style={{marginTop: 4}}>
-              <b>Precio sugerido</b> = costo ingredientes ÷ food&nbsp;cost objetivo
+            <div className="divider" style={{margin: '0'}} />
+            {/* Precio sugerido visual */}
+            <div style={{background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 14px'}}>
+              <div style={{fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6}}>Precio sugerido</div>
+              <div style={{display: 'flex', alignItems: 'baseline', gap: 6}}>
+                <span className="num" style={{fontSize: 28, fontWeight: 700, color: m.suggestedPrice > receta.sellPrice ? 'var(--warn)' : 'var(--good)'}}>
+                  {fmt$(m.suggestedPrice)}
+                </span>
+                <span style={{fontSize: 12, color: 'var(--text-3)'}}>
+                  {m.suggestedPrice > receta.sellPrice + 0.5
+                    ? `↑ sube ${fmt$(m.suggestedPrice - receta.sellPrice)} vs precio actual`
+                    : m.suggestedPrice < receta.sellPrice - 0.5
+                    ? `✓ ${fmt$(receta.sellPrice - m.suggestedPrice)} de margen extra`
+                    : '✓ en objetivo'}
+                </span>
+              </div>
+              <div style={{fontSize: 11, color: 'var(--text-3)', marginTop: 6}}>
+                Ingredientes {fmt$(m.ingredientCost)} ÷ {receta.targetFoodCost}% food cost objetivo
+              </div>
             </div>
           </div>
         </div>
 
         <div className="card">
-          <div className="card-head"><div className="card-title">Performance</div></div>
-          <div className="card-body" style={{display: 'flex', flexDirection: 'column', gap: 12}}>
-            <Stat label="Food Cost" value={fmtPct(m.foodCostPct)} hint={`Objetivo ${receta.targetFoodCost}%`} good={m.foodCostPct <= receta.targetFoodCost} />
-            <Stat label="Margen contribución" value={fmt$(m.margin$)} hint={`${fmtPct(m.marginPct, 0)} del precio`} good={m.marginPct >= 60} />
-            <Stat label="Utilidad mensual" value={fmt$0(m.monthlyMargin)} hint={`${receta.monthlySales} u × ${fmt$(m.margin$)}`} good />
-            <Stat label="Prime cost" value={fmtPct(m.primeCostPct)} hint="Food + labor" good={m.primeCostPct <= 60} />
+          <div className="card-head"><div className="card-title">Indicadores clave</div></div>
+          <div className="card-body" style={{display: 'flex', flexDirection: 'column', gap: 0}}>
+            {/* Food Cost */}
+            <div style={{padding: '10px 0', borderBottom: '1px solid var(--border)'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>
+                  <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-2)'}}>Food Cost</div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)', marginTop: 2}}>
+                    {fmt$(m.ingredientCost)} ingredientes ÷ {fmt$(receta.sellPrice)} precio
+                  </div>
+                </div>
+                <div style={{textAlign: 'right'}}>
+                  <div className="num" style={{fontSize: 20, fontWeight: 700, color: m.foodCostPct <= receta.targetFoodCost ? 'var(--good)' : m.foodCostPct <= receta.targetFoodCost + 5 ? 'var(--warn)' : 'var(--bad)'}}>
+                    {fmtPct(m.foodCostPct)}
+                  </div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)'}}>objetivo {receta.targetFoodCost}%</div>
+                </div>
+              </div>
+              <div style={{marginTop: 8, background: 'var(--surface-sunk)', borderRadius: 4, height: 6, overflow: 'hidden'}}>
+                <div style={{height: '100%', borderRadius: 4, width: Math.min(m.foodCostPct, 100) + '%', background: m.foodCostPct <= receta.targetFoodCost ? 'var(--good)' : m.foodCostPct <= receta.targetFoodCost + 5 ? 'var(--warn)' : 'var(--bad)', transition: 'width 0.3s'}} />
+              </div>
+            </div>
+            {/* Margen */}
+            <div style={{padding: '10px 0', borderBottom: '1px solid var(--border)'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>
+                  <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-2)'}}>Margen de contribución</div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)', marginTop: 2}}>
+                    {fmt$(receta.sellPrice)} precio − {fmt$(m.totalVariable)} costos variables
+                  </div>
+                </div>
+                <div style={{textAlign: 'right'}}>
+                  <div className="num" style={{fontSize: 20, fontWeight: 700, color: m.marginPct >= 60 ? 'var(--good)' : 'var(--warn)'}}>
+                    {fmt$(m.margin$)}
+                  </div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)'}}>{fmtPct(m.marginPct, 0)} del precio</div>
+                </div>
+              </div>
+            </div>
+            {/* Prime Cost */}
+            <div style={{padding: '10px 0', borderBottom: '1px solid var(--border)'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>
+                  <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-2)'}}>Prime Cost</div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)', marginTop: 2}}>
+                    Ingredientes {fmt$(m.ingredientCost)} + labor {fmt$(m.laborCost)}
+                  </div>
+                </div>
+                <div style={{textAlign: 'right'}}>
+                  <div className="num" style={{fontSize: 20, fontWeight: 700, color: m.primeCostPct <= 60 ? 'var(--good)' : 'var(--warn)'}}>
+                    {fmtPct(m.primeCostPct)}
+                  </div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)'}}>objetivo ≤ 60%</div>
+                </div>
+              </div>
+            </div>
+            {/* Utilidad mensual */}
+            <div style={{padding: '10px 0'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>
+                  <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-2)'}}>Utilidad mensual estimada</div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)', marginTop: 2}}>
+                    {receta.monthlySales} unidades × {fmt$(m.margin$)} margen
+                  </div>
+                </div>
+                <div style={{textAlign: 'right'}}>
+                  <div className="num" style={{fontSize: 20, fontWeight: 700, color: 'var(--good)'}}>
+                    {fmt$0(m.monthlyMargin)}
+                  </div>
+                  <div style={{fontSize: 11, color: 'var(--text-3)'}}>este mes</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
