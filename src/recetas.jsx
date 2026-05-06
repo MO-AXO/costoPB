@@ -1,5 +1,5 @@
 // Recetas — fichas técnicas con cálculo en vivo
-const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixedCosts, openId }) => {
+const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, deleteReceta, fixedCosts, openId }) => {
   const C = window.PB_CALC;
   const [tab, setTab] = React.useState('finales');
   const [selected, setSelected] = React.useState(openId || recetas[0]?.id);
@@ -150,7 +150,7 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
             onUpdate={(patch) => setRecetas(recetas.map(x => x.id === item.id ? { ...x, ...patch } : x))}
             onDelete={() => {
               const next = recetas.filter(x => x.id !== item.id);
-              setRecetas(next);
+              if (deleteReceta) deleteReceta(item.id); else setRecetas(next);
               setSelected(next[0]?.id || null);
             }}
           />

@@ -346,16 +346,23 @@ const App = () => {
     };
     Object.keys(months).forEach(mid => {
       const m = { ...months[mid] };
-      // Insumos: reemplaza los del SEED, conserva los manuales
+
+      // INSUMOS: siempre sincroniza del SEED (son datos de costo/referencia, no editables por el usuario)
       const userInsumos = (m.insumos || []).filter(x => !seedInsumoIds.has(x.id));
       m.insumos = [...SD.SEED_INSUMOS, ...userInsumos];
-      // Sub-recetas: reemplaza las del SEED, conserva las manuales
+
+      // SUB-RECETAS: siempre sincroniza del SEED, conserva las creadas manualmente
       const userSubs = (m.subrecetas || []).filter(x => !seedSubIds.has(x.id));
       m.subrecetas = [...SD.SEED_SUBRECETAS, ...userSubs];
-      // Recetas: reemplaza las del SEED, conserva las manuales
-      const userRecetas = (m.recetas || []).filter(x => !seedRecetaIds.has(x.id));
-      m.recetas = [...SD.SEED_RECETAS, ...userRecetas];
-      // Costos fijos: inyecta campos nuevos si no existen, preserva los que el usuario ya editó
+
+      // RECETAS: solo agrega las del SEED que el usuario NO haya eliminado nunca.
+      // Se usa una lista negra de IDs eliminados guardada en el store.
+      const deletedIds = new Set(m.deletedRecetaIds || []);
+      const existingRecetaIds = new Set((m.recetas || []).map(x => x.id));
+      const seedToAdd = SD.SEED_RECETAS.filter(r => !existingRecetaIds.has(r.id) && !deletedIds.has(r.id));
+      m.recetas = [...(m.recetas || []), ...seedToAdd];
+
+      // COSTOS FIJOS: inyecta campos nuevos si no existen, preserva los que el usuario ya editó
       m.fixedCosts = { ...defaultCosts, ...(m.fixedCosts || {}) };
       months[mid] = m;
     });
@@ -457,6 +464,12 @@ const App = () => {
   const setRecetas = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
     return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, recetas: typeof v==='function' ? v(cur.recetas) : v } } };
+  });
+  const deleteReceta = (id) => setStore(s => {
+    const cur = s.months[s.currentMonthId];
+    const deletedIds = [...new Set([...(cur.deletedRecetaIds || []), id])];
+    const recetas = (cur.recetas || []).filter(r => r.id !== id);
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, recetas, deletedRecetaIds: deletedIds } } };
   });
   const setFixedCosts = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
@@ -618,7 +631,7 @@ const App = () => {
             {page === 'dashboard' && <Dashboard insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onNavigate={setPage} onOpenReceta={goToReceta} monthLabel={monthData.label} />}
             {page === 'ventas' && <Ventas recetas={recetas} setRecetas={setRecetas} insumos={insumos} subrecetas={subrecetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
             {page === 'insumos' && <Insumos insumos={insumos} setInsumos={setInsumos} />}
-            {page === 'recetas' && <Recetas insumos={insumos} subrecetas={subrecetas} setSubrecetas={setSubrecetas} recetas={recetas} setRecetas={setRecetas} fixedCosts={fixedCosts} openId={openRecetaId} />}
+            {page === 'recetas' && <Recetas insumos={insumos} subrecetas={subrecetas} setSubrecetas={setSubrecetas} recetas={recetas} setRecetas={setRecetas} deleteReceta={deleteReceta} fixedCosts={fixedCosts} openId={openRecetaId} />}
             {page === 'rentabilidad' && <Rentabilidad insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onOpenReceta={goToReceta} />}
             {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
