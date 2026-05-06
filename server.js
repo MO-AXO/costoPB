@@ -3,14 +3,18 @@ const { Pool } = require('pg');
 const path = require('path');
 
 const app = express();
+
+if (!process.env.DATABASE_URL) {
+  console.error('ERROR: DATABASE_URL no está configurada. Ve a Railway → tu servicio → Variables y agrega DATABASE_URL.');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 app.use(express.json({ limit: '10mb' }));
 
-// API routes antes de static
 app.get('/api/store', async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT value FROM app_data WHERE key = 'store'");
@@ -38,11 +42,9 @@ app.post('/api/store', async (req, res) => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-// Static files (el app HTML)
 app.use(express.static(path.join(__dirname)));
 
-// Inicializar tabla y arrancar
-const init = async () => {
+const initDB = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS app_data (
       key        TEXT PRIMARY KEY,
@@ -54,6 +56,11 @@ const init = async () => {
 };
 
 const PORT = process.env.PORT || 3000;
-init()
-  .then(() => app.listen(PORT, () => console.log(`Pig Brothers Costeo en :${PORT}`)))
-  .catch(e => { console.error('Error al iniciar DB:', e); process.exit(1); });
+
+// Arranca el servidor siempre; intenta conectar la DB en paralelo
+app.listen(PORT, () => console.log(`Pig Brothers Costeo en :${PORT}`));
+
+initDB().catch(e => {
+  console.error('Advertencia: no se pudo inicializar la DB:', e.message);
+  console.error('El servidor sigue activo pero /api/store fallará hasta que DATABASE_URL esté configurada.');
+});
