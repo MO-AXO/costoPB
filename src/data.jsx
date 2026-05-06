@@ -258,6 +258,17 @@ const SEED_INSUMOS = [
   { id: 'i123', name: 'Papel Aluminio (mt)',   category: 'Proceso', unit: 'pza', cost: 0.1836, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
   // Pellets: $33.50 / 18,140g → $0.001848/g
   { id: 'i124', name: 'Pellets',               category: 'Proceso', unit: 'g',   cost: 0.001848, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== AUXILIARES (mismos ingredientes en unidad g para uso en salsas) =====
+  // Cebolla Blanca a gramo: $1.00 / 917g (8 unidades × ~115g c/u) → $0.00109/g, yield 91%
+  { id: 'i125', name: 'Cebolla Blanca (g)',    category: 'Vegetal', unit: 'g', cost: 0.001090,   supplier: 'Local', yield: 0.91, lastChange: '0.0%', stock: 0 },
+  // Ajo a gramo: $3.50 / 453.6g (1 lb) → $0.00772/g, yield 85%
+  { id: 'i126', name: 'Ajo (g)',               category: 'Vegetal', unit: 'g', cost: 0.007716,   supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Cilantro a gramo: $1.00 / 227g (manojo) → $0.00441/g, yield 91%
+  { id: 'i127', name: 'Cilantro (g)',          category: 'Vegetal', unit: 'g', cost: 0.004405,   supplier: 'Local', yield: 0.91, lastChange: '0.0%', stock: 0 },
+  // Chile Guaco a unidad (imagen: 24.5 unidades, yield 69%) ya existe i57 en g, pero imagen lo da en unidades
+  // Agua: costo $0 — se registra para tener el ingrediente visible
+  { id: 'i128', name: 'Agua',                  category: 'Proceso', unit: 'g', cost: 0.00,       supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
@@ -376,148 +387,181 @@ const SEED_SUBRECETAS = [
 
   // ===== SALSAS =====
   {
-    id: 's1', name: 'Salsa BBQ Pig Brothers (casera)', category: 'Salsas', yield: 64, yieldUnit: 'oz',
+    // ── SALSA BBQ TAMARINDO ── batch 1,396g · 39.9 porciones de 35g · $0.06/porción · $0.002/g
+    id: 's1', name: 'Salsa BBQ Tamarindo', category: 'Salsas', yield: 1396, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i32', qty: 32, unit: 'oz' },
-      { insumoId: 'i67', qty: 8,  unit: 'oz' },
-      { insumoId: 'i41', qty: 6,  unit: 'oz' },
-      { insumoId: 'i38', qty: 4,  unit: 'oz' },
-      { insumoId: 'i36', qty: 1,  unit: 'oz' },
-      { insumoId: 'i48', qty: 0.5, unit: 'oz' },
-      { insumoId: 'i60', qty: 0.5, unit: 'oz' },
+      { insumoId: 'i24',  qty: 454,   unit: 'g'  }, // Tamarindo       — 454g ($1.50/lb)
+      { insumoId: 'i48',  qty: 245,   unit: 'g'  }, // Ketchup         — 245g ($6.19/4100g)
+      { insumoId: 'i72',  qty: 400,   unit: 'g'  }, // Azúcar          — 400g ($2.68/2500g)
+      { insumoId: 'i39',  qty: 13.5,  unit: 'ml' }, // Salsa Inglesa   — 13.5ml ($6.00/3650ml)
+      { insumoId: 'i68',  qty: 17,    unit: 'g'  }, // Sal             — 17g ($0.20/400g)
+      { insumoId: 'i67',  qty: 6,     unit: 'g'  }, // Pimienta        — 6g ($7.69/453g)
+      { insumoId: 'i128', qty: 570,   unit: 'g'  }, // Agua            — 570g ($0)
     ],
   },
   {
-    id: 's5', name: 'Salsa de Higos', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    // ── SALSA BBQ PANELA ── batch 1,014g · 29 porciones de 35g · $0.07/porción · $0.002/g
+    id: 's7', name: 'Salsa BBQ Panela', category: 'Salsas', yield: 1014, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i66', qty: 12, unit: 'oz' },
-      { insumoId: 'i41', qty: 4,  unit: 'oz' },
-      { insumoId: 'i38', qty: 2,  unit: 'oz' },
-      { insumoId: 'i71', qty: 1,  unit: 'pza' },
-      { insumoId: 'i57', qty: 0.2, unit: 'oz' },
+      { insumoId: 'i55',  qty: 1,     unit: 'pza'}, // Panela          — 750g/pza ($1.25/pza)
+      { insumoId: 'i48',  qty: 240,   unit: 'g'  }, // Ketchup         — 240g ($6.19/4100g)
+      { insumoId: 'i41',  qty: 35,    unit: 'ml' }, // Vinagre Manzana — 35ml ($2.55/3650ml)
+      { insumoId: 'i40',  qty: 13,    unit: 'ml' }, // Salsa de Soya   — 13ml ($6.25/3650ml)
+      { insumoId: 'i68',  qty: 3,     unit: 'g'  }, // Sal             — 3g
+      { insumoId: 'i67',  qty: 6,     unit: 'g'  }, // Pimienta        — 6g
     ],
   },
   {
-    id: 's7', name: 'Salsa de Panela', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    // ── SALSA BBQ CERVEZA ── batch 3,354g · 95.8 porciones de 35g · $0.13/porción · $0.004/g
+    id: 's9', name: 'Salsa BBQ Cerveza', category: 'Salsas', yield: 3354, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i41', qty: 12, unit: 'oz' },
-      { insumoId: 'i38', qty: 4,  unit: 'oz' },
-      { insumoId: 'i36', qty: 1,  unit: 'oz' },
-      { insumoId: 'i15', qty: 2,  unit: 'oz' },
-      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
-      { insumoId: 'i46', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i43',  qty: 1980,  unit: 'ml' }, // Cerveza Stella  — 1,980ml ($1.50/330ml)
+      { insumoId: 'i48',  qty: 950,   unit: 'g'  }, // Ketchup         — 950g
+      { insumoId: 'i41',  qty: 20.5,  unit: 'ml' }, // Vinagre Manzana — 20.5ml
+      { insumoId: 'i40',  qty: 20.5,  unit: 'ml' }, // Salsa de Soya   — 20.5ml
+      { insumoId: 'i125', qty: 137.5, unit: 'g'  }, // Cebolla Blanca  — 137.5g bruto (91% = 125.5g)
+      { insumoId: 'i68',  qty: 35,    unit: 'g'  }, // Sal             — 35g
+      { insumoId: 'i67',  qty: 10,    unit: 'g'  }, // Pimienta        — 10g
+      { insumoId: 'i126', qty: 11,    unit: 'g'  }, // Ajo             — 11g
+      { insumoId: 'i72',  qty: 640,   unit: 'g'  }, // Azúcar          — 640g
+      { insumoId: 'i91',  qty: 45,    unit: 'g'  }, // Margarina       — 45g ($1.04/400g)
+      { insumoId: 'i39',  qty: 20.5,  unit: 'ml' }, // Salsa Inglesa   — 20.5ml
+      { insumoId: 'i82',  qty: 109.5, unit: 'g'  }, // Harina Pancakes — 109.5g ($10.59/4530g)
+      { insumoId: 'i91',  qty: 72.5,  unit: 'g'  }, // Margarina Rub   — 72.5g adicional
     ],
   },
   {
-    id: 's8', name: 'Salsa de Tamarindo', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    // ── SALSA BBQ HIGOS ── batch 1,286.5g · 36.8 porciones de 35g · $0.18/porción · $0.005/g
+    id: 's5', name: 'Salsa BBQ Higos', category: 'Salsas', yield: 1287, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i67', qty: 10, unit: 'oz' },
-      { insumoId: 'i40', qty: 6,  unit: 'oz' },
-      { insumoId: 'i19', qty: 0.5, unit: 'oz' },
-      { insumoId: 'i38', qty: 2,  unit: 'oz' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i35',  qty: 440,   unit: 'g'  }, // Higos (enlatado)— 440g ($3.27/320g peso drenado)
+      { insumoId: 'i48',  qty: 230,   unit: 'g'  }, // Ketchup         — 230g
+      { insumoId: 'i57',  qty: 24.5,  unit: 'g'  }, // Chile Guaco     — 24.5g bruto (69% = 17g neto)
+      { insumoId: 'i125', qty: 44,    unit: 'g'  }, // Cebolla Blanca  — 44g bruto (99% = 43.5g neto)
+      { insumoId: 'i68',  qty: 3,     unit: 'g'  }, // Sal             — 3g
+      { insumoId: 'i67',  qty: 2,     unit: 'g'  }, // Pimienta        — 2g
+      { insumoId: 'i44',  qty: 355,   unit: 'ml' }, // Cerveza Regia   — 355ml ($1.04/355ml)
+      { insumoId: 'i72',  qty: 230,   unit: 'g'  }, // Azúcar          — 230g
+      { insumoId: 'i91',  qty: 30,    unit: 'g'  }, // Margarina       — 30g
     ],
   },
   {
-    id: 's9', name: 'Salsa de Cerveza', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    // ── SALSA PARA POLLO ── batch 577g · 19.2 porciones de 30g · $0.08/porción · $0.003/g
+    id: 's6', name: 'Salsa para Pollo', category: 'Salsas', yield: 577, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i71', qty: 2,  unit: 'pza' },
-      { insumoId: 'i41', qty: 4,  unit: 'oz' },
-      { insumoId: 'i15', qty: 2,  unit: 'oz' },
-      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
-      { insumoId: 'i36', qty: 0.5, unit: 'oz' },
-      { insumoId: 'i48', qty: 0.25, unit: 'oz' },
-    ],
-  },
-  {
-    id: 's10', name: 'White BBQ', category: 'Salsas', yield: 32, yieldUnit: 'oz',
-    ingredients: [
-      { insumoId: 'i31', qty: 16, unit: 'oz' },
-      { insumoId: 'i38', qty: 4,  unit: 'oz' },
-      { insumoId: 'i18', qty: 2,  unit: 'oz' },
-      { insumoId: 'i33', qty: 2,  unit: 'oz' },
-      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
-      { insumoId: 'i46', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i50',  qty: 240,  unit: 'g'  }, // Mayonesa        — 240g ($10.71/3000g)
+      { insumoId: 'i76',  qty: 12,   unit: 'g'  }, // Sazonador Pollo — 12g ($7.29/623.7g)
+      { insumoId: 'i72',  qty: 200,  unit: 'g'  }, // Azúcar          — 200g
+      { insumoId: 'i67',  qty: 6,    unit: 'g'  }, // Pimienta        — 6g
+      { insumoId: 'i68',  qty: 12,   unit: 'g'  }, // Sal             — 12g
+      { insumoId: 'i52',  qty: 25,   unit: 'g'  }, // Mostaza Dijon   — 25g ($2.75/340g)
+      { insumoId: 'i41',  qty: 90,   unit: 'ml' }, // Vinagre Manzana — 90ml
     ],
   },
 
   // ===== ADEREZOS =====
   {
-    id: 's11', name: 'Aderezo Ajo Romero', category: 'Aderezos', yield: 16, yieldUnit: 'oz',
+    // ── ADEREZO DE CILANTRO ── batch 1,161.5g · 33.2 porciones de 35g · $0.13/porción
+    id: 's13', name: 'Aderezo de Cilantro', category: 'Aderezos', yield: 1162, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i31', qty: 8,  unit: 'oz' },
-      { insumoId: 'i22', qty: 1,  unit: 'pza' },
-      { insumoId: 'i18', qty: 1,  unit: 'oz' },
-      { insumoId: 'i54', qty: 0.5, unit: 'oz' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
-      { insumoId: 'i46', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i83',  qty: 1,     unit: 'pza'}, // Crema           — 679.5g ≈ 1 botella ($2.20/botella 660ml)
+      { insumoId: 'i50',  qty: 250,   unit: 'g'  }, // Mayonesa        — 250g ($10.71/3000g)
+      { insumoId: 'i127', qty: 227.5, unit: 'g'  }, // Cilantro        — 227.5g bruto (91% = 206g neto)
+      { insumoId: 'i126', qty: 18,    unit: 'g'  }, // Ajo             — 18g ($3.50/lb)
+      { insumoId: 'i21',  qty: 0.5,   unit: 'pza'}, // Limón           — 0.5 unidad ($0.083/pza)
+      { insumoId: 'i68',  qty: 5,     unit: 'g'  }, // Sal             — 5g
+      { insumoId: 'i67',  qty: 5,     unit: 'g'  }, // Pimienta        — 5g
     ],
   },
   {
-    id: 's12', name: 'Aderezo de Chipotle', category: 'Aderezos', yield: 16, yieldUnit: 'oz',
+    // ── ADEREZO DE CHIPOTLE ── batch 1,222g · 34.9 porciones de 35g · $0.15/porción
+    id: 's12', name: 'Aderezo de Chipotle', category: 'Aderezos', yield: 1222, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i31', qty: 8,  unit: 'oz' },
-      { insumoId: 'i60', qty: 1,  unit: 'oz' },
-      { insumoId: 'i18', qty: 1,  unit: 'oz' },
-      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
-      { insumoId: 'i40', qty: 0.5, unit: 'oz' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i83',  qty: 1,     unit: 'pza'}, // Crema           — 665.5g ≈ 1 botella ($2.20)
+      { insumoId: 'i50',  qty: 251,   unit: 'g'  }, // Mayonesa        — 251g
+      { insumoId: 'i34',  qty: 265.5, unit: 'g'  }, // Chipotles       — 265.5g ($2.75/380g peso drenado)
+      { insumoId: 'i67',  qty: 2,     unit: 'g'  }, // Pimienta (Pimiento en imagen) — 2g
+      { insumoId: 'i40',  qty: 12.5,  unit: 'ml' }, // Salsa de Soya   — 12.5ml
+      { insumoId: 'i54',  qty: 20,    unit: 'g'  }, // Miel            — 20g ($18.00/5200g)
+      { insumoId: 'i72',  qty: 32.5,  unit: 'g'  }, // Azúcar          — 32.5g
     ],
   },
   {
-    id: 's13', name: 'Aderezo de Cilantro', category: 'Aderezos', yield: 16, yieldUnit: 'oz',
+    // ── ADEREZO AJO ROMERO ── (sin hoja de producción, se mantiene como referencia)
+    id: 's11', name: 'Aderezo Ajo Romero', category: 'Aderezos', yield: 500, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i31', qty: 8,  unit: 'oz' },
-      { insumoId: 'i21', qty: 1,  unit: 'pza' },
-      { insumoId: 'i18', qty: 1,  unit: 'oz' },
-      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
-      { insumoId: 'i19', qty: 0.25, unit: 'oz' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i50',  qty: 240,  unit: 'g'  }, // Mayonesa        — base
+      { insumoId: 'i126', qty: 18,   unit: 'g'  }, // Ajo
+      { insumoId: 'i26',  qty: 1,    unit: 'pza'}, // Romero          — 1 pza
+      { insumoId: 'i21',  qty: 0.5,  unit: 'pza'}, // Limón
+      { insumoId: 'i68',  qty: 5,    unit: 'g'  }, // Sal
+      { insumoId: 'i67',  qty: 5,    unit: 'g'  }, // Pimienta
     ],
   },
 
   // ===== OTROS =====
   {
-    id: 's2', name: 'BBQ Rub seco', category: 'Otros', yield: 16, yieldUnit: 'oz',
+    id: 's2', name: 'Rub BBQ (seco)', category: 'Otros', yield: 715, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i41', qty: 5, unit: 'oz' },
-      { insumoId: 'i44', qty: 4, unit: 'oz' },
-      { insumoId: 'i48', qty: 3, unit: 'oz' },
-      { insumoId: 'i46', qty: 2, unit: 'oz' },
-      { insumoId: 'i50', qty: 1, unit: 'oz' },
-      { insumoId: 'i49', qty: 1, unit: 'oz' },
+      { insumoId: 'i67', qty: 45,  unit: 'g' }, // Pimienta Negra
+      { insumoId: 'i68', qty: 370, unit: 'g' }, // Sal
+      { insumoId: 'i69', qty: 55,  unit: 'g' }, // Ajo en Polvo
+      { insumoId: 'i70', qty: 55,  unit: 'g' }, // Cebolla en Polvo
+      { insumoId: 'i71', qty: 40,  unit: 'g' }, // Paprika
+      { insumoId: 'i72', qty: 150, unit: 'g' }, // Azúcar
     ],
   },
   {
-    id: 's3', name: 'Coleslaw (ensalada de repollo)', category: 'Otros', yield: 32, yieldUnit: 'oz',
+    id: 's3', name: 'Coleslaw', category: 'Otros', yield: 900, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i12', qty: 14, unit: 'oz' },
-      { insumoId: 'i13', qty: 6,  unit: 'oz' },
-      { insumoId: 'i14', qty: 3,  unit: 'oz' },
-      { insumoId: 'i31', qty: 6,  unit: 'oz' },
-      { insumoId: 'i38', qty: 1,  unit: 'oz' },
-      { insumoId: 'i40', qty: 1,  unit: 'oz' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i17',  qty: 1,    unit: 'pza'}, // Repollo Blanco  — 1 pza
+      { insumoId: 'i18',  qty: 1,    unit: 'pza'}, // Repollo Morado  — 1 pza
+      { insumoId: 'i30',  qty: 2,    unit: 'pza'}, // Zanahoria       — 2 pza
+      { insumoId: 'i50',  qty: 170,  unit: 'g'  }, // Mayonesa        — 170g
+      { insumoId: 'i41',  qty: 30,   unit: 'ml' }, // Vinagre Manzana — 30ml
+      { insumoId: 'i72',  qty: 30,   unit: 'g'  }, // Azúcar          — 30g
+      { insumoId: 'i68',  qty: 5,    unit: 'g'  }, // Sal             — 5g
     ],
   },
   {
-    id: 's4', name: 'Mac and Cheese', category: 'Otros', yield: 64, yieldUnit: 'oz',
+    id: 's4', name: 'Mac and Cheese', category: 'Otros', yield: 1800, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i25', qty: 16, unit: 'oz' },
-      { insumoId: 'i26', qty: 12, unit: 'oz' },
-      { insumoId: 'i29', qty: 16, unit: 'oz' },
-      { insumoId: 'i28', qty: 3,  unit: 'oz' },
-      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
-      { insumoId: 'i46', qty: 0.1, unit: 'oz' },
+      { insumoId: 'i36',  qty: 400,  unit: 'g'  }, // Coditos (pasta) — 400g
+      { insumoId: 'i85',  qty: 340,  unit: 'g'  }, // Queso Cheddar   — 340g
+      { insumoId: 'i88',  qty: 450,  unit: 'ml' }, // Leche           — 450ml
+      { insumoId: 'i91',  qty: 85,   unit: 'g'  }, // Margarina       — 85g
+      { insumoId: 'i68',  qty: 10,   unit: 'g'  }, // Sal             — 10g
+      { insumoId: 'i67',  qty: 3,    unit: 'g'  }, // Pimienta        — 3g
     ],
   },
   {
-    id: 's6', name: 'Salsa Maracuyá', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    id: 's10', name: 'White BBQ', category: 'Salsas', yield: 500, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i68', qty: 14, unit: 'oz' },
-      { insumoId: 'i40', qty: 6,  unit: 'oz' },
-      { insumoId: 'i19', qty: 0.5, unit: 'oz' },
+      { insumoId: 'i50',  qty: 300,  unit: 'g'  }, // Mayonesa        — base
+      { insumoId: 'i41',  qty: 60,   unit: 'ml' }, // Vinagre Manzana
+      { insumoId: 'i21',  qty: 1,    unit: 'pza'}, // Limón
+      { insumoId: 'i51',  qty: 30,   unit: 'g'  }, // Mostaza
+      { insumoId: 'i126', qty: 10,   unit: 'g'  }, // Ajo
+      { insumoId: 'i68',  qty: 5,    unit: 'g'  }, // Sal
+      { insumoId: 'i67',  qty: 5,    unit: 'g'  }, // Pimienta
+    ],
+  },
+  {
+    id: 's8', name: 'Salsa de Tamarindo', category: 'Salsas', yield: 500, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i24',  qty: 200,  unit: 'g'  }, // Tamarindo
+      { insumoId: 'i72',  qty: 150,  unit: 'g'  }, // Azúcar
+      { insumoId: 'i23',  qty: 1,    unit: 'pza'}, // Jalapeño
+      { insumoId: 'i41',  qty: 60,   unit: 'ml' }, // Vinagre Manzana
+      { insumoId: 'i68',  qty: 5,    unit: 'g'  }, // Sal
+    ],
+  },
+  {
+    id: 's14', name: 'Salsa Maracuyá', category: 'Salsas', yield: 500, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i25',  qty: 5,    unit: 'pza'}, // Maracuyá        — 5 pzas (yield 0.55)
+      { insumoId: 'i72',  qty: 150,  unit: 'g'  }, // Azúcar
+      { insumoId: 'i23',  qty: 1,    unit: 'pza'}, // Jalapeño
     ],
   },
 ];
