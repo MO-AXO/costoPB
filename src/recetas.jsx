@@ -5,6 +5,7 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
   const [selected, setSelected] = React.useState(openId || recetas[0]?.id);
   const [listSearch, setListSearch] = React.useState('');
   const [showNew, setShowNew] = React.useState(false);
+  const [showNewSub, setShowNewSub] = React.useState(false);
 
   React.useEffect(() => { if (openId) { setSelected(openId); setTab('finales'); } }, [openId]);
 
@@ -23,7 +24,10 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
         </div>
         <div className="page-actions">
           <button className="btn" onClick={() => window.print()}><Icon name="download" /> Imprimir ficha</button>
-          <button className="btn btn-primary" onClick={() => setShowNew(true)}><Icon name="plus" /> Nueva receta</button>
+          {tab === 'sub'
+            ? <button className="btn btn-primary" onClick={() => setShowNewSub(true)}><Icon name="plus" /> Nueva sub-receta</button>
+            : <button className="btn btn-primary" onClick={() => setShowNew(true)}><Icon name="plus" /> Nueva receta</button>
+          }
         </div>
       </div>
 
@@ -146,7 +150,18 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
             onUpdate={(patch) => setRecetas(recetas.map(x => x.id === item.id ? { ...x, ...patch } : x))}
           />
         )}
-        {item && tab === 'sub' && <SubRecetaDetail sub={item} insumos={insumos} />}
+        {item && tab === 'sub' && (
+          <SubRecetaDetail
+            sub={item}
+            insumos={insumos}
+            onUpdate={(patch) => setSubrecetas(subrecetas.map(x => x.id === item.id ? { ...x, ...patch } : x))}
+            onDelete={() => {
+              const next = subrecetas.filter(x => x.id !== item.id);
+              setSubrecetas(next);
+              setSelected(next[0]?.id || null);
+            }}
+          />
+        )}
       </div>
 
       {showNew && (
@@ -159,6 +174,18 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
             setSelected(r.id);
             setTab('finales');
             setShowNew(false);
+          }}
+        />
+      )}
+      {showNewSub && (
+        <NewSubRecetaDrawer
+          open
+          onClose={() => setShowNewSub(false)}
+          onAdd={(s) => {
+            setSubrecetas(prev => [...prev, s]);
+            setSelected(s.id);
+            setTab('sub');
+            setShowNewSub(false);
           }}
         />
       )}
@@ -231,8 +258,61 @@ const NewRecetaDrawer = ({ open, onClose, onAdd, existingCategories }) => {
   );
 };
 
+// ─── Drawer: Nueva sub-receta ─────────────────────────────────────────────────
+const NewSubRecetaDrawer = ({ open, onClose, onAdd }) => {
+  const SUB_CATS = ['Salsas', 'Aderezos', 'Otros'];
+  const [f, setF] = React.useState({ name: '', category: 'Salsas', yield: 32, yieldUnit: 'oz' });
+  const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
+  const canSave = f.name.trim().length > 0 && parseFloat(f.yield) > 0;
+  const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
+  const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
+  return (
+    <Drawer open={open} title="Nueva sub-receta" subtitle="Crea una salsa, aderezo u otro preparado reutilizable" onClose={onClose}
+      footer={
+        <>
+          <button className="btn" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" disabled={!canSave} onClick={() => onAdd({
+            id: 's_' + Date.now(),
+            name: f.name.trim(),
+            category: f.category,
+            yield: parseFloat(f.yield) || 32,
+            yieldUnit: f.yieldUnit,
+            ingredients: [],
+          })}>
+            Crear sub-receta
+          </button>
+        </>
+      }>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div>
+          {lbl('Nombre')}
+          <input style={fl} value={f.name} onChange={e => upd('name', e.target.value)} placeholder="Ej: Salsa de Mango" autoFocus />
+        </div>
+        <div>
+          {lbl('Categoría')}
+          <select style={fl} value={f.category} onChange={e => upd('category', e.target.value)}>
+            {SUB_CATS.map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            {lbl('Rendimiento (yield)')}
+            <input type="number" step="1" min="1" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.yield} onChange={e => upd('yield', e.target.value)} />
+          </div>
+          <div>
+            {lbl('Unidad de yield')}
+            <select style={fl} value={f.yieldUnit} onChange={e => upd('yieldUnit', e.target.value)}>
+              {['oz', 'lb', 'kg', 'g', 'gal', 'l', 'ml', 'pza'].map(u => <option key={u}>{u}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+    </Drawer>
+  );
+};
+
 // ─── Drawer: Agregar ingrediente ──────────────────────────────────────────────
-const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas }) => {
+const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas, onlyInsumos }) => {
   const [type, setType] = React.useState('insumo');
   const [itemId, setItemId] = React.useState(insumos[0]?.id || '');
   const [qty, setQty] = React.useState(1);
@@ -242,7 +322,7 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas }) => 
 
   const handleTypeChange = (t) => {
     setType(t);
-    const first = t === 'insumo' ? insumos[0] : subrecetas[0];
+    const first = t === 'insumo' ? insumos[0] : (subrecetas || [])[0];
     if (first) { setItemId(first.id); setUnit(t === 'insumo' ? first.unit : first.yieldUnit); }
   };
 
@@ -252,7 +332,7 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas }) => 
       const ins = insumos.find(i => i.id === id);
       if (ins) setUnit(ins.unit);
     } else {
-      const sub = subrecetas.find(s => s.id === id);
+      const sub = (subrecetas || []).find(s => s.id === id);
       if (sub) setUnit(sub.yieldUnit);
     }
   };
@@ -278,13 +358,15 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas }) => 
         </>
       }>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div>
-          {lbl('Tipo')}
-          <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-            <button style={{ flex: 1, padding: '8px 0', border: 0, fontSize: 13, cursor: 'pointer', background: type === 'insumo' ? 'var(--accent)' : 'transparent', color: type === 'insumo' ? '#fff' : 'var(--text-2)' }} onClick={() => handleTypeChange('insumo')}>Insumo</button>
-            <button style={{ flex: 1, padding: '8px 0', border: 0, fontSize: 13, cursor: 'pointer', background: type === 'sub' ? 'var(--accent)' : 'transparent', color: type === 'sub' ? '#fff' : 'var(--text-2)', borderLeft: '1px solid var(--border)' }} onClick={() => handleTypeChange('sub')}>Sub-receta</button>
+        {!onlyInsumos && (
+          <div>
+            {lbl('Tipo')}
+            <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+              <button style={{ flex: 1, padding: '8px 0', border: 0, fontSize: 13, cursor: 'pointer', background: type === 'insumo' ? 'var(--accent)' : 'transparent', color: type === 'insumo' ? '#fff' : 'var(--text-2)' }} onClick={() => handleTypeChange('insumo')}>Insumo</button>
+              <button style={{ flex: 1, padding: '8px 0', border: 0, fontSize: 13, cursor: 'pointer', background: type === 'sub' ? 'var(--accent)' : 'transparent', color: type === 'sub' ? '#fff' : 'var(--text-2)', borderLeft: '1px solid var(--border)' }} onClick={() => handleTypeChange('sub')}>Sub-receta</button>
+            </div>
           </div>
-        </div>
+        )}
         <div>
           {lbl(type === 'insumo' ? 'Insumo' : 'Sub-receta')}
           <select style={fl} value={itemId} onChange={e => handleItemChange(e.target.value)}>
@@ -292,7 +374,7 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas }) => 
               insumos.map(x => <option key={x.id} value={x.id}>{x.name}</option>)
             ) : (() => {
               const catOrder = ['Aderezos', 'Salsas', 'Otros'];
-              const grouped = subrecetas.reduce((acc, s) => {
+              const grouped = (subrecetas || []).reduce((acc, s) => {
                 const cat = s.category || 'Otros';
                 if (!acc[cat]) acc[cat] = [];
                 acc[cat].push(s);
@@ -487,24 +569,56 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate }) => 
 };
 
 // ─── Detalle de sub-receta ────────────────────────────────────────────────────
-const SubRecetaDetail = ({ sub, insumos }) => {
+const SubRecetaDetail = ({ sub, insumos, onUpdate, onDelete }) => {
   const C = window.PB_CALC;
   const total = C.subRecetaCost(sub, insumos);
   const perUnit = C.subRecetaCostPerUnit(sub, insumos);
+  const [showAddIng, setShowAddIng] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <div className="card">
         <div className="card-body">
-          <div style={{display: 'flex', gap: 6, alignItems: 'center'}}>
-            <Tag kind="accent">Sub-receta</Tag>
-            {sub.category && <Tag>{sub.category}</Tag>}
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+            <div>
+              <div style={{display: 'flex', gap: 6, alignItems: 'center'}}>
+                <Tag kind="accent">Sub-receta</Tag>
+                {sub.category && <Tag>{sub.category}</Tag>}
+              </div>
+              <div style={{fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, marginTop: 8, letterSpacing: '-0.01em'}}>{sub.name}</div>
+              <div style={{fontSize: 12, color: 'var(--text-3)', marginTop: 4}}>
+                Rinde {sub.yield} {sub.yieldUnit} · <span className="num" style={{fontWeight: 600}}>{fmt$(perUnit)}/{sub.yieldUnit}</span> · Batch total: <span className="num" style={{fontWeight: 600}}>{fmt$(total)}</span>
+              </div>
+            </div>
+            <div style={{display: 'flex', gap: 8}}>
+              {!confirmDelete ? (
+                <button className="btn btn-sm" style={{color: 'var(--bad)', borderColor: 'var(--bad-soft)', background: 'var(--bad-soft)'}}
+                  onClick={() => setConfirmDelete(true)}>
+                  <Icon name="trash" size={12} /> Borrar sub-receta
+                </button>
+              ) : (
+                <>
+                  <button className="btn btn-sm" onClick={() => setConfirmDelete(false)}>Cancelar</button>
+                  <button className="btn btn-sm" style={{background: 'var(--bad)', color: '#fff', borderColor: 'var(--bad)'}}
+                    onClick={onDelete}>
+                    Confirmar borrado
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          <div style={{fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, marginTop: 8, letterSpacing: '-0.01em'}}>{sub.name}</div>
-          <div style={{fontSize: 12, color: 'var(--text-3)', marginTop: 4}}>Rinde {sub.yield} {sub.yieldUnit} · {fmt$(perUnit)}/{sub.yieldUnit}</div>
         </div>
       </div>
+
       <div className="card">
-        <div className="card-head"><div className="card-title">Ingredientes</div></div>
+        <div className="card-head">
+          <div>
+            <div className="card-title">Ingredientes</div>
+            <div className="card-sub">El costo se recalcula automáticamente al editar precios</div>
+          </div>
+          <button className="btn btn-sm" onClick={() => setShowAddIng(true)}><Icon name="plus" size={12} /> Agregar</button>
+        </div>
         <table className="tbl">
           <thead><tr>
             <th>Ingrediente</th>
@@ -512,6 +626,7 @@ const SubRecetaDetail = ({ sub, insumos }) => {
             <th>Unidad</th>
             <th className="right">Costo unit</th>
             <th className="right">Subtotal</th>
+            <th></th>
           </tr></thead>
           <tbody>
             {sub.ingredients.map((ing, i) => {
@@ -520,21 +635,45 @@ const SubRecetaDetail = ({ sub, insumos }) => {
               const qtyConv = ins ? C.convertQty(ing.qty, ing.unit, ins.unit) : ing.qty;
               return (
                 <tr key={i}>
-                  <td>{ins?.name}</td>
+                  <td style={{fontWeight: 500}}>{ins?.name || <span style={{color:'var(--text-3)'}}>Insumo no encontrado</span>}</td>
                   <td className="right num">{ing.qty}</td>
                   <td className="num" style={{color: 'var(--text-2)'}}>{ing.unit}</td>
                   <td className="right num">{fmt$(cu)}</td>
                   <td className="right num" style={{fontWeight: 600}}>{fmt$(cu * qtyConv)}</td>
+                  <td>
+                    <button className="icon-btn" onClick={() => onUpdate({ ingredients: sub.ingredients.filter((_, j) => j !== i) })}>
+                      <Icon name="trash" size={13} />
+                    </button>
+                  </td>
                 </tr>
               );
             })}
-            <tr>
-              <td colSpan="4" className="right" style={{fontWeight: 600}}>Total batch</td>
-              <td className="right num" style={{fontWeight: 700}}>{fmt$(total)}</td>
-            </tr>
+            {sub.ingredients.length === 0 && (
+              <tr><td colSpan="6" style={{textAlign: 'center', color: 'var(--text-3)', fontSize: 13, padding: 16}}>Sin ingredientes · Usa "Agregar" para empezar</td></tr>
+            )}
+            {sub.ingredients.length > 0 && (
+              <tr style={{background: 'var(--surface-2)'}}>
+                <td colSpan="4" className="right" style={{fontWeight: 600, fontSize: 13}}>Total batch</td>
+                <td className="right num" style={{fontWeight: 700}}>{fmt$(total)}</td>
+                <td></td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      {showAddIng && (
+        <AddIngredienteDrawer
+          open
+          onlyInsumos
+          onClose={() => setShowAddIng(false)}
+          insumos={insumos}
+          onAdd={(ing) => {
+            onUpdate({ ingredients: [...sub.ingredients, ing] });
+            setShowAddIng(false);
+          }}
+        />
+      )}
     </div>
   );
 };
