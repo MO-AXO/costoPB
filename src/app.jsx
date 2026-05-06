@@ -245,6 +245,16 @@ const App = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Atajo de teclado — debe estar antes del early return
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); searchRef.current?.focus(); setSearchOpen(true); }
+      if (e.key === 'Escape') { setSearchOpen(false); setSearchQ(''); setShowNotifs(false); setShowFixedCosts(false); setShowMonthPicker(false); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
   if (loading || !store) {
     return (
       <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', flexDirection:'column', gap:12, color:'var(--text-2)' }}>
@@ -312,15 +322,6 @@ const App = () => {
 
   const crumbLabel = navItems.find(n => n.id === page)?.label || 'Dashboard';
   const goToReceta = (id) => { setOpenRecetaId(id); setPage('recetas'); };
-
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); searchRef.current?.focus(); setSearchOpen(true); }
-      if (e.key === 'Escape') { setSearchOpen(false); setSearchQ(''); setShowNotifs(false); setShowFixedCosts(false); setShowMonthPicker(false); }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
 
   const C = window.PB_CALC;
   const alertCount = recetas.filter(r => {
