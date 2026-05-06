@@ -16,6 +16,12 @@ const SEED_INSUMOS = [
   { id: 'i6',  name: 'Carne Molida',           category: 'Proteína', unit: 'lb', cost: 3.15,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
   { id: 'i7',  name: 'Pavo',                   category: 'Proteína', unit: 'lb', cost: 2.10,             supplier: 'Local', yield: 0.65, lastChange: '0.0%', stock: 0 },
   { id: 'i8',  name: 'Chompi Pollo',           category: 'Proteína', unit: 'lb', cost: 2.39,             supplier: 'Local', yield: 0.70, lastChange: '0.0%', stock: 0 },
+  // Brisket (pecho de res): ~$7.20/lb, yield limpieza 95% (corte limpio), merma cocción ~50%
+  { id: 'i142', name: 'Brisket (pecho de res)', category: 'Proteína', unit: 'lb', cost: 7.20, supplier: 'Local', yield: 0.95, lastChange: '0.0%', stock: 0 },
+  // Puyaso (vacío de res): ~$6.50/lb, yield limpieza 95%, merma cocción ~55%
+  { id: 'i143', name: 'Puyaso (vacío de res)',  category: 'Proteína', unit: 'lb', cost: 6.50, supplier: 'Local', yield: 0.95, lastChange: '0.0%', stock: 0 },
+  // Salchicha ahumada: ~$3.50/lb, yield 100% (se vende entera)
+  { id: 'i144', name: 'Salchicha ahumada',      category: 'Proteína', unit: 'lb', cost: 3.50, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
 
   // ===== PAN =====
   // Pan de Papa: $1.95 / 6 unidades → $0.325/pza; Pan de Pretzel: $0.45/pza
@@ -411,6 +417,60 @@ const SEED_SUBRECETAS = [
       { insumoId: 'i70',  qty: 16,   unit: 'g'  }, // Cebolla en Polvo
       { insumoId: 'i71',  qty: 12,   unit: 'g'  }, // Paprika
       { insumoId: 'i72',  qty: 45,   unit: 'g'  }, // Azúcar
+    ],
+  },
+
+  {
+    // ── BRISKET (cocido) ── batch referencia ~15 lbs bruto → yield neto ~6,800g
+    // Basado en Pulled Pork: yield limpieza 95%, merma cocción ~50% total
+    // Brisket 15lb bruto · Rub ~200g · Mostaza ~65g · Carbón 1 zaco · Madera 80cm · Aluminio 12 mts
+    // Costo referencial: ~$0.56/oz · porción ½ lb (227g): ~$4.47
+    id: 'sp7', name: 'Brisket (cocido)', category: 'Proteína cocida', yield: 6800, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i142', qty: 15,    unit: 'lb' }, // Brisket          — 15 lbs bruto ($7.20/lb, yield 0.95)
+      { insumoId: 'i67',  qty: 13,    unit: 'g'  }, // Pimienta Negra   — Rub proporción
+      { insumoId: 'i68',  qty: 103,   unit: 'g'  }, // Sal
+      { insumoId: 'i69',  qty: 15,    unit: 'g'  }, // Ajo en Polvo
+      { insumoId: 'i70',  qty: 15,    unit: 'g'  }, // Cebolla en Polvo
+      { insumoId: 'i71',  qty: 11,    unit: 'g'  }, // Paprika
+      { insumoId: 'i72',  qty: 43,    unit: 'g'  }, // Azúcar
+      { insumoId: 'i51',  qty: 65,    unit: 'g'  }, // Mostaza
+      { insumoId: 'i121', qty: 1,     unit: 'pza'}, // Carbón — 1 zaco
+      { insumoId: 'i122', qty: 80,    unit: 'pza'}, // Madera — 80 cm
+      { insumoId: 'i123', qty: 12,    unit: 'pza'}, // Papel Aluminio — 12 mts
+    ],
+  },
+
+  {
+    // ── PUYASO (cocido) ── batch referencia ~12 lbs bruto → yield neto ~5,200g
+    // Vacío de res: yield limpieza 95%, merma cocción ~55% total
+    // Puyaso 12lb bruto · Rub ~160g · Mostaza ~52g · Salsa Inglesa 20ml · Carbón 1 zaco · Aluminio 10 mts
+    // Costo referencial: ~$0.47/oz · porción ½ lb (227g): ~$3.74
+    id: 'sp8', name: 'Puyaso (cocido)', category: 'Proteína cocida', yield: 5200, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i143', qty: 12,    unit: 'lb' }, // Puyaso           — 12 lbs bruto ($6.50/lb, yield 0.95)
+      { insumoId: 'i67',  qty: 10,    unit: 'g'  }, // Pimienta Negra   — Rub proporción
+      { insumoId: 'i68',  qty: 83,    unit: 'g'  }, // Sal
+      { insumoId: 'i69',  qty: 12,    unit: 'g'  }, // Ajo en Polvo
+      { insumoId: 'i70',  qty: 12,    unit: 'g'  }, // Cebolla en Polvo
+      { insumoId: 'i71',  qty: 9,     unit: 'g'  }, // Paprika
+      { insumoId: 'i72',  qty: 34,    unit: 'g'  }, // Azúcar
+      { insumoId: 'i51',  qty: 52,    unit: 'g'  }, // Mostaza
+      { insumoId: 'i39',  qty: 20,    unit: 'ml' }, // Salsa Inglesa
+      { insumoId: 'i121', qty: 1,     unit: 'pza'}, // Carbón — 1 zaco
+      { insumoId: 'i122', qty: 60,    unit: 'pza'}, // Madera — 60 cm
+      { insumoId: 'i123', qty: 10,    unit: 'pza'}, // Papel Aluminio — 10 mts
+    ],
+  },
+
+  {
+    // ── SALCHICHA AHUMADA ── batch ~5 lbs · se vende por pieza (~150g c/u)
+    // Salchicha ahumada en parrilla/ahumador con pellets
+    // ~15 piezas de 150g por batch
+    id: 'sp9', name: 'Salchicha Ahumada', category: 'Proteína cocida', yield: 15, yieldUnit: 'pza',
+    ingredients: [
+      { insumoId: 'i144', qty: 5,     unit: 'lb' }, // Salchicha        — 5 lbs ($3.50/lb)
+      { insumoId: 'i124', qty: 5000,  unit: 'g'  }, // Pellets          — 5 kg
     ],
   },
 
@@ -1024,13 +1084,106 @@ const SEED_RECETAS = [
     laborMinutes: 4,
     packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
     ingredients: [
-      { type: 'insumo', insumoId: 'i19',  qty: 0.65, unit: 'lb' }, // Camotes             $0.89
-      { type: 'sub',    subId: 'sp1',     qty: 113,  unit: 'g'  }, // Pulled Pork 4oz     $1.14
-      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  }, // Salsa BBQ Higos     $0.18
-      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
-      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
-      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo         $0.04
-      { type: 'insumo', insumoId: 'i103', qty: 1,    unit: 'pza'}, // Tenedor             $0.01
+      { type: 'insumo', insumoId: 'i19',  qty: 0.65, unit: 'lb' },
+      { type: 'sub',    subId: 'sp1',     qty: 113,  unit: 'g'  },
+      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  },
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  },
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  },
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'},
+      { type: 'insumo', insumoId: 'i103', qty: 1,    unit: 'pza'},
+    ],
+  },
+
+  // ===== VENTAS POR PESO =====
+  // Proteínas cocidas vendidas por libra / media libra
+  // Empaque: bandeja aluminio pequeña + papel encerado + servilleta
+
+  // ── PULLED PORK ──
+  { id: 'r24', name: 'Pulled Pork (½ lb)', category: 'Ventas por peso',
+    sellPrice: 7.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp1', qty: 227, unit: 'g' }, // Pulled Pork cocido — 227g (½ lb)
+    ],
+  },
+  { id: 'r25', name: 'Pulled Pork (1 lb)', category: 'Ventas por peso',
+    sellPrice: 13.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i113', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp1', qty: 454, unit: 'g' }, // Pulled Pork cocido — 454g (1 lb)
+    ],
+  },
+
+  // ── BRISKET ──
+  { id: 'r26', name: 'Brisket (½ lb)', category: 'Ventas por peso',
+    sellPrice: 12.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp7', qty: 227, unit: 'g' }, // Brisket cocido — 227g (½ lb)
+    ],
+  },
+  { id: 'r27', name: 'Brisket (1 lb)', category: 'Ventas por peso',
+    sellPrice: 22.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i113', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp7', qty: 454, unit: 'g' }, // Brisket cocido — 454g (1 lb)
+    ],
+  },
+
+  // ── COSTILLAS ──
+  { id: 'r28', name: 'Costillas (½ lb)', category: 'Ventas por peso',
+    sellPrice: 9.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp2', qty: 227, unit: 'g' }, // Costillas cocidas — 227g (½ lb)
+    ],
+  },
+  { id: 'r29', name: 'Costillas (1 lb)', category: 'Ventas por peso',
+    sellPrice: 17.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i113', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp2', qty: 454, unit: 'g' }, // Costillas cocidas — 454g (1 lb)
+    ],
+  },
+
+  // ── PUYASO ──
+  { id: 'r30', name: 'Puyaso (½ lb)', category: 'Ventas por peso',
+    sellPrice: 10.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp8', qty: 227, unit: 'g' }, // Puyaso cocido — 227g (½ lb)
+    ],
+  },
+  { id: 'r31', name: 'Puyaso (1 lb)', category: 'Ventas por peso',
+    sellPrice: 18.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i113', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp8', qty: 454, unit: 'g' }, // Puyaso cocido — 454g (1 lb)
+    ],
+  },
+
+  // ── SALCHICHA ──
+  { id: 'r32', name: 'Salchicha (pieza)', category: 'Ventas por peso',
+    sellPrice: 4.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 1, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp9', qty: 1, unit: 'pza' }, // Salchicha ahumada — 1 pieza (~150g)
+    ],
+  },
+  { id: 'r33', name: 'Salchicha (½ lb)', category: 'Ventas por peso',
+    sellPrice: 6.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 1, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'insumo', insumoId: 'i144', qty: 0.5, unit: 'lb' }, // Salchicha cruda — ½ lb
+    ],
+  },
+
+  // ── POLLO ──
+  { id: 'r34', name: 'Pieza de Pollo', category: 'Ventas por peso',
+    sellPrice: 5.00, monthlySales: 0, targetFoodCost: 35,
+    laborMinutes: 2, packagingItems: ['i114', 'i98', 'i100'],
+    ingredients: [
+      { type: 'sub', subId: 'sp4', qty: 227, unit: 'g' }, // Pollo cocido — ~½ lb por pieza
     ],
   },
 ];
