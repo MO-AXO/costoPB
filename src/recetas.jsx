@@ -422,6 +422,23 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate, onDel
   const diff = m.suggestedPrice - receta.sellPrice;
   const [showAddIng, setShowAddIng] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [simPrice, setSimPrice] = React.useState(receta.sellPrice);
+  const [showSim, setShowSim] = React.useState(false);
+
+  // Recalcula métricas con el precio simulado
+  const simSellPrice = parseFloat(simPrice) || receta.sellPrice;
+  const simFoodCostPct  = (m.ingredientCost / simSellPrice) * 100;
+  const simMargin$      = simSellPrice - m.totalVariable;
+  const simMarginPct    = (simMargin$ / simSellPrice) * 100;
+  const simPrimePct     = ((m.ingredientCost + m.laborCost) / simSellPrice) * 100;
+  const simMonthly      = simMargin$ * receta.monthlySales;
+  const realMonthly     = m.margin$ * receta.monthlySales;
+  const monthlyDiff     = simMonthly - realMonthly;
+
+  // Rango del slider: desde costo total hasta 3× precio actual
+  const sliderMin = Math.max(m.totalAll, 0.5);
+  const sliderMax = Math.max(receta.sellPrice * 3, m.totalAll * 3, 30);
+  const sliderStep = 0.25;
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
@@ -523,6 +540,122 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate, onDel
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* ── SIMULADOR DE PRECIO ── */}
+      <div className="card">
+        <div className="card-head">
+          <div>
+            <div className="card-title">Simulador de precio</div>
+            <div className="card-sub">Mueve el slider para ver el impacto sin cambiar el precio real</div>
+          </div>
+          <button className="btn btn-sm" onClick={() => { setShowSim(s => !s); setSimPrice(receta.sellPrice); }}>
+            {showSim ? 'Cerrar' : <><Icon name="trending" size={12} /> Simular</>}
+          </button>
+        </div>
+        {showSim && (
+          <div className="card-body">
+            {/* Slider */}
+            <div style={{marginBottom: 20}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10}}>
+                <div style={{fontSize: 12, color: 'var(--text-2)', fontWeight: 500}}>Precio simulado</div>
+                <div style={{display: 'flex', alignItems: 'baseline', gap: 4}}>
+                  <span className="num" style={{fontSize: 28, fontWeight: 700, color: simMargin$ < 0 ? 'var(--bad)' : simFoodCostPct <= receta.targetFoodCost ? 'var(--good)' : 'var(--warn)'}}>
+                    {fmt$(simSellPrice)}
+                  </span>
+                  {simSellPrice !== receta.sellPrice && (
+                    <span style={{fontSize: 12, color: simSellPrice > receta.sellPrice ? 'var(--good)' : 'var(--bad)', fontWeight: 600}}>
+                      {simSellPrice > receta.sellPrice ? '+' : ''}{fmt$(simSellPrice - receta.sellPrice)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <input
+                type="range"
+                min={sliderMin}
+                max={sliderMax}
+                step={sliderStep}
+                value={simSellPrice}
+                onChange={e => setSimPrice(e.target.value)}
+                style={{width: '100%', accentColor: 'var(--accent)', cursor: 'pointer'}}
+              />
+              <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-3)', marginTop: 4}}>
+                <span>{fmt$(sliderMin)} (costo)</span>
+                <span style={{color: 'var(--accent-text)', fontWeight: 500}}>Actual: {fmt$(receta.sellPrice)}</span>
+                <span>{fmt$(sliderMax)}</span>
+              </div>
+            </div>
+
+            {/* Comparativa */}
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8}}>
+              {[
+                {
+                  label: 'Food Cost',
+                  real: fmtPct(m.foodCostPct),
+                  sim: fmtPct(simFoodCostPct),
+                  good: simFoodCostPct <= receta.targetFoodCost,
+                  better: simFoodCostPct < m.foodCostPct,
+                  target: `obj. ${receta.targetFoodCost}%`,
+                },
+                {
+                  label: 'Margen',
+                  real: fmt$(m.margin$),
+                  sim: fmt$(simMargin$),
+                  good: simMargin$ > 0,
+                  better: simMargin$ > m.margin$,
+                  target: fmtPct(simMarginPct, 0) + ' del precio',
+                },
+                {
+                  label: 'Prime Cost',
+                  real: fmtPct(m.primeCostPct),
+                  sim: fmtPct(simPrimePct),
+                  good: simPrimePct <= 60,
+                  better: simPrimePct < m.primeCostPct,
+                  target: 'obj. ≤ 60%',
+                },
+                {
+                  label: 'Utilidad mes',
+                  real: fmt$0(realMonthly),
+                  sim: fmt$0(simMonthly),
+                  good: simMonthly > 0,
+                  better: simMonthly > realMonthly,
+                  target: monthlyDiff >= 0 ? `+${fmt$0(monthlyDiff)}/mes` : `${fmt$0(monthlyDiff)}/mes`,
+                },
+              ].map(({ label, real, sim, good, better, target }) => (
+                <div key={label} style={{
+                  background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 14px',
+                  border: `1.5px solid ${better ? 'var(--good)' : simSellPrice === receta.sellPrice ? 'var(--border)' : 'var(--bad)'}`,
+                }}>
+                  <div style={{fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em'}}>{label}</div>
+                  {/* Valor simulado */}
+                  <div className="num" style={{fontSize: 18, fontWeight: 700, color: good ? 'var(--good)' : 'var(--bad)'}}>
+                    {sim}
+                  </div>
+                  {/* Valor real como referencia */}
+                  <div style={{fontSize: 11, color: 'var(--text-3)', marginTop: 4}}>
+                    antes: <span className="num">{real}</span>
+                  </div>
+                  <div style={{fontSize: 11, color: better ? 'var(--good)' : 'var(--text-3)', marginTop: 2, fontWeight: better ? 600 : 400}}>
+                    {target}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Botón aplicar */}
+            {simSellPrice !== receta.sellPrice && (
+              <div style={{marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center'}}>
+                <span style={{fontSize: 12, color: 'var(--text-3)'}}>
+                  {simMargin$ < 0 ? '⚠️ Estás perdiendo dinero a este precio' : simFoodCostPct <= receta.targetFoodCost ? '✓ Cumple el food cost objetivo' : '⚠️ Food cost por encima del objetivo'}
+                </span>
+                <button className="btn btn-sm" onClick={() => setSimPrice(receta.sellPrice)}>Resetear</button>
+                <button className="btn btn-sm btn-primary" onClick={() => { onUpdate({ sellPrice: simSellPrice }); setShowSim(false); }}>
+                  Aplicar {fmt$(simSellPrice)} como precio real
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="three-col">
