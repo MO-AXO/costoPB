@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
+const https = require('https');
 
 const app = express();
 
@@ -41,6 +42,51 @@ app.post('/api/store', async (req, res) => {
 });
 
 app.get('/health', (_, res) => res.json({ ok: true }));
+
+// ─── Endpoint IA ──────────────────────────────────────────────────────────────
+app.post('/api/ai', async (req, res) => {
+  const { messages, system } = req.body;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY no configurada en Railway → Variables.' });
+  }
+
+  const body = JSON.stringify({
+    model: 'claude-3-5-haiku-20241022',
+    max_tokens: 1024,
+    system,
+    messages,
+  });
+
+  const options = {
+    hostname: 'api.anthropic.com',
+    path: '/v1/messages',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  };
+
+  const proxyReq = https.request(options, proxyRes => {
+    let data = '';
+    proxyRes.on('data', chunk => { data += chunk; });
+    proxyRes.on('end', () => {
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.error) return res.status(400).json({ error: parsed.error.message });
+        res.json({ content: parsed.content?.[0]?.text || '' });
+      } catch (e) {
+        res.status(500).json({ error: 'Error parseando respuesta de Anthropic' });
+      }
+    });
+  });
+  proxyReq.on('error', e => res.status(500).json({ error: e.message }));
+  proxyReq.write(body);
+  proxyReq.end();
+});
 
 app.get('/api/reset', async (req, res) => {
   try {
