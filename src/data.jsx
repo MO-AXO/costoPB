@@ -277,6 +277,19 @@ const SEED_INSUMOS = [
   { id: 'i131', name: 'Romero (g)',            category: 'Vegetal', unit: 'g', cost: 0.033333,    supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
   // Crema a gramo: $2.20/botella ÷ 660g → $0.003333/g
   { id: 'i132', name: 'Crema (g)',             category: 'Lácteo',  unit: 'g', cost: 0.003333,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== INSUMOS ADICIONALES =====
+  // Carne de Res (molida): $3.15/lb → $0.006945/g
+  { id: 'i133', name: 'Carne de Res (g)',      category: 'Proteína', unit: 'g', cost: 0.006945,   supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Carne de Soya: $2.95/lb → $0.006504/g  (proteína vegetal texturizada)
+  { id: 'i134', name: 'Carne de Soya (g)',     category: 'Proteína', unit: 'g', cost: 0.006504,   supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Panela a gramo: $2.01 / 1000g → $0.00201/g (imagen Blue Cheese: $2.01/lb presentación)
+  // Nota: i55 es Panela pza ($1.50/750g), aquí usamos g para las sub-recetas que piden gramos exactos
+  { id: 'i135', name: 'Panela (g)',            category: 'Endulzante', unit: 'g', cost: 0.002000, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Gas propano: $25/lb como referencia de costo por proceso — $0.055/lb → costo referencial por g
+  { id: 'i136', name: 'Gas (lb)',              category: 'Proceso', unit: 'g', cost: 0.000121,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Salsa de Queso (sub-receta se maneja separado, pero para Mac final se referencia)
+  // Jalapeño en gramos: ya existe i23 como pza. Para Texas Twinkies usamos pza directamente.
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
@@ -615,6 +628,60 @@ const SEED_SUBRECETAS = [
       { insumoId: 'i23',  qty: 1,    unit: 'pza'}, // Jalapeño
     ],
   },
+
+  {
+    // ── TORTITA CHICHARRA BBQ ── batch 5,443g · 41.9 tortitas de 130g · $0.92/tortita
+    // Carne de Res 4,536g · Carne de Soya 907g · Sal 90g · Pimienta 40g · Ajo en polvo 40g
+    id: 'sp6', name: 'Tortita Chicharra BBQ (130g)', category: 'Proteína cocida', yield: 42, yieldUnit: 'pza',
+    ingredients: [
+      { insumoId: 'i133', qty: 4536, unit: 'g'  }, // Carne de Res     — 4,536g ($3.15/lb)
+      { insumoId: 'i134', qty: 907,  unit: 'g'  }, // Carne de Soya    — 907g ($2.95/lb)
+      { insumoId: 'i68',  qty: 90,   unit: 'g'  }, // Sal              — 90g
+      { insumoId: 'i67',  qty: 40,   unit: 'g'  }, // Pimienta         — 40g
+      { insumoId: 'i69',  qty: 40,   unit: 'g'  }, // Ajo en Polvo     — 40g
+    ],
+  },
+
+  {
+    // ── ADEREZO BLUE CHEESE CON PANELA ── batch 585g · 16.7 porciones de 35g · $0.20/porción
+    // Blue Cheese 80.5g · Panela 80g · Mayonesa 121.5g · Crema 328.5g · Sal 5g · Pimienta 5g
+    id: 'sc2', name: 'Aderezo Blue Cheese con Panela', category: 'Aderezos', yield: 585, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i89',  qty: 80.5,  unit: 'g'  }, // Blue Cheese      — 80.5g ($8.60/454g)
+      { insumoId: 'i135', qty: 80,    unit: 'g'  }, // Panela           — 80g ($2.01/1000g)
+      { insumoId: 'i50',  qty: 121.5, unit: 'g'  }, // Mayonesa         — 121.5g ($10.71/3000g)
+      { insumoId: 'i132', qty: 328.5, unit: 'g'  }, // Crema            — 328.5g ($2.20/660g)
+      { insumoId: 'i68',  qty: 5,     unit: 'g'  }, // Sal              — 5g
+      { insumoId: 'i67',  qty: 5,     unit: 'g'  }, // Pimienta         — 5g
+    ],
+  },
+
+  {
+    // ── SALSA DE QUESO (Mac and Cheese base) ── batch 861g · $6.91 · $0.008/g
+    // Queso Crema 210g · Queso Cheddar 300g · Leche 500g · Sazonador BBQ 10g
+    // Pimienta 3g · Sal 2g · Pellets 0.6kg · Gas 25 lbs
+    id: 'sc3', name: 'Salsa de Queso', category: 'Otros', yield: 861, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i87',  qty: 210,   unit: 'g'  }, // Queso Crema      — 210g ($1.51/210g)
+      { insumoId: 'i85',  qty: 300,   unit: 'g'  }, // Queso Cheddar    — 300g ($8.49/907g)
+      { insumoId: 'i88',  qty: 500,   unit: 'ml' }, // Leche            — 500ml ($1.70/1000ml)
+      { insumoId: 'i75',  qty: 10,    unit: 'g'  }, // Sazonador BBQ    — 10g ($9.85/1000g)
+      { insumoId: 'i67',  qty: 3,     unit: 'g'  }, // Pimienta         — 3g
+      { insumoId: 'i68',  qty: 2,     unit: 'g'  }, // Sal              — 2g
+      { insumoId: 'i124', qty: 600,   unit: 'g'  }, // Pellets          — 0.6kg = 600g
+      { insumoId: 'i136', qty: 11340, unit: 'g'  }, // Gas              — 25 lbs = 11,340g
+    ],
+  },
+
+  {
+    // ── CODITOS COCIDOS ── 200g secos → 435.5g cocidos (218% hidratación)
+    // Coditos 200g + Agua 1,000ml · costo $2.45 · $0.01/g cocido
+    id: 'sc4', name: 'Coditos Cocidos', category: 'Otros', yield: 435, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i36',  qty: 200,   unit: 'g'  }, // Coditos (pasta)  — 200g ($0.00265/g)
+      { insumoId: 'i128', qty: 1000,  unit: 'g'  }, // Agua             — 1,000g ($0)
+    ],
+  },
 ];
 
 // Recetas (productos finales del menú real)
@@ -651,6 +718,24 @@ const SEED_RECETAS = [
       { type: 'insumo', insumoId: 'i24', qty: 1,    unit: 'pza' },
       { type: 'insumo', insumoId: 'i26', qty: 1,    unit: 'oz' },
       { type: 'insumo', insumoId: 'i15', qty: 0.5,  unit: 'oz' },
+    ],
+  },
+
+  // ===== HAMBURGUESAS =====
+  {
+    // ── CHICHARRA BURGER ──
+    // Tortita Chicharra BBQ (130g) · Queso Mozzarella (1 pza) · Arúgula 5g
+    // · Chicharra 7.5g · Aderezo Blue Cheese con Panela (35g) · Pan
+    id: 'r15', name: 'Chicharra Burger', category: 'Hamburguesas',
+    sellPrice: 12.00, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 5, packagingItems: ['i94', 'i100'],
+    ingredients: [
+      { type: 'sub',    subId: 'sp6',    qty: 1,    unit: 'pza'}, // Tortita Chicharra BBQ ($0.92)
+      { type: 'insumo', insumoId: 'i90', qty: 1,    unit: 'pza'}, // Queso Mozzarella ($0.11/pza)
+      { type: 'insumo', insumoId: 'i31', qty: 5,    unit: 'g'  }, // Arúgula ($0.02345/g)
+      { type: 'insumo', insumoId: 'i66', qty: 7.5,  unit: 'g'  }, // Chicharra ($0.00283/g)
+      { type: 'sub',    subId: 'sc2',    qty: 35,   unit: 'g'  }, // Aderezo Blue Cheese ($0.20/35g)
+      { type: 'insumo', insumoId: 'i10', qty: 1,    unit: 'pza'}, // Pan de Pretzel ($0.45)
     ],
   },
 
@@ -726,15 +811,18 @@ const SEED_RECETAS = [
 
   // ===== ENTRADAS =====
   {
+    // ── TEXAS TWINKIES ──
+    // Jalapeños rellenos de brisket y queso crema, envueltos en tocino, ahumados
+    // Jalapeños 4 pza · Brisket cocido · Queso Crema · Tocino · Salsa BBQ
     id: 'r9', name: 'Texas Twinkies', category: 'Entradas',
     sellPrice: 10.00, monthlySales: 280, targetFoodCost: 30,
-    laborMinutes: 8, packagingItems: ['i72', 'i77'],
+    laborMinutes: 8, packagingItems: ['i94', 'i100'],
     ingredients: [
-      { type: 'insumo', insumoId: 'i19', qty: 4, unit: 'pza' },
-      { type: 'insumo', insumoId: 'i2',  qty: 3, unit: 'oz' },
-      { type: 'insumo', insumoId: 'i27', qty: 2, unit: 'oz' },
-      { type: 'insumo', insumoId: 'i8',  qty: 4, unit: 'oz' },
-      { type: 'sub',    subId: 's1',     qty: 1, unit: 'oz' },
+      { type: 'insumo', insumoId: 'i23',  qty: 4,   unit: 'pza'}, // Jalapeños — 4 pza
+      { type: 'sub',    subId: 'sp2',     qty: 85,  unit: 'g'  }, // Rack Costillas/Brisket cocido — 3oz ≈ 85g
+      { type: 'insumo', insumoId: 'i87',  qty: 57,  unit: 'g'  }, // Queso Crema — 2oz ≈ 57g
+      { type: 'insumo', insumoId: 'i5',   qty: 4,   unit: 'pza'}, // Tocino — 4 rebanadas
+      { type: 'sub',    subId: 's1',      qty: 30,  unit: 'g'  }, // Salsa BBQ Tamarindo — 30g
     ],
   },
   {
@@ -751,27 +839,45 @@ const SEED_RECETAS = [
 
   // ===== GUARNICIONES =====
   {
-    id: 'r11', name: 'Mac and Cheese (porción)', category: 'Guarniciones',
+    // ── MAC AND CHEESE (side) ──
+    // Imagen: 1 porción = Macarrones 110.5g + Salsa de Queso 50g + Pulled Pork 2oz + Salsa BBQ 15g
+    // Como SIDE solo lleva macarrones + salsa de queso
+    id: 'r11', name: 'Mac and Cheese (side)', category: 'Guarniciones',
     sellPrice: 5.50, monthlySales: 320, targetFoodCost: 28,
-    laborMinutes: 2, packagingItems: ['i75', 'i77'],
+    laborMinutes: 2, packagingItems: ['i97', 'i100'],
     ingredients: [
-      { type: 'sub',    subId: 's4',     qty: 8, unit: 'oz' },
+      { type: 'sub', subId: 'sc4', qty: 110.5, unit: 'g'  }, // Coditos cocidos — 110.5g
+      { type: 'sub', subId: 'sc3', qty: 50,    unit: 'g'  }, // Salsa de Queso  — 50g
     ],
   },
   {
-    id: 'r12', name: 'Coleslaw (porción)', category: 'Guarniciones',
+    // ── LOADED MAC AND CHEESE ──
+    // Imagen: Macarrones 110.5g + Salsa de Queso 50g + Pulled Pork 2oz + Salsa BBQ 15g
+    id: 'r16', name: 'Loaded Mac and Cheese', category: 'Platos BBQ',
+    sellPrice: 9.00, monthlySales: 0, targetFoodCost: 32,
+    laborMinutes: 3, packagingItems: ['i97', 'i100'],
+    ingredients: [
+      { type: 'sub',    subId: 'sc4',    qty: 110.5, unit: 'g'  }, // Coditos cocidos  — 110.5g
+      { type: 'sub',    subId: 'sc3',    qty: 50,    unit: 'g'  }, // Salsa de Queso   — 50g
+      { type: 'sub',    subId: 'sp1',    qty: 57,    unit: 'g'  }, // Pulled Pork      — 2oz ≈ 57g ($0.28/oz)
+      { type: 'sub',    subId: 's1',     qty: 15,    unit: 'g'  }, // Salsa BBQ Tamarindo — 15g
+    ],
+  },
+  {
+    id: 'r12', name: 'Mezcla Repollo (porción)', category: 'Guarniciones',
     sellPrice: 4.00, monthlySales: 260, targetFoodCost: 25,
-    laborMinutes: 1, packagingItems: ['i75'],
+    laborMinutes: 1, packagingItems: ['i115'],
     ingredients: [
-      { type: 'sub',    subId: 's3',     qty: 6, unit: 'oz' },
+      { type: 'sub', subId: 's3', qty: 40, unit: 'g' }, // Mezcla Repollo — 40g ($0.07/porción)
     ],
   },
   {
-    id: 'r13', name: 'Camote frito', category: 'Guarniciones',
+    id: 'r13', name: 'Camote Frito', category: 'Guarniciones',
     sellPrice: 4.50, monthlySales: 200, targetFoodCost: 26,
-    laborMinutes: 2, packagingItems: ['i75'],
+    laborMinutes: 2, packagingItems: ['i115'],
     ingredients: [
-      { type: 'insumo', insumoId: 'i11', qty: 6, unit: 'oz' },
+      { type: 'insumo', insumoId: 'i19', qty: 170, unit: 'g'  }, // Camote — 170g ($0.914/lb)
+      { type: 'insumo', insumoId: 'i75', qty: 5,   unit: 'g'  }, // Sazonador Papas — 5g
     ],
   },
 ];
