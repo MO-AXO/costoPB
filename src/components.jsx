@@ -110,6 +110,7 @@ const recetaMetrics = (receta, insumos, subrecetas, fixedCosts) => {
 
 window.PB_CALC = {
   fmt$, fmt$0, fmtPct,
+  convertQty,
   insumoCostPerUnit, subRecetaCost, subRecetaCostPerUnit,
   recetaIngredientCost, recetaPackagingCost, recetaLaborCost,
   fixedCostPerCover, recetaMetrics,
