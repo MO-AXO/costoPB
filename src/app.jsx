@@ -184,6 +184,7 @@ const App = () => {
   const saveTimer = useRef(null);
   const lastSavedAt = useRef(0);
   const initialized = useRef(false);
+  const remoteUpdate = useRef(false);
   const tweaks = window.useTweaksPanel();
 
   // Carga inicial desde la API
@@ -193,20 +194,23 @@ const App = () => {
       .then(data => {
         const s = (data && data.months) ? data : seedStore();
         lastSavedAt.current = s.savedAt || 0;
+        remoteUpdate.current = true;
         setStore(s);
         setViewMonthId(s.currentMonthId);
       })
       .catch(() => {
         const s = seedStore();
+        remoteUpdate.current = true;
         setStore(s);
         setViewMonthId(s.currentMonthId);
       })
       .finally(() => { setLoading(false); initialized.current = true; });
   }, []);
 
-  // Guarda con debounce de 800ms
+  // Guarda con debounce de 800ms — omite actualizaciones remotas
   useEffect(() => {
     if (!store || !initialized.current) return;
+    if (remoteUpdate.current) { remoteUpdate.current = false; return; }
     setSyncStatus('saving');
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -231,10 +235,9 @@ const App = () => {
         .then(data => {
           if (data && data.savedAt && data.savedAt > lastSavedAt.current) {
             lastSavedAt.current = data.savedAt;
-            initialized.current = false; // evitar re-guardado inmediato
+            remoteUpdate.current = true;
             setStore(data);
             setViewMonthId(v => data.months[v] ? v : data.currentMonthId);
-            setTimeout(() => { initialized.current = true; }, 0);
           }
         })
         .catch(() => {});
