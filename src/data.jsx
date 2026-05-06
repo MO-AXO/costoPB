@@ -11,8 +11,8 @@ const SEED_INSUMOS = [
   { id: 'i2',  name: 'Costillas Spare Ribs',   category: 'Proteína', unit: 'lb', cost: 2.40,  supplier: 'Local', yield: 0.91, lastChange: '0.0%', stock: 0 }, // 91% limpieza (imagen: 5610/6174)
   { id: 'i3',  name: 'Pork Belly',             category: 'Proteína', unit: 'lb', cost: 2.00,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 }, // 100% (imagen: sin merma limpieza)
   { id: 'i4',  name: 'Pollo',                  category: 'Proteína', unit: 'lb', cost: 2.42,  supplier: 'Local', yield: 0.95, lastChange: '0.0%', stock: 0 }, // 95% limpieza (imagen: 6472/6810)
-  // Tocino: $17.99 / 46 unidades → $0.391/pza
-  { id: 'i5',  name: 'Tocino',                 category: 'Proteína', unit: 'pza', cost: 0.391,           supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Tocino: $16.99 / 37 rebanadas → $0.459/pza
+  { id: 'i5',  name: 'Tocino',                 category: 'Proteína', unit: 'pza', cost: 0.459,           supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
   { id: 'i6',  name: 'Carne Molida',           category: 'Proteína', unit: 'lb', cost: 3.15,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
   { id: 'i7',  name: 'Pavo',                   category: 'Proteína', unit: 'lb', cost: 2.10,             supplier: 'Local', yield: 0.65, lastChange: '0.0%', stock: 0 },
   { id: 'i8',  name: 'Chompi Pollo',           category: 'Proteína', unit: 'lb', cost: 2.39,             supplier: 'Local', yield: 0.70, lastChange: '0.0%', stock: 0 },
@@ -596,6 +596,18 @@ const SEED_SUBRECETAS = [
     ],
   },
   {
+    // ── CEBOLLA CARAMELIZADA DE MARACUYÁ ── batch 942g · 23.55 porciones de 40g · $0.18/porción
+    // Cebolla 1,291g bruto (84.74% = 1,094g neto) · Maracuyá 250g · Azúcar 300g · Sal 20g · Pimienta 4g
+    id: 'sc1', name: 'Cebolla Caramelizada de Maracuyá', category: 'Otros', yield: 942, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i125', qty: 1291, unit: 'g'  }, // Cebolla Blanca   — 1,291g bruto (yield 0.91 → ~1,094g neto)
+      { insumoId: 'i25',  qty: 250,  unit: 'g'  }, // Maracuyá         — 250g ($0.44/pza, yield 0.55)
+      { insumoId: 'i72',  qty: 300,  unit: 'g'  }, // Azúcar           — 300g
+      { insumoId: 'i68',  qty: 20,   unit: 'g'  }, // Sal              — 20g
+      { insumoId: 'i67',  qty: 4,    unit: 'g'  }, // Pimienta         — 4g
+    ],
+  },
+  {
     id: 's14', name: 'Salsa Maracuyá', category: 'Salsas', yield: 500, yieldUnit: 'g',
     ingredients: [
       { insumoId: 'i25',  qty: 5,    unit: 'pza'}, // Maracuyá        — 5 pzas (yield 0.55)
@@ -639,6 +651,24 @@ const SEED_RECETAS = [
       { type: 'insumo', insumoId: 'i24', qty: 1,    unit: 'pza' },
       { type: 'insumo', insumoId: 'i26', qty: 1,    unit: 'oz' },
       { type: 'insumo', insumoId: 'i15', qty: 0.5,  unit: 'oz' },
+    ],
+  },
+
+  // ===== HAMBURGUESAS ESPECIALES =====
+  {
+    // ── VACA Y CERDITO ──
+    // Tortita de carne (130g) · Queso Americano · Tocino (1 rebanada) 
+    // · Cebolla Caramelizada de Maracuyá (40g) · Aderezo Ajo Romero (30g) · Pan
+    id: 'r14', name: 'Vaca y Cerdito', category: 'Hamburguesas',
+    sellPrice: 12.00, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 5, packagingItems: ['i94', 'i100'],
+    ingredients: [
+      { type: 'sub',    subId: 'sp5',    qty: 1,   unit: 'pza'}, // Tortita de Carne 130g ($0.77/pza)
+      { type: 'insumo', insumoId: 'i84', qty: 1,   unit: 'pza'}, // Queso Americano ($0.1665/rebanada)
+      { type: 'insumo', insumoId: 'i5',  qty: 1,   unit: 'pza'}, // Tocino ($0.459/rebanada)
+      { type: 'sub',    subId: 'sc1',    qty: 40,  unit: 'g'  }, // Cebolla Caramelizada Maracuyá ($0.18/40g)
+      { type: 'sub',    subId: 's11',    qty: 30,  unit: 'g'  }, // Aderezo Ajo Romero ($0.11/30g)
+      { type: 'insumo', insumoId: 'i9',  qty: 1,   unit: 'pza'}, // Pan de Papa ($0.325/pza)
     ],
   },
 
