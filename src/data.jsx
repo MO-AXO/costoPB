@@ -269,6 +269,14 @@ const SEED_INSUMOS = [
   // Chile Guaco a unidad (imagen: 24.5 unidades, yield 69%) ya existe i57 en g, pero imagen lo da en unidades
   // Agua: costo $0 — se registra para tener el ingrediente visible
   { id: 'i128', name: 'Agua',                  category: 'Proceso', unit: 'g', cost: 0.00,       supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Repollo Blanco a gramo: $1.50/pza ÷ ~700g neto → $0.00214/g, yield 0.85
+  { id: 'i129', name: 'Repollo Blanco (g)',    category: 'Vegetal', unit: 'g', cost: 0.002143,    supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Repollo Morado a gramo: $3.75/pza ÷ ~700g neto → $0.00536/g, yield 0.85
+  { id: 'i130', name: 'Repollo Morado (g)',    category: 'Vegetal', unit: 'g', cost: 0.005357,    supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Romero a gramo: $1.00/pza ÷ ~30g neto → $0.03333/g, yield 0.90
+  { id: 'i131', name: 'Romero (g)',            category: 'Vegetal', unit: 'g', cost: 0.033333,    supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  // Crema a gramo: $2.20/botella ÷ 660g → $0.003333/g
+  { id: 'i132', name: 'Crema (g)',             category: 'Lácteo',  unit: 'g', cost: 0.003333,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
@@ -464,7 +472,7 @@ const SEED_SUBRECETAS = [
     // ── ADEREZO DE CILANTRO ── batch 1,161.5g · 33.2 porciones de 35g · $0.13/porción
     id: 's13', name: 'Aderezo de Cilantro', category: 'Aderezos', yield: 1162, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i83',  qty: 1,     unit: 'pza'}, // Crema           — 679.5g ≈ 1 botella ($2.20/botella 660ml)
+      { insumoId: 'i132', qty: 679.5, unit: 'g'  }, // Crema           — 679.5g ($2.20/660g)
       { insumoId: 'i50',  qty: 250,   unit: 'g'  }, // Mayonesa        — 250g ($10.71/3000g)
       { insumoId: 'i127', qty: 227.5, unit: 'g'  }, // Cilantro        — 227.5g bruto (91% = 206g neto)
       { insumoId: 'i126', qty: 18,    unit: 'g'  }, // Ajo             — 18g ($3.50/lb)
@@ -477,7 +485,7 @@ const SEED_SUBRECETAS = [
     // ── ADEREZO DE CHIPOTLE ── batch 1,222g · 34.9 porciones de 35g · $0.15/porción
     id: 's12', name: 'Aderezo de Chipotle', category: 'Aderezos', yield: 1222, yieldUnit: 'g',
     ingredients: [
-      { insumoId: 'i83',  qty: 1,     unit: 'pza'}, // Crema           — 665.5g ≈ 1 botella ($2.20)
+      { insumoId: 'i132', qty: 665.5, unit: 'g'  }, // Crema           — 665.5g ($2.20/660g)
       { insumoId: 'i50',  qty: 251,   unit: 'g'  }, // Mayonesa        — 251g
       { insumoId: 'i34',  qty: 265.5, unit: 'g'  }, // Chipotles       — 265.5g ($2.75/380g peso drenado)
       { insumoId: 'i67',  qty: 2,     unit: 'g'  }, // Pimienta (Pimiento en imagen) — 2g
@@ -554,6 +562,37 @@ const SEED_SUBRECETAS = [
       { insumoId: 'i23',  qty: 1,    unit: 'pza'}, // Jalapeño
       { insumoId: 'i41',  qty: 60,   unit: 'ml' }, // Vinagre Manzana
       { insumoId: 'i68',  qty: 5,    unit: 'g'  }, // Sal
+    ],
+  },
+  {
+    // ── MEZCLA REPOLLO (Coleslaw) ── batch 1,437g · 16.55 porciones de 40g · $0.07/porción
+    // Parte 1 — Aderezo base (1,050g): Yogurt 470g · Mayonesa 485g · Mostaza Dijon 110g
+    //           Azúcar 375g · Sal 10g · Pimienta 8.5g → costo $4.68
+    // Parte 2 — Mezcla final (662g): Repollo B 317g · Repollo M 105g · Aderezo 240g
+    // La sub-receta incluye todos los ingredientes para el batch completo
+    id: 's3', name: 'Mezcla Repollo', category: 'Otros', yield: 1437, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i53',  qty: 470,  unit: 'g'  }, // Yogurt           — 470g ($3.20/1000g)
+      { insumoId: 'i50',  qty: 485,  unit: 'g'  }, // Mayonesa         — 485g ($10.71/3000g)
+      { insumoId: 'i52',  qty: 110,  unit: 'g'  }, // Mostaza Dijon    — 110g ($2.75/340g)
+      { insumoId: 'i72',  qty: 375,  unit: 'g'  }, // Azúcar           — 375g
+      { insumoId: 'i68',  qty: 10,   unit: 'g'  }, // Sal              — 10g
+      { insumoId: 'i67',  qty: 8.5,  unit: 'g'  }, // Pimienta         — 8.5g
+      { insumoId: 'i129', qty: 317,  unit: 'g'  }, // Repollo Blanco   — 317g ($1.50/pza)
+      { insumoId: 'i130', qty: 105,  unit: 'g'  }, // Repollo Morado   — 105g ($3.75/pza)
+    ],
+  },
+  {
+    // ── ADEREZO AJO ROMERO ── batch 452.5g · 15.08 porciones de 30g · $0.11/porción
+    // Crema 328g · Mayonesa 120g · Ajo 22g · Sal 2g · Pimienta 1g · Romero 4g
+    id: 's11', name: 'Aderezo Ajo Romero', category: 'Aderezos', yield: 477, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i132', qty: 328,  unit: 'g'  }, // Crema            — 328g ($2.20/660g)
+      { insumoId: 'i50',  qty: 120,  unit: 'g'  }, // Mayonesa         — 120g ($10.71/3000g)
+      { insumoId: 'i126', qty: 22,   unit: 'g'  }, // Ajo              — 22g ($3.50/lb)
+      { insumoId: 'i68',  qty: 2,    unit: 'g'  }, // Sal              — 2g
+      { insumoId: 'i67',  qty: 1,    unit: 'g'  }, // Pimienta         — 1g
+      { insumoId: 'i131', qty: 4,    unit: 'g'  }, // Romero           — 4g ($1.00/pza ~30g)
     ],
   },
   {
