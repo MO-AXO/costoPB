@@ -90,10 +90,25 @@ const recetaLaborCost = (receta, fixedCosts) => {
   return (receta.laborMinutes / 60) * fixedCosts.laborRatePerHour;
 };
 
-// Costo fijo prorrateado por plato
+// Costo fijo prorrateado por plato — suma todos los costos operativos
 const fixedCostPerCover = (fixedCosts) => {
-  const total = fixedCosts.rent + fixedCosts.utilities + fixedCosts.insurance + fixedCosts.software;
-  return total / Math.max(fixedCosts.monthlyCovers, 1);
+  const total = (fixedCosts.rent        || 0) +
+                (fixedCosts.salaries    || 0) +
+                (fixedCosts.gas        || 0) +
+                (fixedCosts.water      || 0) +
+                (fixedCosts.internet   || 0) +
+                (fixedCosts.gasoline   || 0) +
+                (fixedCosts.charcoal   || 0) +
+                (fixedCosts.wood       || 0) +
+                (fixedCosts.aluminum   || 0) +
+                (fixedCosts.electricity|| 0) +
+                (fixedCosts.accountant || 0) +
+                (fixedCosts.cleaning   || 0) +
+                // Compatibilidad con campos anteriores
+                (fixedCosts.utilities  || 0) +
+                (fixedCosts.insurance  || 0) +
+                (fixedCosts.software   || 0);
+  return total / Math.max(fixedCosts.monthlyCovers || 1, 1);
 };
 
 // Costo total y métricas de una receta

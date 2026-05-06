@@ -23,7 +23,24 @@ const seedStore = () => {
         insumos: [],
         subrecetas: [],
         recetas: [],
-        fixedCosts: { rent: 0, utilities: 0, insurance: 0, software: 0, monthlyCovers: 1, laborRatePerHour: 0, taxRate: 0 },
+        fixedCosts: {
+          // Costos operativos reales Pig Brothers
+          rent: 1800,          // Alquiler
+          salaries: 1500,      // Salarios
+          gas: 100,            // Gas
+          water: 150,          // Agua
+          internet: 100,       // Internet
+          gasoline: 200,       // Gasolina
+          charcoal: 96,        // Carbón
+          wood: 90,            // Madera
+          aluminum: 28,        // Aluminio
+          electricity: 300,    // Electricidad
+          accountant: 250,     // Contador
+          cleaning: 60,        // Equipo de limpieza
+          // Operación
+          monthlyCovers: 1,
+          laborRatePerHour: 0,
+        },
       }
     }
   };
@@ -35,16 +52,18 @@ const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
   const upd = (k, val) => setV(p => ({ ...p, [k]: parseFloat(val) || 0 }));
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13, fontFamily: 'var(--font-mono)' };
   const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
-  const field = (label, key, sfx) => (
+  const field = (label, key, sfx = 'USD/mes') => (
     <div>
       {lbl(label)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="number" step="1" min="0" value={v[key]} onChange={e => upd(key, e.target.value)} style={fl} />
+        <input type="number" step="1" min="0" value={v[key] ?? 0} onChange={e => upd(key, e.target.value)} style={fl} />
         <span style={{ fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>{sfx}</span>
       </div>
     </div>
   );
-  const total = (v.rent||0) + (v.utilities||0) + (v.insurance||0) + (v.software||0);
+  const total = (v.rent||0) + (v.salaries||0) + (v.gas||0) + (v.water||0) + (v.internet||0) +
+                (v.gasoline||0) + (v.charcoal||0) + (v.wood||0) + (v.aluminum||0) +
+                (v.electricity||0) + (v.accountant||0) + (v.cleaning||0);
   const perCover = total / Math.max(v.monthlyCovers||1, 1);
   return (
     <Drawer open title="Costos fijos mensuales" subtitle="Se prorratean por cubierta para calcular el costo por plato"
@@ -52,11 +71,27 @@ const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
       footer={<><button className="btn" onClick={onClose}>Cancelar</button><button className="btn btn-primary" onClick={() => { onSave(v); onClose(); }}>Guardar cambios</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="hint">Total fijos: <b>${Math.round(total).toLocaleString()}/mes</b> · Por cubierta: <b>${perCover.toFixed(2)}</b></div>
-        {field('Renta mensual', 'rent', 'USD/mes')}
-        {field('Servicios (luz, gas, agua)', 'utilities', 'USD/mes')}
-        {field('Seguros', 'insurance', 'USD/mes')}
-        {field('Software y suscripciones', 'software', 'USD/mes')}
+
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Instalación y personal</div>
+        {field('Alquiler', 'rent')}
+        {field('Salarios', 'salaries')}
+        {field('Contador', 'accountant')}
+
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Servicios</div>
+        {field('Electricidad', 'electricity')}
+        {field('Gas', 'gas')}
+        {field('Agua', 'water')}
+        {field('Internet', 'internet')}
+        {field('Gasolina', 'gasoline')}
+
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Insumos de operación</div>
+        {field('Carbón', 'charcoal')}
+        {field('Madera', 'wood')}
+        {field('Aluminio (foil)', 'aluminum')}
+        {field('Equipo de limpieza', 'cleaning')}
+
         <div className="divider" />
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Operación</div>
         {field('Tarifa de mano de obra', 'laborRatePerHour', 'USD/hora')}
         {field('Cubiertas mensuales estimadas', 'monthlyCovers', 'platos/mes')}
       </div>
@@ -198,6 +233,11 @@ const App = () => {
     const seedSubIds     = new Set(SD.SEED_SUBRECETAS.map(x => x.id));
     const seedRecetaIds  = new Set(SD.SEED_RECETAS.map(x => x.id));
     const months = { ...s.months };
+    const defaultCosts = {
+      rent: 1800, salaries: 1500, gas: 100, water: 150, internet: 100,
+      gasoline: 200, charcoal: 96, wood: 90, aluminum: 28, electricity: 300,
+      accountant: 250, cleaning: 60, monthlyCovers: 1, laborRatePerHour: 0,
+    };
     Object.keys(months).forEach(mid => {
       const m = { ...months[mid] };
       // Insumos: reemplaza los del SEED, conserva los manuales
@@ -209,6 +249,8 @@ const App = () => {
       // Recetas: reemplaza las del SEED, conserva las manuales
       const userRecetas = (m.recetas || []).filter(x => !seedRecetaIds.has(x.id));
       m.recetas = [...SD.SEED_RECETAS, ...userRecetas];
+      // Costos fijos: inyecta campos nuevos si no existen, preserva los que el usuario ya editó
+      m.fixedCosts = { ...defaultCosts, ...(m.fixedCosts || {}) };
       months[mid] = m;
     });
     return { ...s, months };

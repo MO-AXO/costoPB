@@ -8,7 +8,21 @@ const Reportes = ({ insumos, subrecetas, recetas, fixedCosts, monthLabel }) => {
   const totalIngredient = all.reduce((a, x) => a + x.m.ingredientCost * x.receta.monthlySales, 0);
   const totalLabor = all.reduce((a, x) => a + x.m.laborCost * x.receta.monthlySales, 0);
   const totalPackaging = all.reduce((a, x) => a + x.m.packagingCost * x.receta.monthlySales, 0);
-  const totalFixed = fixedCosts.rent + fixedCosts.utilities + fixedCosts.insurance + fixedCosts.software;
+  const totalFixed = (fixedCosts.rent        || 0) +
+                     (fixedCosts.salaries    || 0) +
+                     (fixedCosts.gas        || 0) +
+                     (fixedCosts.water      || 0) +
+                     (fixedCosts.internet   || 0) +
+                     (fixedCosts.gasoline   || 0) +
+                     (fixedCosts.charcoal   || 0) +
+                     (fixedCosts.wood       || 0) +
+                     (fixedCosts.aluminum   || 0) +
+                     (fixedCosts.electricity|| 0) +
+                     (fixedCosts.accountant || 0) +
+                     (fixedCosts.cleaning   || 0) +
+                     (fixedCosts.utilities  || 0) +
+                     (fixedCosts.insurance  || 0) +
+                     (fixedCosts.software   || 0);
   const grossProfit = totalRevenue - totalIngredient - totalLabor - totalPackaging - totalFixed;
 
   const byCategory = {};
@@ -46,12 +60,20 @@ const Reportes = ({ insumos, subrecetas, recetas, fixedCosts, monthLabel }) => {
             <div className="divider" />
             <PLRow label="Margen bruto" value={totalRevenue - totalIngredient - totalLabor - totalPackaging} pct={((totalRevenue-totalIngredient-totalLabor-totalPackaging)/totalRevenue)*100} kind="subtotal" />
             <div className="divider" />
-            <PLRow label="Renta" value={-fixedCosts.rent} />
-            <PLRow label="Servicios (luz, gas, agua)" value={-fixedCosts.utilities} />
-            <PLRow label="Seguros" value={-fixedCosts.insurance} />
-            <PLRow label="Software" value={-fixedCosts.software} />
+            <PLRow label="Alquiler"          value={-(fixedCosts.rent        || 0)} />
+            <PLRow label="Salarios"          value={-(fixedCosts.salaries    || 0)} />
+            <PLRow label="Electricidad"      value={-(fixedCosts.electricity || 0)} />
+            <PLRow label="Gas"               value={-(fixedCosts.gas        || 0)} />
+            <PLRow label="Agua"              value={-(fixedCosts.water      || 0)} />
+            <PLRow label="Internet"          value={-(fixedCosts.internet   || 0)} />
+            <PLRow label="Gasolina"          value={-(fixedCosts.gasoline   || 0)} />
+            <PLRow label="Carbón"            value={-(fixedCosts.charcoal   || 0)} />
+            <PLRow label="Madera"            value={-(fixedCosts.wood       || 0)} />
+            <PLRow label="Aluminio (foil)"   value={-(fixedCosts.aluminum   || 0)} />
+            <PLRow label="Contador"          value={-(fixedCosts.accountant || 0)} />
+            <PLRow label="Equipo limpieza"   value={-(fixedCosts.cleaning   || 0)} />
             <div className="divider" />
-            <PLRow label="Utilidad operativa" value={grossProfit} pct={(grossProfit/totalRevenue)*100} kind="total" />
+            <PLRow label="Utilidad operativa" value={grossProfit} pct={totalRevenue > 0 ? (grossProfit/totalRevenue)*100 : 0} kind="total" />
           </div>
         </div>
 
