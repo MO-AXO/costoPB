@@ -1,5 +1,5 @@
 // Reportes — vistas adicionales
-const Reportes = ({ insumos, subrecetas, recetas, fixedCosts }) => {
+const Reportes = ({ insumos, subrecetas, recetas, fixedCosts, monthLabel }) => {
   const C = window.PB_CALC;
   const D = window.PB_DATA;
   const all = recetas.map(r => ({ receta: r, m: C.recetaMetrics(r, insumos, subrecetas, fixedCosts) }));
@@ -24,7 +24,7 @@ const Reportes = ({ insumos, subrecetas, recetas, fixedCosts }) => {
       <div className="page-head">
         <div>
           <h1 className="page-title">Reportes</h1>
-          <div className="page-sub">P&L del mes · Abr 2026</div>
+          <div className="page-sub">P&L del mes · {monthLabel || 'Abr 2026'}</div>
         </div>
         <div className="page-actions">
           <button className="btn" onClick={() => window.print()}><Icon name="download" /> Exportar PDF</button>

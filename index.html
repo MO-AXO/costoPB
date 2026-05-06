@@ -407,6 +407,15 @@
     z-index: 100; pointer-events: none;
   }
 
+  /* solo lectura — meses cerrados */
+  .pb-readonly input, .pb-readonly select, .pb-readonly textarea {
+    pointer-events: none; opacity: 0.6; cursor: not-allowed;
+  }
+  .pb-readonly .btn-primary, .pb-readonly .btn-sm, .pb-readonly .icon-btn {
+    pointer-events: none; opacity: 0.35;
+  }
+  .pb-readonly .btn-ghost { pointer-events: none; opacity: 0.35; }
+
   /* print */
   @media print {
     .sidebar, .topbar, .page-actions, .tabs, #pb-ai-btn { display: none !important; }

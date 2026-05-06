@@ -1,5 +1,5 @@
 // Ventas — registro de unidades vendidas por producto
-const Ventas = ({ recetas, setRecetas, insumos, subrecetas, fixedCosts }) => {
+const Ventas = ({ recetas, setRecetas, insumos, subrecetas, fixedCosts, monthLabel }) => {
   const C = window.PB_CALC;
   const [sortBy, setSortBy] = React.useState('category');
 
@@ -48,7 +48,7 @@ const Ventas = ({ recetas, setRecetas, insumos, subrecetas, fixedCosts }) => {
       <div className="page-head">
         <div>
           <h1 className="page-title">Ventas del mes</h1>
-          <div className="page-sub">Unidades vendidas · Abr 2026 · Los ingresos y márgenes se recalculan al instante</div>
+          <div className="page-sub">Unidades vendidas · {monthLabel || 'Abr 2026'} · Los ingresos y márgenes se recalculan al instante</div>
         </div>
         <div className="page-actions">
           <button className="btn" onClick={() => window.print()}><Icon name="download" /> Exportar</button>

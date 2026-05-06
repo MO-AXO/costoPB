@@ -1,5 +1,5 @@
 // Dashboard principal
-const Dashboard = ({ insumos, subrecetas, recetas, fixedCosts, onNavigate, onOpenReceta }) => {
+const Dashboard = ({ insumos, subrecetas, recetas, fixedCosts, onNavigate, onOpenReceta, monthLabel }) => {
   const C = window.PB_CALC;
   const D = window.PB_DATA;
 
@@ -36,7 +36,7 @@ const Dashboard = ({ insumos, subrecetas, recetas, fixedCosts, onNavigate, onOpe
       <div className="page-head">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <div className="page-sub">Resumen del mes · 1 – 30 Abr 2026 · USD</div>
+          <div className="page-sub">Resumen del mes · {monthLabel || 'Abr 2026'} · USD</div>
         </div>
         <div className="page-actions">
           <span className="pill"><span className="dot"></span>Datos al día</span>
