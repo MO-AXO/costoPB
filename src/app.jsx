@@ -1,9 +1,8 @@
-// App — localStorage + navegación por meses + sidebar
+// App — Postgres backend + navegación por meses + sidebar
 const { useState, useRef, useEffect } = React;
 const D = window.PB_DATA;
 
 // ─── Helpers de mes ───────────────────────────────────────────────────────────
-const STORAGE_KEY = 'pb_costeo_v1';
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -13,11 +12,7 @@ const siguienteMes = (id) => {
   return m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
 };
 
-const cargarStore = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
+const seedStore = () => {
   const id = '2026-04';
   return {
     currentMonthId: id,
@@ -32,8 +27,6 @@ const cargarStore = () => {
     }
   };
 };
-
-const _store0 = cargarStore();
 
 // ─── Drawer: Costos Fijos ─────────────────────────────────────────────────────
 const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
@@ -176,8 +169,10 @@ const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onClose }) => {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 const App = () => {
-  const [store, setStore] = useState(_store0);
-  const [viewMonthId, setViewMonthId] = useState(_store0.currentMonthId);
+  const [store, setStore] = useState(null);
+  const [viewMonthId, setViewMonthId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState('ok'); // 'ok' | 'saving' | 'error'
   const [page, setPage] = useState('dashboard');
   const [openRecetaId, setOpenRecetaId] = useState(null);
   const [showFixedCosts, setShowFixedCosts] = useState(false);
@@ -186,12 +181,78 @@ const App = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const searchRef = useRef(null);
+  const saveTimer = useRef(null);
+  const lastSavedAt = useRef(0);
+  const initialized = useRef(false);
   const tweaks = window.useTweaksPanel();
 
-  // Auto-save a localStorage en cada cambio
+  // Carga inicial desde la API
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e) {}
+    fetch('/api/store')
+      .then(r => r.json())
+      .then(data => {
+        const s = (data && data.months) ? data : seedStore();
+        lastSavedAt.current = s.savedAt || 0;
+        setStore(s);
+        setViewMonthId(s.currentMonthId);
+      })
+      .catch(() => {
+        const s = seedStore();
+        setStore(s);
+        setViewMonthId(s.currentMonthId);
+      })
+      .finally(() => { setLoading(false); initialized.current = true; });
+  }, []);
+
+  // Guarda con debounce de 800ms
+  useEffect(() => {
+    if (!store || !initialized.current) return;
+    setSyncStatus('saving');
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const payload = { ...store, savedAt: Date.now() };
+      fetch('/api/store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(r => r.json())
+        .then(() => { lastSavedAt.current = payload.savedAt; setSyncStatus('ok'); })
+        .catch(() => setSyncStatus('error'));
+    }, 800);
+    return () => clearTimeout(saveTimer.current);
   }, [store]);
+
+  // Polling cada 15 s — detecta cambios de otros usuarios
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetch('/api/store')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.savedAt && data.savedAt > lastSavedAt.current) {
+            lastSavedAt.current = data.savedAt;
+            initialized.current = false; // evitar re-guardado inmediato
+            setStore(data);
+            setViewMonthId(v => data.months[v] ? v : data.currentMonthId);
+            setTimeout(() => { initialized.current = true; }, 0);
+          }
+        })
+        .catch(() => {});
+    }, 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (loading || !store) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', flexDirection:'column', gap:12, color:'var(--text-2)' }}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation:'spin 1s linear infinite' }}>
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+        <span style={{ fontSize:13 }}>Cargando datos…</span>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
@@ -263,6 +324,12 @@ const App = () => {
     const m = C.recetaMetrics(r, insumos, subrecetas, fixedCosts);
     return m.foodCostPct > r.targetFoodCost + 5;
   }).length;
+
+  const syncDot = syncStatus === 'saving'
+    ? { color: 'var(--warn)', label: 'Guardando…' }
+    : syncStatus === 'error'
+    ? { color: 'var(--bad)', label: 'Error al guardar' }
+    : { color: 'var(--good)', label: 'Guardado' };
 
   return (
     <div className="app">
@@ -336,6 +403,11 @@ const App = () => {
             <NotifPanel open={showNotifs} onClose={() => setShowNotifs(false)}
               insumos={insumos} recetas={recetas} subrecetas={subrecetas} fixedCosts={fixedCosts} />
           </div>
+
+          <span title={syncDot.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--text-3)', userSelect:'none' }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background: syncDot.color, display:'inline-block' }} />
+            {syncDot.label}
+          </span>
 
           <div style={{ position:'relative' }}>
             <button className="pill" onClick={() => setShowMonthPicker(v => !v)}
