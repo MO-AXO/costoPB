@@ -13,16 +13,17 @@ const siguienteMes = (id) => {
 };
 
 const seedStore = () => {
-  const id = '2026-04';
+  const now = new Date();
+  const id = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   return {
     currentMonthId: id,
     months: {
       [id]: {
         label: mesLabel(id),
-        insumos: D.SEED_INSUMOS,
-        subrecetas: D.SEED_SUBRECETAS,
-        recetas: D.SEED_RECETAS,
-        fixedCosts: D.SEED_FIXED_COSTS,
+        insumos: [],
+        subrecetas: [],
+        recetas: [],
+        fixedCosts: { rent: 0, utilities: 0, insurance: 0, software: 0, monthlyCovers: 1, laborRatePerHour: 0, taxRate: 0 },
       }
     }
   };

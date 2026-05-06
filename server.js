@@ -42,6 +42,15 @@ app.post('/api/store', async (req, res) => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
+app.get('/api/reset', async (req, res) => {
+  try {
+    await pool.query("DELETE FROM app_data WHERE key = 'store'");
+    res.send('<h2>Datos borrados. <a href="/">Volver al app</a></h2>');
+  } catch (e) {
+    res.status(500).send('Error: ' + e.message);
+  }
+});
+
 app.use(express.static(path.join(__dirname)));
 
 const initDB = async () => {
