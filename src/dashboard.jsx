@@ -9,10 +9,11 @@ const Dashboard = ({ insumos, subrecetas, recetas, fixedCosts, onNavigate, onOpe
   const totalRevenue = allMetrics.reduce((a, x) => a + x.m.monthlyRevenue, 0);
   const totalIngredientCost = allMetrics.reduce((a, x) => a + x.m.ingredientCost * x.receta.monthlySales, 0);
   const totalLaborCost = allMetrics.reduce((a, x) => a + x.m.laborCost * x.receta.monthlySales, 0);
-  const blendedFoodCost = (totalIngredientCost / totalRevenue) * 100;
-  const primeCost = ((totalIngredientCost + totalLaborCost) / totalRevenue) * 100;
+  const safeRevenue = Math.max(totalRevenue, 0.0001);
+  const blendedFoodCost = (totalIngredientCost / safeRevenue) * 100;
+  const primeCost = ((totalIngredientCost + totalLaborCost) / safeRevenue) * 100;
   const totalMargin = allMetrics.reduce((a, x) => a + x.m.monthlyMargin, 0);
-  const avgMarginPct = (totalMargin / totalRevenue) * 100;
+  const avgMarginPct = (totalMargin / safeRevenue) * 100;
 
   const sorted = [...allMetrics].sort((a, b) => b.m.monthlyMargin - a.m.monthlyMargin);
   const topProducts = sorted.slice(0, 4);

@@ -49,35 +49,91 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
             </div>
           </div>
           <div style={{maxHeight: 600, overflowY: 'auto'}}>
-            {list.map(r => {
-              const m = tab === 'finales'
-                ? C.recetaMetrics(r, insumos, subrecetas, fixedCosts)
-                : { ingredientCost: C.subRecetaCost(r, insumos), foodCostPct: 0 };
-              return (
-                <button
-                  key={r.id}
-                  onClick={() => setSelected(r.id)}
-                  style={{
-                    width: '100%', textAlign: 'left',
-                    padding: '12px 14px',
-                    background: selected === r.id ? 'var(--accent-soft)' : 'transparent',
-                    border: 0, borderLeft: selected === r.id ? '3px solid var(--accent)' : '3px solid transparent',
-                    borderBottom: '1px solid var(--border)',
-                    color: selected === r.id ? 'var(--accent-text)' : 'var(--text)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{fontSize: 13, fontWeight: 500}}>{r.name}</div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: 'var(--text-3)'}}>
-                    <span>{tab === 'finales' ? r.category : `Rinde ${r.yield} ${r.yieldUnit}`}</span>
-                    <span className="num">{fmt$(m.ingredientCost)}</span>
-                  </div>
-                </button>
+            {tab === 'finales' ? (
+              <>
+                {list.map(r => {
+                  const m = C.recetaMetrics(r, insumos, subrecetas, fixedCosts);
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => setSelected(r.id)}
+                      style={{
+                        width: '100%', textAlign: 'left',
+                        padding: '12px 14px',
+                        background: selected === r.id ? 'var(--accent-soft)' : 'transparent',
+                        border: 0, borderLeft: selected === r.id ? '3px solid var(--accent)' : '3px solid transparent',
+                        borderBottom: '1px solid var(--border)',
+                        color: selected === r.id ? 'var(--accent-text)' : 'var(--text)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{fontSize: 13, fontWeight: 500}}>{r.name}</div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: 'var(--text-3)'}}>
+                        <span>{r.category}</span>
+                        <span className="num">{fmt$(m.ingredientCost)}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+                {list.length === 0 && (
+                  <div style={{padding: 16, fontSize: 13, color: 'var(--text-3)', textAlign: 'center'}}>Sin resultados</div>
+                )}
+              </>
+            ) : (() => {
+              const categoryOrder = ['Aderezos', 'Salsas', 'Otros'];
+              const grouped = list.reduce((acc, r) => {
+                const cat = r.category || 'Otros';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(r);
+                return acc;
+              }, {});
+              const sortedCats = Object.keys(grouped).sort((a, b) => {
+                const ia = categoryOrder.indexOf(a);
+                const ib = categoryOrder.indexOf(b);
+                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+              });
+              if (sortedCats.length === 0) return (
+                <div style={{padding: 16, fontSize: 13, color: 'var(--text-3)', textAlign: 'center'}}>Sin resultados</div>
               );
-            })}
-            {list.length === 0 && (
-              <div style={{padding: 16, fontSize: 13, color: 'var(--text-3)', textAlign: 'center'}}>Sin resultados</div>
-            )}
+              return sortedCats.map(cat => (
+                <div key={cat}>
+                  <div style={{
+                    padding: '8px 14px 4px',
+                    fontSize: 10, fontWeight: 600,
+                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                    color: 'var(--text-3)',
+                    background: 'var(--surface-2)',
+                    borderBottom: '1px solid var(--border)',
+                  }}>
+                    {cat} <span style={{fontWeight: 400}}>({grouped[cat].length})</span>
+                  </div>
+                  {grouped[cat].map(r => {
+                    const cost = C.subRecetaCost(r, insumos);
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => setSelected(r.id)}
+                        style={{
+                          width: '100%', textAlign: 'left',
+                          padding: '12px 14px',
+                          background: selected === r.id ? 'var(--accent-soft)' : 'transparent',
+                          border: 0, borderLeft: selected === r.id ? '3px solid var(--accent)' : '3px solid transparent',
+                          borderBottom: '1px solid var(--border)',
+                          color: selected === r.id ? 'var(--accent-text)' : 'var(--text)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{fontSize: 13, fontWeight: 500}}>{r.name}</div>
+                        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: 'var(--text-3)'}}>
+                          <span>{cat}</span>
+                          <span className="num">{fmt$(cost)}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ));
+            })()}
           </div>
         </div>
 
@@ -232,9 +288,27 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas }) => 
         <div>
           {lbl(type === 'insumo' ? 'Insumo' : 'Sub-receta')}
           <select style={fl} value={itemId} onChange={e => handleItemChange(e.target.value)}>
-            {(type === 'insumo' ? insumos : subrecetas).map(x => (
-              <option key={x.id} value={x.id}>{x.name}</option>
-            ))}
+            {type === 'insumo' ? (
+              insumos.map(x => <option key={x.id} value={x.id}>{x.name}</option>)
+            ) : (() => {
+              const catOrder = ['Aderezos', 'Salsas', 'Otros'];
+              const grouped = subrecetas.reduce((acc, s) => {
+                const cat = s.category || 'Otros';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(s);
+                return acc;
+              }, {});
+              const sortedCats = Object.keys(grouped).sort((a, b) => {
+                const ia = catOrder.indexOf(a);
+                const ib = catOrder.indexOf(b);
+                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+              });
+              return sortedCats.map(cat => (
+                <optgroup key={cat} label={cat}>
+                  {grouped[cat].map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+                </optgroup>
+              ));
+            })()}
           </select>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -317,7 +391,7 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate }) => 
                 const ins = insumos.find(x => x.id === ing.insumoId);
                 name = ins?.name;
                 costUnit = C.insumoCostPerUnit(ins);
-                const qtyConv = ins ? C.convertQty ? C.convertQty(ing.qty, ing.unit, ins.unit) : (ing.unit === ins.unit ? ing.qty : (ing.unit === 'oz' && ins.unit === 'lb' ? ing.qty/16 : ing.qty)) : ing.qty;
+                const qtyConv = ins ? C.convertQty(ing.qty, ing.unit, ins.unit) : ing.qty;
                 lineCost = costUnit * qtyConv;
               }
               return (
@@ -421,7 +495,10 @@ const SubRecetaDetail = ({ sub, insumos }) => {
     <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <div className="card">
         <div className="card-body">
-          <Tag kind="accent">Sub-receta</Tag>
+          <div style={{display: 'flex', gap: 6, alignItems: 'center'}}>
+            <Tag kind="accent">Sub-receta</Tag>
+            {sub.category && <Tag>{sub.category}</Tag>}
+          </div>
           <div style={{fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, marginTop: 8, letterSpacing: '-0.01em'}}>{sub.name}</div>
           <div style={{fontSize: 12, color: 'var(--text-3)', marginTop: 4}}>Rinde {sub.yield} {sub.yieldUnit} · {fmt$(perUnit)}/{sub.yieldUnit}</div>
         </div>
@@ -440,7 +517,7 @@ const SubRecetaDetail = ({ sub, insumos }) => {
             {sub.ingredients.map((ing, i) => {
               const ins = insumos.find(x => x.id === ing.insumoId);
               const cu = C.insumoCostPerUnit(ins);
-              const qtyConv = ins ? (ing.unit === ins.unit ? ing.qty : (ing.unit === 'oz' && ins.unit === 'lb' ? ing.qty/16 : ing.unit === 'oz' && ins.unit === 'gal' ? ing.qty/128 : ing.qty)) : ing.qty;
+              const qtyConv = ins ? C.convertQty(ing.qty, ing.unit, ins.unit) : ing.qty;
               return (
                 <tr key={i}>
                   <td>{ins?.name}</td>
