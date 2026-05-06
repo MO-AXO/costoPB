@@ -92,8 +92,11 @@ const recetaLaborCost = (receta, fixedCosts) => {
 
 // Costo fijo prorrateado por plato — suma todos los costos operativos
 const fixedCostPerCover = (fixedCosts) => {
+  // Salarios desde la tabla de personal (si existe), o campo legacy
+  const staffSalary = (fixedCosts.staff || []).reduce((a, m) => a + (m.salary || 0), 0)
+                   || (fixedCosts.salaries || 0);
   const total = (fixedCosts.rent        || 0) +
-                (fixedCosts.salaries    || 0) +
+                staffSalary                   +
                 (fixedCosts.gas        || 0) +
                 (fixedCosts.water      || 0) +
                 (fixedCosts.internet   || 0) +

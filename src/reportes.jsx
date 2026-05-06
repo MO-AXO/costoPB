@@ -8,8 +8,10 @@ const Reportes = ({ insumos, subrecetas, recetas, fixedCosts, monthLabel }) => {
   const totalIngredient = all.reduce((a, x) => a + x.m.ingredientCost * x.receta.monthlySales, 0);
   const totalLabor = all.reduce((a, x) => a + x.m.laborCost * x.receta.monthlySales, 0);
   const totalPackaging = all.reduce((a, x) => a + x.m.packagingCost * x.receta.monthlySales, 0);
+  const staffSalary = (fixedCosts.staff || []).reduce((a, m) => a + (m.salary || 0), 0)
+                   || (fixedCosts.salaries || 0);
   const totalFixed = (fixedCosts.rent        || 0) +
-                     (fixedCosts.salaries    || 0) +
+                     staffSalary                   +
                      (fixedCosts.gas        || 0) +
                      (fixedCosts.water      || 0) +
                      (fixedCosts.internet   || 0) +
@@ -61,7 +63,7 @@ const Reportes = ({ insumos, subrecetas, recetas, fixedCosts, monthLabel }) => {
             <PLRow label="Margen bruto" value={totalRevenue - totalIngredient - totalLabor - totalPackaging} pct={((totalRevenue-totalIngredient-totalLabor-totalPackaging)/totalRevenue)*100} kind="subtotal" />
             <div className="divider" />
             <PLRow label="Alquiler"          value={-(fixedCosts.rent        || 0)} />
-            <PLRow label="Salarios"          value={-(fixedCosts.salaries    || 0)} />
+            <PLRow label="Salarios personal" value={-staffSalary} />
             <PLRow label="Electricidad"      value={-(fixedCosts.electricity || 0)} />
             <PLRow label="Gas"               value={-(fixedCosts.gas        || 0)} />
             <PLRow label="Agua"              value={-(fixedCosts.water      || 0)} />

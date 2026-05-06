@@ -37,9 +37,15 @@ const seedStore = () => {
           electricity: 300,    // Electricidad
           accountant: 250,     // Contador
           cleaning: 60,        // Equipo de limpieza
+          // Personal (tasa calculada automáticamente)
+          staff: [
+            { role: 'Jefe de cocina',      salary: 500, dailyHours: 12 },
+            { role: 'Ayudante de cocina',  salary: 450, dailyHours: 12 },
+            { role: 'Ayudante de cocina',  salary: 450, dailyHours: 12 },
+          ],
           // Operación
           monthlyCovers: 1,
-          laborRatePerHour: 0,
+          laborRatePerHour: 1.62, // calculado: $1,400 / 864 hrs
         },
       }
     }
@@ -49,7 +55,34 @@ const seedStore = () => {
 // ─── Drawer: Costos Fijos ─────────────────────────────────────────────────────
 const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
   const [v, setV] = useState({ ...costs });
+  const [staff, setStaff] = useState(
+    costs.staff && costs.staff.length > 0
+      ? costs.staff
+      : [
+          { role: 'Jefe de cocina',     salary: 500, dailyHours: 12 },
+          { role: 'Ayudante de cocina', salary: 450, dailyHours: 12 },
+          { role: 'Ayudante de cocina', salary: 450, dailyHours: 12 },
+        ]
+  );
+
   const upd = (k, val) => setV(p => ({ ...p, [k]: parseFloat(val) || 0 }));
+  const updStaff = (i, k, val) => setStaff(s => s.map((m, j) => j === i ? { ...m, [k]: k === 'role' ? val : (parseFloat(val) || 0) } : m));
+  const addStaff = () => setStaff(s => [...s, { role: 'Empleado', salary: 0, dailyHours: 8 }]);
+  const removeStaff = (i) => setStaff(s => s.filter((_, j) => j !== i));
+
+  // Cálculos de personal
+  const WEEKS_PER_MONTH = 4;
+  const DAYS_PER_WEEK = 6;
+  const staffCalc = staff.map(m => ({
+    ...m,
+    weeklyHours: m.dailyHours * DAYS_PER_WEEK,
+    monthlyHours: m.dailyHours * DAYS_PER_WEEK * WEEKS_PER_MONTH,
+    hourRate: m.salary / Math.max(m.dailyHours * DAYS_PER_WEEK * WEEKS_PER_MONTH, 1),
+  }));
+  const totalStaffSalary = staffCalc.reduce((a, m) => a + m.salary, 0);
+  const totalStaffHours  = staffCalc.reduce((a, m) => a + m.monthlyHours, 0);
+  const blendedLaborRate = totalStaffHours > 0 ? totalStaffSalary / totalStaffHours : 0;
+
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13, fontFamily: 'var(--font-mono)' };
   const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
   const field = (label, key, sfx = 'USD/mes') => (
@@ -61,20 +94,89 @@ const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
       </div>
     </div>
   );
-  const total = (v.rent||0) + (v.salaries||0) + (v.gas||0) + (v.water||0) + (v.internet||0) +
+
+  const total = (v.rent||0) + (v.gas||0) + (v.water||0) + (v.internet||0) +
                 (v.gasoline||0) + (v.charcoal||0) + (v.wood||0) + (v.aluminum||0) +
-                (v.electricity||0) + (v.accountant||0) + (v.cleaning||0);
+                (v.electricity||0) + (v.accountant||0) + (v.cleaning||0) + totalStaffSalary;
   const perCover = total / Math.max(v.monthlyCovers||1, 1);
+
+  const thSt = { padding: '6px 10px', fontSize: 11, fontWeight: 600, textAlign: 'left', color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' };
+  const tdSt = { padding: '8px 10px', fontSize: 13, borderBottom: '1px solid var(--border)', verticalAlign: 'middle' };
+  const inpSt = { fontFamily: 'var(--font-mono)', fontSize: 13, width: '100%', border: '1px solid var(--border)', borderRadius: 4, padding: '4px 6px', background: 'var(--surface)', textAlign: 'right' };
+
   return (
     <Drawer open title="Costos fijos mensuales" subtitle="Se prorratean por cubierta para calcular el costo por plato"
       onClose={onClose}
-      footer={<><button className="btn" onClick={onClose}>Cancelar</button><button className="btn btn-primary" onClick={() => { onSave(v); onClose(); }}>Guardar cambios</button></>}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="hint">Total fijos: <b>${Math.round(total).toLocaleString()}/mes</b> · Por cubierta: <b>${perCover.toFixed(2)}</b></div>
+      footer={<>
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={() => {
+          onSave({ ...v, staff, laborRatePerHour: blendedLaborRate });
+          onClose();
+        }}>Guardar cambios</button>
+      </>}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Instalación y personal</div>
+        <div className="hint" style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Total fijos: <b>${Math.round(total).toLocaleString()}/mes</b></span>
+          <span>Por cubierta: <b>${perCover.toFixed(2)}</b></span>
+        </div>
+
+        {/* ── PERSONAL ── */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Personal de cocina</div>
+            <button className="btn btn-sm" onClick={addStaff}><Icon name="plus" size={12} /> Agregar</button>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+            <thead>
+              <tr>
+                <th style={thSt}>Puesto</th>
+                <th style={{...thSt, textAlign:'right'}}>Salario/mes</th>
+                <th style={{...thSt, textAlign:'right'}}>Hrs/día</th>
+                <th style={{...thSt, textAlign:'right'}}>Hrs/mes</th>
+                <th style={{...thSt, textAlign:'right'}}>$/hora</th>
+                <th style={{...thSt}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {staffCalc.map((m, i) => (
+                <tr key={i}>
+                  <td style={tdSt}>
+                    <input style={{...inpSt, textAlign:'left'}} value={m.role} onChange={e => updStaff(i, 'role', e.target.value)} />
+                  </td>
+                  <td style={tdSt}>
+                    <input type="number" style={inpSt} value={m.salary} onChange={e => updStaff(i, 'salary', e.target.value)} />
+                  </td>
+                  <td style={tdSt}>
+                    <input type="number" style={inpSt} value={m.dailyHours} onChange={e => updStaff(i, 'dailyHours', e.target.value)} />
+                  </td>
+                  <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', color:'var(--text-2)'}}>{m.monthlyHours}</td>
+                  <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', color: 'var(--good)', fontWeight:600}}>${m.hourRate.toFixed(2)}</td>
+                  <td style={{...tdSt, textAlign:'center'}}>
+                    <button className="icon-btn" onClick={() => removeStaff(i)}><Icon name="trash" size={13} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ background: 'var(--surface-2)' }}>
+                <td style={{...tdSt, fontWeight:600}}>Total</td>
+                <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:600}}>${totalStaffSalary.toLocaleString()}</td>
+                <td style={tdSt}></td>
+                <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:600}}>{totalStaffHours}</td>
+                <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:700, color:'var(--accent)'}}>${blendedLaborRate.toFixed(2)}/hr</td>
+                <td style={tdSt}></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>
+            Calculado con 6 días/semana × 4 semanas. Tasa blended se aplica automáticamente a todas las recetas.
+          </div>
+        </div>
+
+        {/* ── COSTOS OPERATIVOS ── */}
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Instalación</div>
         {field('Alquiler', 'rent')}
-        {field('Salarios', 'salaries')}
         {field('Contador', 'accountant')}
 
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Servicios</div>
@@ -92,7 +194,6 @@ const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
 
         <div className="divider" />
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Operación</div>
-        {field('Tarifa de mano de obra', 'laborRatePerHour', 'USD/hora')}
         {field('Cubiertas mensuales estimadas', 'monthlyCovers', 'platos/mes')}
       </div>
     </Drawer>
@@ -234,9 +335,14 @@ const App = () => {
     const seedRecetaIds  = new Set(SD.SEED_RECETAS.map(x => x.id));
     const months = { ...s.months };
     const defaultCosts = {
-      rent: 1800, salaries: 1500, gas: 100, water: 150, internet: 100,
+      rent: 1800, gas: 100, water: 150, internet: 100,
       gasoline: 200, charcoal: 96, wood: 90, aluminum: 28, electricity: 300,
-      accountant: 250, cleaning: 60, monthlyCovers: 1, laborRatePerHour: 0,
+      accountant: 250, cleaning: 60, monthlyCovers: 1, laborRatePerHour: 1.62,
+      staff: [
+        { role: 'Jefe de cocina',     salary: 500, dailyHours: 12 },
+        { role: 'Ayudante de cocina', salary: 450, dailyHours: 12 },
+        { role: 'Ayudante de cocina', salary: 450, dailyHours: 12 },
+      ],
     };
     Object.keys(months).forEach(mid => {
       const m = { ...months[mid] };
