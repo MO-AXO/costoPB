@@ -16,13 +16,24 @@ const insumoCostPerUnit = (insumo) => {
 // Conversión entre unidades (peso/volumen/pieza)
 // Devuelve cuántas "unidades del insumo" equivalen a 1 "unidad de la receta"
 const UNIT_CONV = {
-  // peso
-  'lb->oz': 1/16, 'oz->lb': 16, 'lb->lb': 1, 'oz->oz': 1,
-  'kg->g': 1/1000, 'g->kg': 1000, 'kg->kg': 1, 'g->g': 1,
-  'lb->g': 1/453.592, 'g->lb': 453.592, 'lb->kg': 1/0.453592, 'kg->lb': 0.453592,
-  // volumen
-  'gal->oz': 1/128, 'oz->gal': 128, 'gal->gal': 1,
-  'l->ml': 1/1000, 'ml->l': 1000, 'l->l': 1, 'ml->ml': 1,
+  // peso: lb ↔ oz ↔ g ↔ kg
+  'lb->oz': 1/16,       'oz->lb': 16,
+  'lb->lb': 1,          'oz->oz': 1,
+  'kg->g': 1/1000,      'g->kg': 1000,
+  'kg->kg': 1,          'g->g': 1,
+  'lb->g': 1/453.592,   'g->lb': 453.592,
+  'lb->kg': 1/0.453592, 'kg->lb': 0.453592,
+  'oz->g': 1/28.3495,   'g->oz': 28.3495,
+  'oz->kg': 1/28349.5,  'kg->oz': 28349.5,
+  // volumen: gal ↔ l ↔ ml ↔ oz
+  'gal->oz': 1/128,     'oz->gal': 128,
+  'gal->gal': 1,
+  'l->ml': 1/1000,      'ml->l': 1000,
+  'l->l': 1,            'ml->ml': 1,
+  'gal->ml': 1/3785.41, 'ml->gal': 3785.41,
+  'gal->l': 1/3.78541,  'l->gal': 3.78541,
+  'oz->ml': 1/29.5735,  'ml->oz': 29.5735,
+  'l->oz': 1/0.029574,  'oz->l': 0.029574,
   // pieza
   'pza->pza': 1,
 };

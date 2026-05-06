@@ -1,108 +1,259 @@
-// Pig Brothers — datos reales del inventario (USD, prom. estimados de mercado SV/CA)
-// Insumos basados en el inventario real subido por el cliente.
+// Pig Brothers — inventario real con presentación, unidad de compra y precio por unidad
+// cost = precio por unidad de la columna "unit" (g, ml, pza, lb)
+// yield = rendimiento tras limpieza/cocción (1.00 si no hay merma)
 
 const SEED_INSUMOS = [
-  // ===== CARNES CRUDAS =====
-  { id: 'i1',  name: 'Pulled Pork (hombro de cerdo crudo)', category: 'Carne cruda', unit: 'lb', cost: 3.85, supplier: 'Sysco', yield: 0.55, lastChange: '+4.2%', stock: 52 },
-  { id: 'i2',  name: 'Brisket (pecho de res)',              category: 'Carne cruda', unit: 'lb', cost: 7.20, supplier: 'US Foods', yield: 0.50, lastChange: '+8.1%', stock: 0 },
-  { id: 'i3',  name: 'Costilla de Cerdo',                   category: 'Carne cruda', unit: 'lb', cost: 5.60, supplier: 'Sysco', yield: 0.65, lastChange: '+1.5%', stock: 25 },
-  { id: 'i4',  name: 'Pork Belly (panceta)',                category: 'Carne cruda', unit: 'lb', cost: 4.80, supplier: 'Sysco', yield: 0.70, lastChange: '+2.0%', stock: 33 },
-  { id: 'i5',  name: 'Muslos de Pollo',                     category: 'Carne cruda', unit: 'lb', cost: 1.95, supplier: 'Tyson', yield: 0.70, lastChange: '0.0%',  stock: 25 },
-  { id: 'i6',  name: 'Puyaso (vacío de res)',               category: 'Carne cruda', unit: 'lb', cost: 6.50, supplier: 'US Foods', yield: 0.65, lastChange: '+3.0%', stock: 0 },
-  { id: 'i7',  name: 'Carne Molida',                        category: 'Carne cruda', unit: 'lb', cost: 4.20, supplier: 'Sysco', yield: 0.85, lastChange: '+2.0%', stock: 18 },
-  { id: 'i8',  name: 'Tocino',                              category: 'Carne cruda', unit: 'lb', cost: 4.40, supplier: 'Sysco', yield: 0.85, lastChange: '-2.0%', stock: 1 },
-  { id: 'i9',  name: 'Tortitas para Hamburguesa',           category: 'Carne cruda', unit: 'pza', cost: 1.20, supplier: 'Casero', yield: 1.00, lastChange: '0.0%', stock: 30 },
 
-  // ===== VERDURAS =====
-  { id: 'i10', name: 'Papa',               category: 'Verdura', unit: 'lb', cost: 0.85, supplier: 'Local', yield: 0.85, lastChange: '+1.2%', stock: 11.4 },
-  { id: 'i11', name: 'Camote',             category: 'Verdura', unit: 'lb', cost: 1.10, supplier: 'Local', yield: 0.85, lastChange: '0.0%',  stock: 49.6 },
-  { id: 'i12', name: 'Repollo Blanco',     category: 'Verdura', unit: 'lb', cost: 0.65, supplier: 'Local', yield: 0.85, lastChange: '0.0%',  stock: 26 },
-  { id: 'i13', name: 'Repollo Morado',     category: 'Verdura', unit: 'lb', cost: 0.75, supplier: 'Local', yield: 0.85, lastChange: '0.0%',  stock: 32 },
-  { id: 'i14', name: 'Zanahoria',          category: 'Verdura', unit: 'lb', cost: 0.70, supplier: 'Local', yield: 0.90, lastChange: '0.0%',  stock: 7 },
-  { id: 'i15', name: 'Cebolla Blanca',     category: 'Verdura', unit: 'lb', cost: 0.80, supplier: 'Local', yield: 0.90, lastChange: '0.0%',  stock: 8.5 },
-  { id: 'i16', name: 'Cebolla Morada',     category: 'Verdura', unit: 'lb', cost: 0.95, supplier: 'Local', yield: 0.90, lastChange: '0.0%',  stock: 2.4 },
-  { id: 'i17', name: 'Cebollín',           category: 'Verdura', unit: 'lb', cost: 1.40, supplier: 'Local', yield: 0.80, lastChange: '0.0%',  stock: 1 },
-  { id: 'i18', name: 'Limón',              category: 'Verdura', unit: 'lb', cost: 0.90, supplier: 'Local', yield: 0.50, lastChange: '+2.0%', stock: 32 },
-  { id: 'i19', name: 'Jalapeño',           category: 'Verdura', unit: 'lb', cost: 1.20, supplier: 'Local', yield: 0.90, lastChange: '+12%',  stock: 4 },
-  { id: 'i20', name: 'Arúgula',            category: 'Verdura', unit: 'lb', cost: 3.80, supplier: 'Local', yield: 0.90, lastChange: '0.0%',  stock: 2 },
-  { id: 'i21', name: 'Cilantro (manojo)',  category: 'Verdura', unit: 'pza', cost: 0.40, supplier: 'Local', yield: 0.80, lastChange: '0.0%', stock: 4 },
-  { id: 'i22', name: 'Ajo (red)',          category: 'Verdura', unit: 'pza', cost: 1.80, supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 9 },
+  // ===== PROTEÍNAS =====
+  // Precio por lb (de la tabla: precio de compra por presentación ÷ lbs por presentación)
+  { id: 'i1',  name: 'Nuca de Cerdo',          category: 'Proteína', unit: 'lb', cost: 2.35,             supplier: 'Local', yield: 0.70, lastChange: '0.0%', stock: 0 },
+  { id: 'i2',  name: 'Costillas Spare Ribs',   category: 'Proteína', unit: 'lb', cost: 2.40,             supplier: 'Local', yield: 0.65, lastChange: '0.0%', stock: 0 },
+  { id: 'i3',  name: 'Pork Belly',             category: 'Proteína', unit: 'lb', cost: 2.00,             supplier: 'Local', yield: 0.70, lastChange: '0.0%', stock: 0 },
+  { id: 'i4',  name: 'Pollo',                  category: 'Proteína', unit: 'lb', cost: 2.42,             supplier: 'Local', yield: 0.70, lastChange: '0.0%', stock: 0 },
+  // Tocino: $17.99 / 46 unidades → $0.391/pza
+  { id: 'i5',  name: 'Tocino',                 category: 'Proteína', unit: 'pza', cost: 0.391,           supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  { id: 'i6',  name: 'Carne Molida',           category: 'Proteína', unit: 'lb', cost: 3.15,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  { id: 'i7',  name: 'Pavo',                   category: 'Proteína', unit: 'lb', cost: 2.10,             supplier: 'Local', yield: 0.65, lastChange: '0.0%', stock: 0 },
+  { id: 'i8',  name: 'Chompi Pollo',           category: 'Proteína', unit: 'lb', cost: 2.39,             supplier: 'Local', yield: 0.70, lastChange: '0.0%', stock: 0 },
 
-  // ===== PANES Y HARINAS =====
-  { id: 'i23', name: 'Pan de Pretzel',     category: 'Pan',      unit: 'pza', cost: 0.55, supplier: 'La Brea', yield: 1.00, lastChange: '+3.0%', stock: 20 },
-  { id: 'i24', name: 'Pan de Papa',        category: 'Pan',      unit: 'pza', cost: 0.42, supplier: 'La Brea', yield: 1.00, lastChange: '+3.0%', stock: 20 },
-  { id: 'i25', name: 'Coditos (pasta)',    category: 'Harina',   unit: 'lb', cost: 1.10, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 8 },
+  // ===== PAN =====
+  // Pan de Papa: $1.95 / 6 unidades → $0.325/pza; Pan de Pretzel: $0.45/pza
+  { id: 'i9',  name: 'Pan de Papa',            category: 'Pan', unit: 'pza', cost: 0.325,                supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i10', name: 'Pan de Pretzel',         category: 'Pan', unit: 'pza', cost: 0.45,                 supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== VEGETALES =====
+  // Unidad de compra en la imagen: algunos en Unidad (pza), otros en lb
+  // Costo = precio de compra / presentación → costo por pza o por lb
+  { id: 'i11', name: 'Cebolla Blanca',         category: 'Vegetal', unit: 'pza', cost: 0.125,            supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  { id: 'i12', name: 'Cebolla Morada',         category: 'Vegetal', unit: 'pza', cost: 0.20,             supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  { id: 'i13', name: 'Ajo (lb)',               category: 'Vegetal', unit: 'lb', cost: 3.50,              supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  { id: 'i14', name: 'Cebollín',               category: 'Vegetal', unit: 'pza', cost: 0.87,             supplier: 'Local', yield: 0.80, lastChange: '0.0%', stock: 0 },
+  { id: 'i15', name: 'Remolacha',              category: 'Vegetal', unit: 'pza', cost: 0.25,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Chile Verde: $1.00 / 10 unidades → $0.10/pza
+  { id: 'i16', name: 'Chile Verde',            category: 'Vegetal', unit: 'pza', cost: 0.10,             supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  { id: 'i17', name: 'Repollo Blanco',         category: 'Vegetal', unit: 'pza', cost: 1.50,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  { id: 'i18', name: 'Repollo Morado',         category: 'Vegetal', unit: 'pza', cost: 3.75,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Camote: $18.00 / 19.7 lb → $0.914/lb
+  { id: 'i19', name: 'Camote',                 category: 'Vegetal', unit: 'lb', cost: 0.914,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Papas: $1.00 / 3 lb → $0.333/lb
+  { id: 'i20', name: 'Papas',                  category: 'Vegetal', unit: 'lb', cost: 0.333,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  // Limones: $1.00 / 12 unidades → $0.083/pza
+  { id: 'i21', name: 'Limones',                category: 'Vegetal', unit: 'pza', cost: 0.083,            supplier: 'Local', yield: 0.50, lastChange: '0.0%', stock: 0 },
+  { id: 'i22', name: 'Cilantro',               category: 'Vegetal', unit: 'pza', cost: 1.00,             supplier: 'Local', yield: 0.80, lastChange: '0.0%', stock: 0 },
+  { id: 'i23', name: 'Jalapeños',              category: 'Vegetal', unit: 'pza', cost: 1.00,             supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  // Tamarindo: $1.50 / lb
+  { id: 'i24', name: 'Tamarindo',              category: 'Vegetal', unit: 'lb', cost: 1.50,              supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Maracuyá: $22.00 / 50 unidades → $0.44/pza
+  { id: 'i25', name: 'Maracuyá',               category: 'Vegetal', unit: 'pza', cost: 0.44,             supplier: 'Local', yield: 0.55, lastChange: '0.0%', stock: 0 },
+  { id: 'i26', name: 'Romero',                 category: 'Vegetal', unit: 'pza', cost: 1.00,             supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  // Tomates: $1.00 / 16 unidades → $0.0625/pza
+  { id: 'i27', name: 'Tomates',                category: 'Vegetal', unit: 'pza', cost: 0.0625,           supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  { id: 'i28', name: 'Apio',                   category: 'Vegetal', unit: 'pza', cost: 1.25,             supplier: 'Local', yield: 0.85, lastChange: '0.0%', stock: 0 },
+  { id: 'i29', name: 'Ejotes',                 category: 'Vegetal', unit: 'pza', cost: 1.00,             supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  // Zanahoria: $1.00 / 4 unidades → $0.25/pza
+  { id: 'i30', name: 'Zanahoria',              category: 'Vegetal', unit: 'pza', cost: 0.25,             supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  // Arúgula: $2.65 / 113 g → $0.02345/g
+  { id: 'i31', name: 'Arúgula',                category: 'Vegetal', unit: 'g', cost: 0.02345,            supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+  // Rábanos: $2.85 / 2225 g → $0.00128/g
+  { id: 'i32', name: 'Rábanos',                category: 'Vegetal', unit: 'g', cost: 0.00128,            supplier: 'Local', yield: 0.90, lastChange: '0.0%', stock: 0 },
+
+  // ===== PRODUCTOS ENLATADOS / EMPAQUETADOS =====
+  // cost = precio de compra / cantidad en gramos → precio por gramo
+  // Maíz Dulce: $7.91 / 3000 g → $0.00264/g
+  { id: 'i33', name: 'Maíz Dulce',             category: 'Enlatado', unit: 'g', cost: 0.00264,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Chipotles: $2.75 / 380 g → $0.00724/g
+  { id: 'i34', name: 'Chipotles en adobo',     category: 'Enlatado', unit: 'g', cost: 0.00724,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Higos: $3.27 / 320 g → $0.01022/g
+  { id: 'i35', name: 'Higos',                  category: 'Enlatado', unit: 'g', cost: 0.01022,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Coditos: $0.53 / 200 g → $0.00265/g
+  { id: 'i36', name: 'Coditos (pasta)',         category: 'Enlatado', unit: 'g', cost: 0.00265,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Aceitunas: $1.28 / 185 g → $0.00692/g
+  { id: 'i37', name: 'Aceitunas',              category: 'Enlatado', unit: 'g', cost: 0.00692,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Alcaparras: $1.25 / 180 g → $0.00694/g
+  { id: 'i38', name: 'Alcaparras',             category: 'Enlatado', unit: 'g', cost: 0.00694,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== PRODUCTOS LÍQUIDOS =====
+  // unit: ml, cost = precio de compra / ml
+  // Salsa Inglesa: $6.00 / 3650 ml → $0.001644/ml
+  { id: 'i39', name: 'Salsa Inglesa (Worcestershire)', category: 'Líquido', unit: 'ml', cost: 0.001644,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Salsa de Soya: $6.25 / 3650 ml → $0.001712/ml
+  { id: 'i40', name: 'Salsa de Soya',          category: 'Líquido', unit: 'ml', cost: 0.001712,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Vinagre de Manzana: $2.55 / 3650 ml → $0.000699/ml
+  { id: 'i41', name: 'Vinagre de Manzana',     category: 'Líquido', unit: 'ml', cost: 0.000699,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Vinagre Blanco: $2.70 / 3800 ml → $0.000711/ml
+  { id: 'i42', name: 'Vinagre Blanco',         category: 'Líquido', unit: 'ml', cost: 0.000711,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Cerveza Stella: $1.50 / 330 ml → $0.004545/ml
+  { id: 'i43', name: 'Cerveza Stella',         category: 'Líquido', unit: 'ml', cost: 0.004545,          supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Cerveza Regia: $1.04 / 355 ml → $0.002930/ml
+  { id: 'i44', name: 'Cerveza Regia',          category: 'Líquido', unit: 'ml', cost: 0.002930,          supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Ron: $16.79 / 1750 ml → $0.009594/ml
+  { id: 'i45', name: 'Ron',                    category: 'Líquido', unit: 'ml', cost: 0.009594,          supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Aceite de Fritura: $28.00 / ml (presentación no especificada, costo referencial)
+  { id: 'i46', name: 'Aceite de Fritura',      category: 'Líquido', unit: 'ml', cost: 0.028,             supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Vino de Cocina: $4.96 / 750 ml → $0.006613/ml
+  { id: 'i47', name: 'Vino de Cocina',         category: 'Líquido', unit: 'ml', cost: 0.006613,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== SALSAS PRE-FABRICADAS =====
+  // unit: g, cost = precio / gramos
+  // Ketchup: $6.19 / 4100 g → $0.001510/g
+  { id: 'i48', name: 'Ketchup',                category: 'Salsa Pre-fab', unit: 'g', cost: 0.001510,     supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Salsa BBQ: $10.49 / 2300 g → $0.004561/g
+  { id: 'i49', name: 'Salsa BBQ comercial',    category: 'Salsa Pre-fab', unit: 'g', cost: 0.004561,     supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Mayonesa: $10.71 / 3000 g → $0.003570/g
+  { id: 'i50', name: 'Mayonesa',               category: 'Salsa Pre-fab', unit: 'g', cost: 0.003570,     supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Mostaza: $5.20 / 3500 g → $0.001486/g
+  { id: 'i51', name: 'Mostaza',                category: 'Salsa Pre-fab', unit: 'g', cost: 0.001486,     supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Mostaza Dijon: $2.75 / 340 g → $0.008088/g
+  { id: 'i52', name: 'Mostaza Dijon',          category: 'Salsa Pre-fab', unit: 'g', cost: 0.008088,     supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Yogurt: $3.20 / 1000 g → $0.003200/g
+  { id: 'i53', name: 'Yogurt',                 category: 'Salsa Pre-fab', unit: 'g', cost: 0.003200,     supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== ENDULZANTES LÍQUIDOS =====
+  // Miel: $18.00 / 5200 g → $0.003462/g
+  { id: 'i54', name: 'Miel',                   category: 'Endulzante', unit: 'g', cost: 0.003462,        supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Panela: $1.50 / pza (750g) → $0.002/g; usamos pza porque así compran
+  { id: 'i55', name: 'Panela',                 category: 'Endulzante', unit: 'pza', cost: 1.50,          supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== PRODUCTOS SECOS DE MERCADO (especias) =====
+  // unit: g, cost = precio / cantidad en gramos
+  // Chile Ancho: $7.00 / 453.6 g → $0.01543/g
+  { id: 'i56', name: 'Chile Ancho',            category: 'Especia', unit: 'g', cost: 0.01543,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Chile Guaco: $6.00 / 453.6 g → $0.01323/g
+  { id: 'i57', name: 'Chile Guaco',            category: 'Especia', unit: 'g', cost: 0.01323,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Semilla de mostaza: $6.00 / 907 g → $0.00661/g
+  { id: 'i58', name: 'Semilla de Mostaza',     category: 'Especia', unit: 'g', cost: 0.00661,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Pimienta Gorda: $6.00 / 385.5 g → $0.01557/g
+  { id: 'i59', name: 'Pimienta Gorda',         category: 'Especia', unit: 'g', cost: 0.01557,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Clavo de olor: $6.00 / 394.5 g → $0.01520/g
+  { id: 'i60', name: 'Clavo de Olor',          category: 'Especia', unit: 'g', cost: 0.01520,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Pepitoria: $2.50 / 454 g → $0.00551/g
+  { id: 'i61', name: 'Pepitoria',              category: 'Especia', unit: 'g', cost: 0.00551,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Comino: $0.81 / 20 g → $0.04050/g
+  { id: 'i62', name: 'Comino',                 category: 'Especia', unit: 'g', cost: 0.04050,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Orégano: $5.69 / 141 g → $0.04035/g
+  { id: 'i63', name: 'Orégano',                category: 'Especia', unit: 'g', cost: 0.04035,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Canela: $2.45 / 50 g → $0.04900/g
+  { id: 'i64', name: 'Canela',                 category: 'Especia', unit: 'g', cost: 0.04900,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Laurel: $1.27 / 5.67 g → $0.22398/g
+  { id: 'i65', name: 'Laurel',                 category: 'Especia', unit: 'g', cost: 0.22398,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Chicharra: $1.25 / 442 g → $0.00283/g
+  { id: 'i66', name: 'Chicharra',              category: 'Especia', unit: 'g', cost: 0.00283,            supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== SAZONADORES / HARINAS =====
+  // unit: g, cost = precio / cantidad en gramos
+  // Pimienta: $7.69 / 453 g → $0.01698/g
+  { id: 'i67', name: 'Pimienta Negra',         category: 'Sazonador', unit: 'g', cost: 0.01698,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Sal: $0.20 / 400 g → $0.00050/g
+  { id: 'i68', name: 'Sal',                    category: 'Sazonador', unit: 'g', cost: 0.00050,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Ajo en polvo: $7.89 / 680.4 g → $0.01160/g
+  { id: 'i69', name: 'Ajo en Polvo',           category: 'Sazonador', unit: 'g', cost: 0.01160,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Cebolla en polvo: $6.69 / 566.9 g → $0.01180/g
+  { id: 'i70', name: 'Cebolla en Polvo',       category: 'Sazonador', unit: 'g', cost: 0.01180,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Paprika: $6.19 / 453 g → $0.01367/g
+  { id: 'i71', name: 'Paprika',                category: 'Sazonador', unit: 'g', cost: 0.01367,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Azúcar: $2.68 / 2500 g → $0.00107/g
+  { id: 'i72', name: 'Azúcar',                 category: 'Sazonador', unit: 'g', cost: 0.00107,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Pimienta Cayenne: $9.25 / 453.6 g → $0.02040/g
+  { id: 'i73', name: 'Pimienta Cayenne',       category: 'Sazonador', unit: 'g', cost: 0.02040,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Chile en hojuelas: $9.99 / 340.2 g → $0.02937/g
+  { id: 'i74', name: 'Chile en Hojuelas',      category: 'Sazonador', unit: 'g', cost: 0.02937,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Sazonador Papas Fritas: $9.85 / 1000 g → $0.00985/g
+  { id: 'i75', name: 'Sazonador Papas Fritas', category: 'Sazonador', unit: 'g', cost: 0.00985,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Sazonador Pollo: $7.29 / 623.7 g → $0.01169/g
+  { id: 'i76', name: 'Sazonador Pollo',        category: 'Sazonador', unit: 'g', cost: 0.01169,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Sazonador Italiano: $8.29 / 177 g → $0.04684/g
+  { id: 'i77', name: 'Sazonador Italiano',     category: 'Sazonador', unit: 'g', cost: 0.04684,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Sal para curar: $13.99 / 907 g → $0.01542/g
+  { id: 'i78', name: 'Sal para Curar',         category: 'Sazonador', unit: 'g', cost: 0.01542,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Almidón de papa: $3.98 / 1000 g → $0.00398/g
+  { id: 'i79', name: 'Almidón de Papa',        category: 'Sazonador', unit: 'g', cost: 0.00398,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Bicarbonato: $1.30 / 227 g → $0.00573/g
+  { id: 'i80', name: 'Bicarbonato',            category: 'Sazonador', unit: 'g', cost: 0.00573,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Eritorbato de sodio: $4.65 / 300 g → $0.01550/g
+  { id: 'i81', name: 'Eritorbato de Sodio',    category: 'Sazonador', unit: 'g', cost: 0.01550,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Harina de Pancakes: $10.59 / 4530 g → $0.00234/g
+  { id: 'i82', name: 'Harina de Pancakes',     category: 'Sazonador', unit: 'g', cost: 0.00234,          supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
 
   // ===== LÁCTEOS =====
-  { id: 'i26', name: 'Queso Cheddar',      category: 'Lácteo',   unit: 'lb', cost: 4.10, supplier: 'Sysco', yield: 1.00, lastChange: '+2.5%', stock: 14 },
-  { id: 'i27', name: 'Queso Crema',        category: 'Lácteo',   unit: 'lb', cost: 2.95, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 8 },
-  { id: 'i28', name: 'Mantequilla / Margarina', category: 'Lácteo', unit: 'lb', cost: 2.40, supplier: 'Sysco', yield: 1.00, lastChange: '+1.5%', stock: 3 },
-  { id: 'i29', name: 'Leche',              category: 'Lácteo',   unit: 'gal', cost: 4.80, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 10 },
-  { id: 'i30', name: 'Crema',              category: 'Lácteo',   unit: 'gal', cost: 8.20, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 6 },
+  // Crema: $2.20 / botella (660 ml) → $0.003333/ml; usamos pza (botella)
+  { id: 'i83', name: 'Crema',                  category: 'Lácteo', unit: 'pza', cost: 2.20,              supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Queso Americano: $7.99 / 48 paquetes → $0.1665/pza (lámina)
+  { id: 'i84', name: 'Queso Americano',        category: 'Lácteo', unit: 'pza', cost: 0.1665,            supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Queso Cheddar: $8.49 / 907 g → $0.00936/g
+  { id: 'i85', name: 'Queso Cheddar',          category: 'Lácteo', unit: 'g', cost: 0.00936,             supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Queso Monterrey: $8.49 / 907 g → $0.00936/g
+  { id: 'i86', name: 'Queso Monterrey',        category: 'Lácteo', unit: 'g', cost: 0.00936,             supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Queso Crema: $1.51 / 210 g → $0.00719/g
+  { id: 'i87', name: 'Queso Crema',            category: 'Lácteo', unit: 'g', cost: 0.00719,             supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Leche: $1.70 / 1000 ml → $0.00170/ml
+  { id: 'i88', name: 'Leche',                  category: 'Lácteo', unit: 'ml', cost: 0.00170,            supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Blue Cheese: $8.60 / 454 g → $0.01894/g
+  { id: 'i89', name: 'Blue Cheese',            category: 'Lácteo', unit: 'g', cost: 0.01894,             supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Queso Mozzarella: $3.38 / 32 pza → $0.10563/pza (lámina)
+  { id: 'i90', name: 'Queso Mozzarella',       category: 'Lácteo', unit: 'pza', cost: 0.10563,           supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
 
-  // ===== ABARROTES / CONDIMENTOS =====
-  { id: 'i31', name: 'Mayonesa',           category: 'Abarrote', unit: 'gal', cost: 9.50,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i32', name: 'Ketchup',            category: 'Abarrote', unit: 'gal', cost: 6.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 3 },
-  { id: 'i33', name: 'Mostaza de Grano',   category: 'Abarrote', unit: 'gal', cost: 7.20,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 47 },
-  { id: 'i34', name: 'Salsa BBQ comercial',category: 'Abarrote', unit: 'gal', cost: 11.00, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 3 },
-  { id: 'i35', name: 'Miel',               category: 'Abarrote', unit: 'gal', cost: 28.00, supplier: 'Sysco', yield: 1.00, lastChange: '+5.0%', stock: 0 },
-  { id: 'i36', name: 'Salsa Inglesa (Worcestershire)', category: 'Abarrote', unit: 'gal', cost: 14.50, supplier: 'Sysco', yield: 1.00, lastChange: '+1.8%', stock: 1.5 },
-  { id: 'i37', name: 'Soya',               category: 'Abarrote', unit: 'gal', cost: 8.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 2 },
-  { id: 'i38', name: 'Vinagre de Manzana', category: 'Abarrote', unit: 'gal', cost: 4.20,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i39', name: 'Vinagre Blanco',     category: 'Abarrote', unit: 'gal', cost: 3.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 0.25 },
-  { id: 'i40', name: 'Azúcar',             category: 'Abarrote', unit: 'lb', cost: 0.65,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 12 },
-  { id: 'i41', name: 'Panela',             category: 'Abarrote', unit: 'lb', cost: 1.20,  supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 7 },
-  { id: 'i42', name: 'Bicarbonato',        category: 'Abarrote', unit: 'lb', cost: 1.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
+  // ===== GRASAS =====
+  // Margarina: $1.04 / 400 g → $0.00260/g
+  { id: 'i91', name: 'Margarina',              category: 'Grasa', unit: 'g', cost: 0.00260,              supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Aceite de Girasol: $10.79 / 4600 ml → $0.00235/ml
+  { id: 'i92', name: 'Aceite de Girasol',      category: 'Grasa', unit: 'ml', cost: 0.00235,             supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
 
-  // ===== ESPECIAS / RUBS =====
-  { id: 'i43', name: 'Sal Kosher',         category: 'Especia',  unit: 'lb', cost: 0.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 3 },
-  { id: 'i44', name: 'Sal Parrillera',     category: 'Especia',  unit: 'lb', cost: 2.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1.5 },
-  { id: 'i45', name: 'Vita Sal',           category: 'Especia',  unit: 'lb', cost: 1.20,  supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 11 },
-  { id: 'i46', name: 'Pimienta negra',     category: 'Especia',  unit: 'lb', cost: 9.80,  supplier: 'Sysco', yield: 1.00, lastChange: '+2.1%', stock: 4 },
-  { id: 'i47', name: 'Pimienta Gorda',     category: 'Especia',  unit: 'lb', cost: 8.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i48', name: 'Paprika ahumada',    category: 'Especia',  unit: 'lb', cost: 12.40, supplier: 'Sysco', yield: 1.00, lastChange: '+5.0%', stock: 5 },
-  { id: 'i49', name: 'Cebolla Granulada',  category: 'Especia',  unit: 'lb', cost: 6.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 6.5 },
-  { id: 'i50', name: 'Ajo Granulado',      category: 'Especia',  unit: 'lb', cost: 7.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 2 },
-  { id: 'i51', name: 'Sazonador Italiano', category: 'Especia',  unit: 'lb', cost: 6.20,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 3.5 },
-  { id: 'i52', name: 'Rotisserie Chicken seasoning', category: 'Especia', unit: 'lb', cost: 8.20, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 3 },
-  { id: 'i53', name: 'Sazón Completo',     category: 'Especia',  unit: 'lb', cost: 5.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i54', name: 'Orégano',            category: 'Especia',  unit: 'lb', cost: 7.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i55', name: 'Tomillo',            category: 'Especia',  unit: 'lb', cost: 9.20,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i56', name: 'Achiote',            category: 'Especia',  unit: 'lb', cost: 4.60,  supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 2 },
-  { id: 'i57', name: 'Canela en Raja',     category: 'Especia',  unit: 'lb', cost: 8.40,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 3 },
-  { id: 'i58', name: 'Clavo de olor',      category: 'Especia',  unit: 'lb', cost: 11.20, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i59', name: 'Chile Waco',         category: 'Especia',  unit: 'lb', cost: 6.40,  supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i60', name: 'Chile Chipotle',     category: 'Especia',  unit: 'lb', cost: 7.80,  supplier: 'Local', yield: 1.00, lastChange: '+3.0%', stock: 3 },
-  { id: 'i61', name: 'Chile Morrón',       category: 'Verdura',  unit: 'lb', cost: 2.40,  supplier: 'Local', yield: 0.85, lastChange: '0.0%',  stock: 0 },
-  { id: 'i62', name: 'Ajonjolí',           category: 'Especia',  unit: 'lb', cost: 4.20,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i63', name: 'Flor de Jamaica',    category: 'Especia',  unit: 'lb', cost: 5.80,  supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 1 },
-  { id: 'i64', name: 'Tajín',              category: 'Especia',  unit: 'lb', cost: 6.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 3 },
-  { id: 'i65', name: 'Chamoy',             category: 'Abarrote', unit: 'gal', cost: 12.40, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 2 },
+  // ===== PAPAS FRITAS =====
+  // Papas Fritas: $59.00 / 16329.33 g → $0.000361/g
+  { id: 'i93', name: 'Papas Fritas (precocidas)', category: 'Vegetal', unit: 'g', cost: 0.003613,        supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
 
-  // ===== INGREDIENTES SALSA / FRUTAS =====
-  { id: 'i66', name: 'Higos',              category: 'Conserva', unit: 'lb', cost: 4.80,  supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 7 },
-  { id: 'i67', name: 'Tamarindo (pulpa)',  category: 'Conserva', unit: 'lb', cost: 3.40,  supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 10.5 },
-  { id: 'i68', name: 'Maracuyá',           category: 'Conserva', unit: 'lb', cost: 3.80,  supplier: 'Local', yield: 0.55, lastChange: '0.0%',  stock: 19 },
-  { id: 'i69', name: 'Lata de Melocotón',  category: 'Conserva', unit: 'pza', cost: 2.40, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 4 },
-  { id: 'i70', name: 'Lata de Maíz Dulce', category: 'Conserva', unit: 'pza', cost: 1.80, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%',  stock: 4 },
-  { id: 'i71', name: 'Cerveza (cocinar)',  category: 'Abarrote', unit: 'pza', cost: 1.40, supplier: 'Local', yield: 1.00, lastChange: '+2.0%', stock: 4 },
+  // ===== DESECHABLES DELIVERY =====
+  { id: 'i94', name: 'Caja Pig Burguer',       category: 'Empaque Delivery', unit: 'pza', cost: 0.20,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i95', name: 'Caja Papas Puercas',     category: 'Empaque Delivery', unit: 'pza', cost: 0.20,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i96', name: 'Caja BBQ Box',           category: 'Empaque Delivery', unit: 'pza', cost: 0.55,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i97', name: 'Contenedor CC/M&C',      category: 'Empaque Delivery', unit: 'pza', cost: 0.21,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Papel encerado: $3.50 / 1000 pzas → $0.0035/pza
+  { id: 'i98', name: 'Papel Encerado',         category: 'Empaque Delivery', unit: 'pza', cost: 0.0035,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Sala de tomate: $23.99 / 1000 → $0.02399/pza
+  { id: 'i99', name: 'Salsa de Tomate (sobre)', category: 'Empaque Delivery', unit: 'pza', cost: 0.02399, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Servilleta: $3.50 / 1000 → $0.0035/pza
+  { id: 'i100', name: 'Servilleta',            category: 'Empaque Delivery', unit: 'pza', cost: 0.0035,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Cup Aderezo: $18.39 / 500 → $0.03678/pza
+  { id: 'i101', name: 'Cup Aderezo',           category: 'Empaque Delivery', unit: 'pza', cost: 0.03678, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Stickers: $10.00 / 367 → $0.02725/pza
+  { id: 'i102', name: 'Sticker',               category: 'Empaque Delivery', unit: 'pza', cost: 0.02725, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Tenedor pequeño: $1.40 / 100 → $0.014/pza
+  { id: 'i103', name: 'Tenedor Pequeño',       category: 'Empaque Delivery', unit: 'pza', cost: 0.014,   supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Cucharas pequeña: $1.65 / 100 → $0.0165/pza
+  { id: 'i104', name: 'Cuchara Pequeña',       category: 'Empaque Delivery', unit: 'pza', cost: 0.0165,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i105', name: 'Bolsa de Gabacha #1',   category: 'Empaque Delivery', unit: 'pza', cost: 0.00,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i106', name: 'Bolsa de Gabacha #2',   category: 'Empaque Delivery', unit: 'pza', cost: 0.00,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i107', name: 'Bolsa de Gabacha #3',   category: 'Empaque Delivery', unit: 'pza', cost: 0.00,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i108', name: 'Bolsa de Vueltos',      category: 'Empaque Delivery', unit: 'pza', cost: 0.00,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Tenedor grande: $1.83 / 100 → $0.0183/pza
+  { id: 'i109', name: 'Tenedor Grande',        category: 'Empaque Delivery', unit: 'pza', cost: 0.0183,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Cuchillo grande: $2.17 / 100 → $0.0217/pza
+  { id: 'i110', name: 'Cuchillo Grande',       category: 'Empaque Delivery', unit: 'pza', cost: 0.0217,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
 
-  // ===== EMPAQUES / DESECHABLES =====
-  { id: 'i72', name: 'Caja Kraft para Llevar',     category: 'Empaque', unit: 'pza', cost: 0.35, supplier: 'Webstaurant', yield: 1.00, lastChange: '+6.0%', stock: 75 },
-  { id: 'i73', name: 'Bandeja para llevar',        category: 'Empaque', unit: 'pza', cost: 0.28, supplier: 'Webstaurant', yield: 1.00, lastChange: '+4.0%', stock: 80 },
-  { id: 'i74', name: 'Vaso 16oz',                  category: 'Empaque', unit: 'pza', cost: 0.18, supplier: 'Webstaurant', yield: 1.00, lastChange: '+4.0%', stock: 700 },
-  { id: 'i75', name: 'Cup 250ml',                  category: 'Empaque', unit: 'pza', cost: 0.09, supplier: 'Webstaurant', yield: 1.00, lastChange: '0.0%',  stock: 15 },
-  { id: 'i76', name: 'Cup 500ml',                  category: 'Empaque', unit: 'pza', cost: 0.14, supplier: 'Webstaurant', yield: 1.00, lastChange: '0.0%',  stock: 30 },
-  { id: 'i77', name: 'Servilletas para llevar',    category: 'Empaque', unit: 'pza', cost: 0.02, supplier: 'Webstaurant', yield: 1.00, lastChange: '0.0%',  stock: 1800 },
-  { id: 'i78', name: 'Bolsa #2',                   category: 'Empaque', unit: 'pza', cost: 0.04, supplier: 'Webstaurant', yield: 1.00, lastChange: '0.0%',  stock: 100 },
-  { id: 'i79', name: 'Pajilla',                    category: 'Empaque', unit: 'pza', cost: 0.015, supplier: 'Webstaurant', yield: 1.00, lastChange: '0.0%', stock: 500 },
-  { id: 'i80', name: 'Sticker',                    category: 'Empaque', unit: 'pza', cost: 0.03, supplier: 'Local', yield: 1.00, lastChange: '0.0%',  stock: 200 },
+  // ===== DESECHABLES EVENTOS Y BANQUETES =====
+  // Tenedor grande: $1.83 / 100 → $0.0183/pza (igual que delivery)
+  { id: 'i111', name: 'Bandeja Craft Regular', category: 'Empaque Evento', unit: 'pza', cost: 0.06,      supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i112', name: 'Bandeja Craft Pequeña', category: 'Empaque Evento', unit: 'pza', cost: 0.06,      supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Bandejas aluminio grandes: $22.49 / 15 → $1.499/pza
+  { id: 'i113', name: 'Bandeja Aluminio Grande', category: 'Empaque Evento', unit: 'pza', cost: 1.499,   supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Bandejas aluminio pequeñas: $16.49 / 30 → $0.5497/pza
+  { id: 'i114', name: 'Bandeja Aluminio Pequeña', category: 'Empaque Evento', unit: 'pza', cost: 0.5497, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Depósito 250ml: $4.25 / 25 → $0.17/pza
+  { id: 'i115', name: 'Depósito 250ml',        category: 'Empaque Evento', unit: 'pza', cost: 0.17,      supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Depósito 500ml: $5.00 / 25 → $0.20/pza
+  { id: 'i116', name: 'Depósito 500ml',        category: 'Empaque Evento', unit: 'pza', cost: 0.20,      supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Bolsas de basura: $5.20 / 25 → $0.208/pza
+  { id: 'i117', name: 'Bolsas de Basura',      category: 'Empaque Evento', unit: 'pza', cost: 0.208,     supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i118', name: 'Cuchillo Grande (evento)', category: 'Empaque Evento', unit: 'pza', cost: 0.022,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i119', name: 'Tenedor Grande (evento)', category: 'Empaque Evento', unit: 'pza', cost: 0.018,   supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  { id: 'i120', name: 'Cuchillo Grande (delivery)', category: 'Empaque Evento', unit: 'pza', cost: 0.022, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
 const SEED_SUBRECETAS = [
+  // ===== SALSAS =====
   {
-    id: 's1', name: 'Salsa BBQ Pig Brothers (casera)', yield: 64, yieldUnit: 'oz',
+    id: 's1', name: 'Salsa BBQ Pig Brothers (casera)', category: 'Salsas', yield: 64, yieldUnit: 'oz',
     ingredients: [
       { insumoId: 'i32', qty: 32, unit: 'oz' },
       { insumoId: 'i67', qty: 8,  unit: 'oz' },
@@ -114,7 +265,98 @@ const SEED_SUBRECETAS = [
     ],
   },
   {
-    id: 's2', name: 'BBQ Rub seco', yield: 16, yieldUnit: 'oz',
+    id: 's5', name: 'Salsa de Higos', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i66', qty: 12, unit: 'oz' },
+      { insumoId: 'i41', qty: 4,  unit: 'oz' },
+      { insumoId: 'i38', qty: 2,  unit: 'oz' },
+      { insumoId: 'i71', qty: 1,  unit: 'pza' },
+      { insumoId: 'i57', qty: 0.2, unit: 'oz' },
+    ],
+  },
+  {
+    id: 's7', name: 'Salsa de Panela', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i41', qty: 12, unit: 'oz' },
+      { insumoId: 'i38', qty: 4,  unit: 'oz' },
+      { insumoId: 'i36', qty: 1,  unit: 'oz' },
+      { insumoId: 'i15', qty: 2,  unit: 'oz' },
+      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
+      { insumoId: 'i46', qty: 0.25, unit: 'oz' },
+    ],
+  },
+  {
+    id: 's8', name: 'Salsa de Tamarindo', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i67', qty: 10, unit: 'oz' },
+      { insumoId: 'i40', qty: 6,  unit: 'oz' },
+      { insumoId: 'i19', qty: 0.5, unit: 'oz' },
+      { insumoId: 'i38', qty: 2,  unit: 'oz' },
+      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+    ],
+  },
+  {
+    id: 's9', name: 'Salsa de Cerveza', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i71', qty: 2,  unit: 'pza' },
+      { insumoId: 'i41', qty: 4,  unit: 'oz' },
+      { insumoId: 'i15', qty: 2,  unit: 'oz' },
+      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
+      { insumoId: 'i36', qty: 0.5, unit: 'oz' },
+      { insumoId: 'i48', qty: 0.25, unit: 'oz' },
+    ],
+  },
+  {
+    id: 's10', name: 'White BBQ', category: 'Salsas', yield: 32, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i31', qty: 16, unit: 'oz' },
+      { insumoId: 'i38', qty: 4,  unit: 'oz' },
+      { insumoId: 'i18', qty: 2,  unit: 'oz' },
+      { insumoId: 'i33', qty: 2,  unit: 'oz' },
+      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
+      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i46', qty: 0.25, unit: 'oz' },
+    ],
+  },
+
+  // ===== ADEREZOS =====
+  {
+    id: 's11', name: 'Aderezo Ajo Romero', category: 'Aderezos', yield: 16, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i31', qty: 8,  unit: 'oz' },
+      { insumoId: 'i22', qty: 1,  unit: 'pza' },
+      { insumoId: 'i18', qty: 1,  unit: 'oz' },
+      { insumoId: 'i54', qty: 0.5, unit: 'oz' },
+      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i46', qty: 0.25, unit: 'oz' },
+    ],
+  },
+  {
+    id: 's12', name: 'Aderezo de Chipotle', category: 'Aderezos', yield: 16, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i31', qty: 8,  unit: 'oz' },
+      { insumoId: 'i60', qty: 1,  unit: 'oz' },
+      { insumoId: 'i18', qty: 1,  unit: 'oz' },
+      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
+      { insumoId: 'i40', qty: 0.5, unit: 'oz' },
+      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+    ],
+  },
+  {
+    id: 's13', name: 'Aderezo de Cilantro', category: 'Aderezos', yield: 16, yieldUnit: 'oz',
+    ingredients: [
+      { insumoId: 'i31', qty: 8,  unit: 'oz' },
+      { insumoId: 'i21', qty: 1,  unit: 'pza' },
+      { insumoId: 'i18', qty: 1,  unit: 'oz' },
+      { insumoId: 'i22', qty: 0.5, unit: 'pza' },
+      { insumoId: 'i19', qty: 0.25, unit: 'oz' },
+      { insumoId: 'i43', qty: 0.25, unit: 'oz' },
+    ],
+  },
+
+  // ===== OTROS =====
+  {
+    id: 's2', name: 'BBQ Rub seco', category: 'Otros', yield: 16, yieldUnit: 'oz',
     ingredients: [
       { insumoId: 'i41', qty: 5, unit: 'oz' },
       { insumoId: 'i44', qty: 4, unit: 'oz' },
@@ -125,7 +367,7 @@ const SEED_SUBRECETAS = [
     ],
   },
   {
-    id: 's3', name: 'Coleslaw (ensalada de repollo)', yield: 32, yieldUnit: 'oz',
+    id: 's3', name: 'Coleslaw (ensalada de repollo)', category: 'Otros', yield: 32, yieldUnit: 'oz',
     ingredients: [
       { insumoId: 'i12', qty: 14, unit: 'oz' },
       { insumoId: 'i13', qty: 6,  unit: 'oz' },
@@ -137,7 +379,7 @@ const SEED_SUBRECETAS = [
     ],
   },
   {
-    id: 's4', name: 'Mac and Cheese', yield: 64, yieldUnit: 'oz',
+    id: 's4', name: 'Mac and Cheese', category: 'Otros', yield: 64, yieldUnit: 'oz',
     ingredients: [
       { insumoId: 'i25', qty: 16, unit: 'oz' },
       { insumoId: 'i26', qty: 12, unit: 'oz' },
@@ -148,17 +390,7 @@ const SEED_SUBRECETAS = [
     ],
   },
   {
-    id: 's5', name: 'Salsa Higos (Pig Brothers)', yield: 32, yieldUnit: 'oz',
-    ingredients: [
-      { insumoId: 'i66', qty: 12, unit: 'oz' },
-      { insumoId: 'i41', qty: 4,  unit: 'oz' },
-      { insumoId: 'i38', qty: 2,  unit: 'oz' },
-      { insumoId: 'i71', qty: 1,  unit: 'pza' },
-      { insumoId: 'i57', qty: 0.2, unit: 'oz' },
-    ],
-  },
-  {
-    id: 's6', name: 'Salsa Maracuyá', yield: 32, yieldUnit: 'oz',
+    id: 's6', name: 'Salsa Maracuyá', category: 'Salsas', yield: 32, yieldUnit: 'oz',
     ingredients: [
       { insumoId: 'i68', qty: 14, unit: 'oz' },
       { insumoId: 'i40', qty: 6,  unit: 'oz' },
