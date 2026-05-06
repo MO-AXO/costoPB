@@ -294,6 +294,10 @@ const SEED_INSUMOS = [
   { id: 'i138', name: 'Cebollín (g)',         category: 'Vegetal', unit: 'g', cost: 0.003433,     supplier: 'Local', yield: 0.855, lastChange: '0.0%', stock: 0 },
   // Cebolla Morada a gramo: $1.00/pza ÷ ~594g neto → $0.001684/g, yield 95.7%
   { id: 'i139', name: 'Cebolla Morada (g)',   category: 'Vegetal', unit: 'g', cost: 0.001684,     supplier: 'Local', yield: 0.957, lastChange: '0.0%', stock: 0 },
+  // Soda (Coca-Cola): $0.62/lata — costo referencial por unidad servida
+  { id: 'i140', name: 'Soda (Coca-Cola)',      category: 'Empaque Delivery', unit: 'pza', cost: 0.62,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Bolsa Plástica: ~$0.01/pza
+  { id: 'i141', name: 'Bolsa Plástica',        category: 'Empaque Delivery', unit: 'pza', cost: 0.01,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
@@ -913,8 +917,120 @@ const SEED_RECETAS = [
     sellPrice: 5.00, monthlySales: 0, targetFoodCost: 28,
     laborMinutes: 2, packagingItems: ['i115', 'i100'],
     ingredients: [
-      { type: 'sub',    subId: 'sc5',    qty: 218,  unit: 'g'  }, // Elote Cremoso base — 218g ($0.15/oz ≈ $1.12/218g)
-      { type: 'insumo', insumoId: 'i21', qty: 0.125, unit: 'pza'}, // Limón — ⅛ pza ($0.083/pza → $0.01)
+      { type: 'sub',    subId: 'sc5',    qty: 218,  unit: 'g'  },
+      { type: 'insumo', insumoId: 'i21', qty: 0.125, unit: 'pza'},
+    ],
+  },
+
+  // ===== COMBOS =====
+  {
+    // ── COMBO PIG BURGUER ── $8.99 PVP · margen 83.4% · costo $4.90
+    // Pan Pretzel · Pulled Pork 4.5oz · Salsa BBQ Higos · Repollo · Papas Fritas
+    // Aderezo Chipotle · Apio · Soda · Cup Aderezo/Cole · + empaque
+    id: 'r18', name: 'Combo Pig Burguer', category: 'Combos',
+    sellPrice: 8.99, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 5,
+    packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
+    ingredients: [
+      { type: 'insumo', insumoId: 'i10',  qty: 1,   unit: 'pza'}, // Pan de Pretzel      $0.45
+      { type: 'sub',    subId: 'sp1',     qty: 127,  unit: 'g'  }, // Pulled Pork 4.5oz   $1.27
+      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  }, // Salsa BBQ Higos     $0.18
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
+      { type: 'insumo', insumoId: 'i93',  qty: 170,  unit: 'g'  }, // Papas Fritas        $0.67
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
+      { type: 'insumo', insumoId: 'i28',  qty: 1,    unit: 'pza'}, // Apio                $0.06
+      { type: 'insumo', insumoId: 'i140', qty: 1,    unit: 'pza'}, // Soda                $0.62
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo/Cole    $0.07
+    ],
+  },
+  {
+    // ── COMBO PORK BELLY ── $8.99 PVP · margen 73.2% · costo $5.19
+    // Pork Belly 8oz · Salsa BBQ Higos · Repollo · Papas Fritas
+    // Aderezo Chipotle · Soda · Cup Aderezo/Cole + empaque
+    id: 'r19', name: 'Combo Pork Belly', category: 'Combos',
+    sellPrice: 8.99, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 5,
+    packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
+    ingredients: [
+      { type: 'sub',    subId: 'sp3',     qty: 227,  unit: 'g'  }, // Pork Belly 8oz      $1.99
+      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  }, // Salsa BBQ Higos     $0.18
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
+      { type: 'insumo', insumoId: 'i93',  qty: 170,  unit: 'g'  }, // Papas Fritas        $0.67
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
+      { type: 'insumo', insumoId: 'i140', qty: 1,    unit: 'pza'}, // Soda                $0.62
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo/Cole    $0.07
+    ],
+  },
+  {
+    // ── COMBO POLLO ── $7.74 PVP · margen 83.0% · costo $4.23
+    // Pollo cocido · Salsa BBQ White · Repollo · Papas Fritas
+    // Aderezo Chipotle · Soda · Cup Aderezo/Cole + empaque
+    id: 'r20', name: 'Combo Pollo', category: 'Combos',
+    sellPrice: 7.74, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 5,
+    packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
+    ingredients: [
+      { type: 'sub',    subId: 'sp4',     qty: 170,  unit: 'g'  }, // Pollo cocido        $1.16
+      { type: 'sub',    subId: 's10',     qty: 35,   unit: 'g'  }, // White BBQ           $0.08
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
+      { type: 'insumo', insumoId: 'i93',  qty: 170,  unit: 'g'  }, // Papas Fritas        $0.67
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
+      { type: 'insumo', insumoId: 'i140', qty: 1,    unit: 'pza'}, // Soda                $0.62
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo/Cole    $0.07
+    ],
+  },
+  {
+    // ── COMBO COSTILLA ── $9.49 PVP · margen 77.0% · costo $5.36
+    // Costilla 8oz · Salsa BBQ Higos · Repollo · Papas Fritas
+    // Aderezo Chipotle · Soda · Cup Aderezo/Cole + empaque
+    id: 'r21', name: 'Combo Costilla', category: 'Combos',
+    sellPrice: 9.49, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 5,
+    packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
+    ingredients: [
+      { type: 'sub',    subId: 'sp2',     qty: 227,  unit: 'g'  }, // Costilla 8oz        $2.22
+      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  }, // Salsa BBQ Higos     $0.18
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
+      { type: 'insumo', insumoId: 'i93',  qty: 170,  unit: 'g'  }, // Papas Fritas        $0.67
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
+      { type: 'insumo', insumoId: 'i140', qty: 1,    unit: 'pza'}, // Soda                $0.62
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo/Cole    $0.07
+    ],
+  },
+  {
+    // ── PAPAS PUERCOS ── $7.49 PVP · margen 77.5% · costo $4.22
+    // Papas · Pulled Pork 4oz · Salsa BBQ Higos · Repollo
+    // Aderezo Chipotle · Cup Aderezo · Tenedor · + empaque
+    id: 'r22', name: 'Papas Puercos', category: 'Combos',
+    sellPrice: 7.49, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 4,
+    packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
+    ingredients: [
+      { type: 'insumo', insumoId: 'i93',  qty: 340,  unit: 'g'  }, // Papas Fritas        $1.35
+      { type: 'sub',    subId: 'sp1',     qty: 113,  unit: 'g'  }, // Pulled Pork 4oz     $1.14
+      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  }, // Salsa BBQ Higos     $0.18
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo         $0.04
+      { type: 'insumo', insumoId: 'i103', qty: 1,    unit: 'pza'}, // Tenedor             $0.01
+    ],
+  },
+  {
+    // ── CAMOTES PUERCOS ── $7.49 PVP · margen 98.8% · costo $3.77
+    // Camotes · Pulled Pork 4oz · Salsa BBQ Higos · Repollo
+    // Aderezo Chipotle · Cup Aderezo · Tenedor · + empaque
+    id: 'r23', name: 'Camotes Puercos', category: 'Combos',
+    sellPrice: 7.49, monthlySales: 0, targetFoodCost: 30,
+    laborMinutes: 4,
+    packagingItems: ['i97', 'i102', 'i100', 'i99', 'i141', 'i98'],
+    ingredients: [
+      { type: 'insumo', insumoId: 'i19',  qty: 0.65, unit: 'lb' }, // Camotes             $0.89
+      { type: 'sub',    subId: 'sp1',     qty: 113,  unit: 'g'  }, // Pulled Pork 4oz     $1.14
+      { type: 'sub',    subId: 's5',      qty: 35,   unit: 'g'  }, // Salsa BBQ Higos     $0.18
+      { type: 'sub',    subId: 's3',      qty: 40,   unit: 'g'  }, // Repollo/Coleslaw    $0.07
+      { type: 'sub',    subId: 's12',     qty: 35,   unit: 'g'  }, // Aderezo Chipotle    $0.15
+      { type: 'insumo', insumoId: 'i101', qty: 1,    unit: 'pza'}, // Cup Aderezo         $0.04
+      { type: 'insumo', insumoId: 'i103', qty: 1,    unit: 'pza'}, // Tenedor             $0.01
     ],
   },
 ];
