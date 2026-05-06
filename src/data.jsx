@@ -288,8 +288,12 @@ const SEED_INSUMOS = [
   { id: 'i135', name: 'Panela (g)',            category: 'Endulzante', unit: 'g', cost: 0.002000, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
   // Gas propano: $25/lb como referencia de costo por proceso — $0.055/lb → costo referencial por g
   { id: 'i136', name: 'Gas (lb)',              category: 'Proceso', unit: 'g', cost: 0.000121,    supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
-  // Salsa de Queso (sub-receta se maneja separado, pero para Mac final se referencia)
-  // Jalapeño en gramos: ya existe i23 como pza. Para Texas Twinkies usamos pza directamente.
+  // Maíz fresco/desgranado: $7.91/3000g (lata drenado) → $0.002637/g; yield 58.5% (imagen: 1756/3000)
+  { id: 'i137', name: 'Maíz (g)',             category: 'Vegetal', unit: 'g', cost: 0.002637,     supplier: 'Sysco', yield: 0.585, lastChange: '0.0%', stock: 0 },
+  // Cebollín a gramo: $0.87/pza ÷ ~253.5g neto → $0.003433/g, yield 85.5%
+  { id: 'i138', name: 'Cebollín (g)',         category: 'Vegetal', unit: 'g', cost: 0.003433,     supplier: 'Local', yield: 0.855, lastChange: '0.0%', stock: 0 },
+  // Cebolla Morada a gramo: $1.00/pza ÷ ~594g neto → $0.001684/g, yield 95.7%
+  { id: 'i139', name: 'Cebolla Morada (g)',   category: 'Vegetal', unit: 'g', cost: 0.001684,     supplier: 'Local', yield: 0.957, lastChange: '0.0%', stock: 0 },
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
@@ -682,6 +686,27 @@ const SEED_SUBRECETAS = [
       { insumoId: 'i128', qty: 1000,  unit: 'g'  }, // Agua             — 1,000g ($0)
     ],
   },
+
+  {
+    // ── ELOTE CREMOSO (Cream Corn base) ── batch 2,207g · 10.12 porciones de 7.7oz (218g) · $0.15/oz
+    // Crema 333.5g (1 botella) · Mayonesa 240g · Cilantro 75g bruto (87.3% = 65.5g neto)
+    // Limón 2 pza · Sal 12g · Pimienta 10g · Cebollín 117.5g bruto (85.5% = 100.5g neto)
+    // Cebolla Morada 115g bruto (95.7% = 110g neto) · Margarina 80g · Maíz 3,000g bruto (58.5% = 1,756g neto)
+    // yield 92.71% → 2,207g producidos · $11.29 costo batch
+    id: 'sc5', name: 'Elote Cremoso (base)', category: 'Otros', yield: 2207, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i83',  qty: 1,     unit: 'pza'}, // Crema            — 1 botella = 333.5g ($2.20/botella)
+      { insumoId: 'i50',  qty: 240,   unit: 'g'  }, // Mayonesa         — 240g ($10.71/3000g)
+      { insumoId: 'i127', qty: 75,    unit: 'g'  }, // Cilantro         — 75g bruto (yield 0.91)
+      { insumoId: 'i21',  qty: 2,     unit: 'pza'}, // Limón            — 2 pza ($0.083/pza)
+      { insumoId: 'i68',  qty: 12,    unit: 'g'  }, // Sal              — 12g
+      { insumoId: 'i67',  qty: 10,    unit: 'g'  }, // Pimienta         — 10g
+      { insumoId: 'i138', qty: 117.5, unit: 'g'  }, // Cebollín         — 117.5g bruto (yield 0.855)
+      { insumoId: 'i139', qty: 115,   unit: 'g'  }, // Cebolla Morada   — 115g bruto (yield 0.957)
+      { insumoId: 'i91',  qty: 80,    unit: 'g'  }, // Margarina        — 80g ($1.04/400g)
+      { insumoId: 'i137', qty: 3000,  unit: 'g'  }, // Maíz             — 3,000g bruto (yield 0.585)
+    ],
+  },
 ];
 
 // Recetas (productos finales del menú real)
@@ -878,6 +903,18 @@ const SEED_RECETAS = [
     ingredients: [
       { type: 'insumo', insumoId: 'i19', qty: 170, unit: 'g'  }, // Camote — 170g ($0.914/lb)
       { type: 'insumo', insumoId: 'i75', qty: 5,   unit: 'g'  }, // Sazonador Papas — 5g
+    ],
+  },
+  {
+    // ── CREAM CORN (Elote Cremoso) ── side
+    // 1 porción = 218g de Elote Cremoso base + 0.125 limón (⅛ de limón)
+    // Costo total por porción: $1.12 (base) + $0.01 (limón) = $1.13
+    id: 'r17', name: 'Cream Corn', category: 'Guarniciones',
+    sellPrice: 5.00, monthlySales: 0, targetFoodCost: 28,
+    laborMinutes: 2, packagingItems: ['i115', 'i100'],
+    ingredients: [
+      { type: 'sub',    subId: 'sc5',    qty: 218,  unit: 'g'  }, // Elote Cremoso base — 218g ($0.15/oz ≈ $1.12/218g)
+      { type: 'insumo', insumoId: 'i21', qty: 0.125, unit: 'pza'}, // Limón — ⅛ pza ($0.083/pza → $0.01)
     ],
   },
 ];
