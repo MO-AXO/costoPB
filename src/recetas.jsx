@@ -84,7 +84,7 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
                 )}
               </>
             ) : (() => {
-              const categoryOrder = ['Aderezos', 'Salsas', 'Otros'];
+              const categoryOrder = ['Proteína cocida', 'Aderezos', 'Salsas', 'Otros'];
               const grouped = list.reduce((acc, r) => {
                 const cat = r.category || 'Otros';
                 if (!acc[cat]) acc[cat] = [];
@@ -105,11 +105,11 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
                     padding: '8px 14px 4px',
                     fontSize: 10, fontWeight: 600,
                     letterSpacing: '0.08em', textTransform: 'uppercase',
-                    color: 'var(--text-3)',
-                    background: 'var(--surface-2)',
+                    color: cat === 'Proteína cocida' ? 'var(--warn)' : 'var(--text-3)',
+                    background: cat === 'Proteína cocida' ? 'var(--warn-soft)' : 'var(--surface-2)',
                     borderBottom: '1px solid var(--border)',
                   }}>
-                    {cat} <span style={{fontWeight: 400}}>({grouped[cat].length})</span>
+                    {cat === 'Proteína cocida' ? '🔥 ' : ''}{cat} <span style={{fontWeight: 400}}>({grouped[cat].length})</span>
                   </div>
                   {grouped[cat].map(r => {
                     const cost = C.subRecetaCost(r, insumos);
@@ -373,7 +373,7 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas, onlyI
             {type === 'insumo' ? (
               insumos.map(x => <option key={x.id} value={x.id}>{x.name}</option>)
             ) : (() => {
-              const catOrder = ['Aderezos', 'Salsas', 'Otros'];
+              const catOrder = ['Proteína cocida', 'Aderezos', 'Salsas', 'Otros'];
               const grouped = (subrecetas || []).reduce((acc, s) => {
                 const cat = s.category || 'Otros';
                 if (!acc[cat]) acc[cat] = [];

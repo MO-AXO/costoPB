@@ -247,10 +247,125 @@ const SEED_INSUMOS = [
   { id: 'i118', name: 'Cuchillo Grande (evento)', category: 'Empaque Evento', unit: 'pza', cost: 0.022,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
   { id: 'i119', name: 'Tenedor Grande (evento)', category: 'Empaque Evento', unit: 'pza', cost: 0.018,   supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
   { id: 'i120', name: 'Cuchillo Grande (delivery)', category: 'Empaque Evento', unit: 'pza', cost: 0.022, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+
+  // ===== INSUMOS DE PROCESO (producción proteínas) =====
+  // Carbón: $12.00 / zaco
+  { id: 'i121', name: 'Carbón (zaco)',         category: 'Proceso', unit: 'pza', cost: 12.00,  supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Madera: $40.00 / 368 cm → $0.1087/cm
+  { id: 'i122', name: 'Madera (cm)',           category: 'Proceso', unit: 'pza', cost: 0.1087, supplier: 'Local', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Aluminio/foil: $27.99 / 152.4 mts → $0.1836/mt
+  { id: 'i123', name: 'Papel Aluminio (mt)',   category: 'Proceso', unit: 'pza', cost: 0.1836, supplier: 'Sysco', yield: 1.00, lastChange: '0.0%', stock: 0 },
+  // Pellets: $33.50 / 18.14 kg → $1.848/kg; yield 10% (solo 10% del peso impacta en sabor/proceso)
+  { id: 'i124', name: 'Pellets (kg)',          category: 'Proceso', unit: 'g',   cost: 0.001848, supplier: 'Local', yield: 0.10, lastChange: '0.0%', stock: 0 },
+  // Rub de Pollo: $7.29 / 623.7 g → $0.01169/g (ya existe como i76 Sazonador Pollo)
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
 const SEED_SUBRECETAS = [
+
+  // ===== PROTEÍNAS COCIDAS =====
+  // yield = peso neto cocido del batch completo (en gramos)
+  // costo/g se calcula automáticamente → úsalo en recetas con la cantidad en g u oz
+  // Nota: Rub, carbón, madera y aluminio se incluyen como insumos directos en cada batch
+
+  {
+    // ── RUB BBQ ── batch 715g · $2.94 total
+    id: 'sp0', name: 'Rub BBQ', category: 'Proteína cocida', yield: 715, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i67', qty: 45,  unit: 'g' },  // Pimienta Negra
+      { insumoId: 'i68', qty: 370, unit: 'g' },  // Sal
+      { insumoId: 'i69', qty: 55,  unit: 'g' },  // Ajo en Polvo
+      { insumoId: 'i70', qty: 55,  unit: 'g' },  // Cebolla en Polvo
+      { insumoId: 'i71', qty: 40,  unit: 'g' },  // Paprika
+      { insumoId: 'i72', qty: 150, unit: 'g' },  // Azúcar
+    ],
+  },
+  {
+    // ── PULLED PORK cocido ── batch 36.59 lbs → yield neto 11,424g
+    // Nuca 16,601g bruto (96% = 15,961g neto) + Rub 488g + Mostaza 155.5g
+    // + Carbón 1 zaco + Madera 80cm + Aluminio 16.8 mts
+    // Costo por oz: $0.28 · Costo por porción 4.5oz (127g): $1.27
+    id: 'sp1', name: 'Pulled Pork (cocido)', category: 'Proteína cocida', yield: 11424, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i1',   qty: 36.59, unit: 'lb' }, // Nuca de Cerdo (peso bruto; yield 0.96 aplicado)
+      { insumoId: 'i67',  qty: 48,    unit: 'g'  }, // Pimienta (Rub: 488g × 45/715)
+      { insumoId: 'i68',  qty: 253,   unit: 'g'  }, // Sal       (Rub: 488g × 370/715)
+      { insumoId: 'i69',  qty: 38,    unit: 'g'  }, // Ajo polvo (Rub: 488g × 55/715)
+      { insumoId: 'i70',  qty: 38,    unit: 'g'  }, // Cebolla polvo (Rub: 488g × 55/715)
+      { insumoId: 'i71',  qty: 27,    unit: 'g'  }, // Paprika   (Rub: 488g × 40/715)
+      { insumoId: 'i72',  qty: 102,   unit: 'g'  }, // Azúcar    (Rub: 488g × 150/715)
+      { insumoId: 'i51',  qty: 155.5, unit: 'g'  }, // Mostaza
+      { insumoId: 'i121', qty: 1,     unit: 'pza'}, // Carbón (zaco)
+      { insumoId: 'i122', qty: 80,    unit: 'pza'}, // Madera (80 cm)
+      { insumoId: 'i123', qty: 16.8,  unit: 'pza'}, // Aluminio (16.8 mts)
+    ],
+  },
+  {
+    // ── RACK DE COSTILLAS cocido ── batch 13.61 lbs → yield neto 3,863.5g
+    // Costilla 6,174g bruto (91% = 5,610g) + Rub 148g + Salsa inglesa 30ml
+    // + Pellets 18.14kg (10% rend) + Aluminio 2 mts
+    // Costo por oz: $0.28 · Costo por porción ½ lb (226.7g): $2.22
+    id: 'sp2', name: 'Rack de Costillas (cocido)', category: 'Proteína cocida', yield: 3864, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i2',   qty: 13.61, unit: 'lb' }, // Costilla Spare Ribs (peso bruto; yield 0.91)
+      { insumoId: 'i67',  qty: 9,     unit: 'g'  }, // Pimienta (Rub: 148g × 45/715)
+      { insumoId: 'i68',  qty: 77,    unit: 'g'  }, // Sal       (Rub: 148g × 370/715)
+      { insumoId: 'i69',  qty: 11,    unit: 'g'  }, // Ajo polvo (Rub: 148g × 55/715)
+      { insumoId: 'i70',  qty: 11,    unit: 'g'  }, // Cebolla polvo
+      { insumoId: 'i71',  qty: 8,     unit: 'g'  }, // Paprika
+      { insumoId: 'i72',  qty: 31,    unit: 'g'  }, // Azúcar
+      { insumoId: 'i39',  qty: 30,    unit: 'ml' }, // Salsa Inglesa
+      { insumoId: 'i124', qty: 18140, unit: 'g'  }, // Pellets 18.14 kg (yield 10% en insumo)
+      { insumoId: 'i123', qty: 2,     unit: 'pza'}, // Aluminio (2 mts)
+    ],
+  },
+  {
+    // ── PORK BELLY cocido ── batch 11.3 lbs → yield neto 3,401.9g
+    // Pork Belly 5,125g (100%) + Rub 250g + Soya 100ml + Pellets 18.14kg
+    // + Salsa BBQ 275g + Azúcar POST 170g
+    // Costo por oz: $0.29 · Costo por porción ½ lb (226.7g): $1.99 · 15 porciones
+    id: 'sp3', name: 'Pork Belly (cocido)', category: 'Proteína cocida', yield: 3402, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i3',   qty: 11.3,  unit: 'lb' }, // Pork Belly (peso bruto; yield 1.00)
+      { insumoId: 'i67',  qty: 16,    unit: 'g'  }, // Pimienta (Rub: 250g × 45/715)
+      { insumoId: 'i68',  qty: 130,   unit: 'g'  }, // Sal
+      { insumoId: 'i69',  qty: 19,    unit: 'g'  }, // Ajo polvo
+      { insumoId: 'i70',  qty: 19,    unit: 'g'  }, // Cebolla polvo
+      { insumoId: 'i71',  qty: 14,    unit: 'g'  }, // Paprika
+      { insumoId: 'i72',  qty: 52,    unit: 'g'  }, // Azúcar (Rub)
+      { insumoId: 'i40',  qty: 100,   unit: 'ml' }, // Soya
+      { insumoId: 'i124', qty: 18140, unit: 'g'  }, // Pellets 18.14 kg
+      { insumoId: 'i49',  qty: 275,   unit: 'g'  }, // Salsa BBQ comercial
+      { insumoId: 'i72',  qty: 170,   unit: 'g'  }, // Azúcar POST
+    ],
+  },
+  {
+    // ── POLLO cocido ── batch 15 lbs → 15 porciones (yield 98.35%)
+    // Pollo 6,810g bruto (95% = 6,472g) + Mostaza 100g + Rub Pollo 80g + Pellets 18.14kg
+    // Costo por porción: $1.16
+    id: 'sp4', name: 'Pollo (cocido)', category: 'Proteína cocida', yield: 6364, yieldUnit: 'g',
+    ingredients: [
+      { insumoId: 'i4',   qty: 15,    unit: 'lb' }, // Pollo (peso bruto; yield 0.95)
+      { insumoId: 'i51',  qty: 100,   unit: 'g'  }, // Mostaza
+      { insumoId: 'i76',  qty: 80,    unit: 'g'  }, // Sazonador Pollo (Rub de Pollo)
+      { insumoId: 'i124', qty: 18140, unit: 'g'  }, // Pellets 18.14 kg
+    ],
+  },
+  {
+    // ── TORTA DE CARNE (Vaca y Cerdito) ── 20 tortitas de 130g c/u
+    // Nuca de Cerdo 2,600g + Rub 210g → 20 tortitas · costo por tortita: $0.77
+    id: 'sp5', name: 'Torta de Carne (130g)', category: 'Proteína cocida', yield: 20, yieldUnit: 'pza',
+    ingredients: [
+      { insumoId: 'i1',   qty: 2600,  unit: 'g'  }, // Nuca de Cerdo
+      { insumoId: 'i67',  qty: 13,    unit: 'g'  }, // Pimienta (Rub: 210g × 45/715)
+      { insumoId: 'i68',  qty: 109,   unit: 'g'  }, // Sal
+      { insumoId: 'i69',  qty: 16,    unit: 'g'  }, // Ajo polvo
+      { insumoId: 'i70',  qty: 16,    unit: 'g'  }, // Cebolla polvo
+      { insumoId: 'i71',  qty: 12,    unit: 'g'  }, // Paprika
+      { insumoId: 'i72',  qty: 44,    unit: 'g'  }, // Azúcar
+    ],
+  },
+
   // ===== SALSAS =====
   {
     id: 's1', name: 'Salsa BBQ Pig Brothers (casera)', category: 'Salsas', yield: 64, yieldUnit: 'oz',
