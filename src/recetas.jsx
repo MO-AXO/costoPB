@@ -148,6 +148,11 @@ const Recetas = ({ insumos, subrecetas, setSubrecetas, recetas, setRecetas, fixe
             subrecetas={subrecetas}
             fixedCosts={fixedCosts}
             onUpdate={(patch) => setRecetas(recetas.map(x => x.id === item.id ? { ...x, ...patch } : x))}
+            onDelete={() => {
+              const next = recetas.filter(x => x.id !== item.id);
+              setRecetas(next);
+              setSelected(next[0]?.id || null);
+            }}
           />
         )}
         {item && tab === 'sub' && (
@@ -411,11 +416,12 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas, onlyI
 };
 
 // ─── Detalle de receta final ──────────────────────────────────────────────────
-const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate }) => {
+const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate, onDelete }) => {
   const C = window.PB_CALC;
   const m = C.recetaMetrics(receta, insumos, subrecetas, fixedCosts);
   const diff = m.suggestedPrice - receta.sellPrice;
   const [showAddIng, setShowAddIng] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
@@ -430,13 +436,31 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate }) => 
               <div style={{fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, marginTop: 8, letterSpacing: '-0.01em'}}>{receta.name}</div>
               <div style={{fontSize: 12, color: 'var(--text-3)', marginTop: 4}}>SKU PB-{receta.id.toUpperCase()} · {receta.monthlySales} unidades/mes · objetivo food cost {receta.targetFoodCost}%</div>
             </div>
-            <div style={{display: 'flex', gap: 16, alignItems: 'flex-start'}}>
-              <PriceField label="Precio venta" value={receta.sellPrice} onChange={(v) => onUpdate({ sellPrice: v })} />
-              <div style={{textAlign: 'right'}}>
-                <div style={{fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-3)'}}>Sugerido</div>
-                <div className="num" style={{fontSize: 22, fontWeight: 600, marginTop: 4}}>{fmt$(m.suggestedPrice)}</div>
-                <div style={{fontSize: 11, color: diff > 0.5 ? 'var(--warn)' : 'var(--text-3)', marginTop: 2}}>
-                  {diff > 0.5 ? `Subir +${fmt$(Math.abs(diff))}` : diff < -0.5 ? `Margen extra ${fmt$(Math.abs(diff))}` : 'En objetivo'}
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10}}>
+              <div style={{display: 'flex', gap: 8}}>
+                {!confirmDelete ? (
+                  <button className="btn btn-sm" style={{color: 'var(--bad)', borderColor: 'var(--bad-soft)', background: 'var(--bad-soft)'}}
+                    onClick={() => setConfirmDelete(true)}>
+                    <Icon name="trash" size={12} /> Borrar receta
+                  </button>
+                ) : (
+                  <>
+                    <button className="btn btn-sm" onClick={() => setConfirmDelete(false)}>Cancelar</button>
+                    <button className="btn btn-sm" style={{background: 'var(--bad)', color: '#fff', borderColor: 'var(--bad)'}}
+                      onClick={onDelete}>
+                      Confirmar borrado
+                    </button>
+                  </>
+                )}
+              </div>
+              <div style={{display: 'flex', gap: 16, alignItems: 'flex-start'}}>
+                <PriceField label="Precio venta" value={receta.sellPrice} onChange={(v) => onUpdate({ sellPrice: v })} />
+                <div style={{textAlign: 'right'}}>
+                  <div style={{fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-3)'}}>Sugerido</div>
+                  <div className="num" style={{fontSize: 22, fontWeight: 600, marginTop: 4}}>{fmt$(m.suggestedPrice)}</div>
+                  <div style={{fontSize: 11, color: diff > 0.5 ? 'var(--warn)' : 'var(--text-3)', marginTop: 2}}>
+                    {diff > 0.5 ? `Subir +${fmt$(Math.abs(diff))}` : diff < -0.5 ? `Margen extra ${fmt$(Math.abs(diff))}` : 'En objetivo'}
+                  </div>
                 </div>
               </div>
             </div>
