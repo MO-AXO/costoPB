@@ -189,18 +189,41 @@ const App = () => {
   const tweaks = window.useTweaksPanel();
 
   // Carga inicial desde la API
+  // Inyecta insumos y subrecetas del SEED que no existan en el mes
+  const mergeSeeds = (s) => {
+    const SD = window.PB_DATA;
+    const months = { ...s.months };
+    Object.keys(months).forEach(mid => {
+      const m = { ...months[mid] };
+      // Merge insumos
+      const insumoIds = new Set((m.insumos || []).map(x => x.id));
+      const newInsumos = SD.SEED_INSUMOS.filter(x => !insumoIds.has(x.id));
+      if (newInsumos.length) m.insumos = [...(m.insumos || []), ...newInsumos];
+      // Merge subrecetas
+      const subIds = new Set((m.subrecetas || []).map(x => x.id));
+      const newSubs = SD.SEED_SUBRECETAS.filter(x => !subIds.has(x.id));
+      if (newSubs.length) m.subrecetas = [...(m.subrecetas || []), ...newSubs];
+      // Merge recetas
+      const recetaIds = new Set((m.recetas || []).map(x => x.id));
+      const newRecetas = SD.SEED_RECETAS.filter(x => !recetaIds.has(x.id));
+      if (newRecetas.length) m.recetas = [...(m.recetas || []), ...newRecetas];
+      months[mid] = m;
+    });
+    return { ...s, months };
+  };
+
   useEffect(() => {
     fetch('/api/store')
       .then(r => r.json())
       .then(data => {
-        const s = (data && data.months) ? data : seedStore();
+        const s = mergeSeeds((data && data.months) ? data : seedStore());
         lastSavedAt.current = s.savedAt || 0;
         remoteUpdate.current = true;
         setStore(s);
         setViewMonthId(s.currentMonthId);
       })
       .catch(() => {
-        const s = seedStore();
+        const s = mergeSeeds(seedStore());
         remoteUpdate.current = true;
         setStore(s);
         setViewMonthId(s.currentMonthId);
