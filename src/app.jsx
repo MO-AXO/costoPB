@@ -304,6 +304,146 @@ const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onClose }) => {
   );
 };
 
+// ─── Modal de bienvenida ──────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    icon: 'dashboard',
+    title: 'Dashboard',
+    color: 'var(--accent)',
+    desc: 'Tu resumen mensual de un vistazo. Ves el Food Cost total, márgenes, utilidad estimada y alertas de platos que están sobre el objetivo. Es la primera pantalla que verás cada vez que entres.',
+  },
+  {
+    icon: 'trending',
+    title: 'Ventas',
+    color: '#0a7a52',
+    desc: 'Aquí registras cuántas unidades vendiste de cada plato en el mes. Solo edita el número de unidades — todo lo demás (ingresos, utilidad, márgenes) se recalcula automáticamente.',
+  },
+  {
+    icon: 'package',
+    title: 'Insumos',
+    color: '#b45309',
+    desc: 'El catálogo de todos los ingredientes con su costo por unidad. Si un proveedor sube el precio de la nuca de cerdo, cámbialo aquí y todas las recetas que la usan se actualizan al instante.',
+  },
+  {
+    icon: 'chef',
+    title: 'Recetas',
+    color: '#b42318',
+    desc: 'El corazón del sistema. Cada plato tiene su ficha técnica con ingredientes, costos, food cost, margen y un simulador de precio para probar qué pasa si subes o bajas el precio sin compromiso.',
+  },
+  {
+    icon: 'pie',
+    title: 'Rentabilidad',
+    color: '#6941c6',
+    desc: 'La Matriz de Menu Engineering clasifica tus platos en 4 categorías: Estrellas (venden mucho y dejan buen margen), Caballos de tiro, Acertijos y Perros. Te dice qué promover y qué evaluar.',
+  },
+  {
+    icon: 'chart',
+    title: 'Reportes',
+    color: '#344054',
+    desc: 'El Estado de Resultados (P&L) del mes: ingresos, costo de ingredientes, mano de obra, empaques, costos fijos y utilidad operativa. Útil para cerrar el mes y ver la foto completa.',
+  },
+  {
+    icon: 'sparkles',
+    title: 'Asesor IA',
+    color: 'var(--accent)',
+    desc: 'El botón azul en la esquina inferior derecha. Puedes preguntarle cosas como "¿cuál es mi plato más rentable?" o "¿qué pasa si el brisket sube 10%?" y responde con tus datos reales.',
+  },
+];
+
+const WelcomeModal = ({ onClose }) => {
+  const [step, setStep] = useState(0);
+  const isLast = step === TOUR_STEPS.length - 1;
+  const s = TOUR_STEPS[step];
+
+  return (
+    <>
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,25,0.55)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
+      <div style={{
+        position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        width: 520, background: 'var(--surface)', borderRadius: 16,
+        boxShadow: '0 24px 80px rgba(15,20,25,0.28)', zIndex: 201,
+        overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Barra de progreso */}
+        <div style={{ height: 3, background: 'var(--surface-sunk)' }}>
+          <div style={{ height: '100%', background: s.color, width: `${((step + 1) / TOUR_STEPS.length) * 100}%`, transition: 'width 0.3s' }} />
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: '28px 32px 0' }}>
+          {step === 0 ? (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+                Pig Brothers — Sistema de Costeo
+              </div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>
+                Bienvenido 👋
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 8 }}>
+                Esta herramienta calcula en tiempo real el costo de cada plato, tu food cost, márgenes y utilidad mensual. Todos los datos se guardan automáticamente.
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 4 }}>
+                Te vamos a explicar cada sección en {TOUR_STEPS.length - 1} pasos rápidos.
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: s.color + '18', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Icon name={s.icon} size={22} style={{ color: s.color }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    {step} de {TOUR_STEPS.length - 1}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.title}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.7 }}>{s.desc}</div>
+            </>
+          )}
+        </div>
+
+        {/* Dots */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '20px 32px 0' }}>
+          {TOUR_STEPS.map((_, i) => (
+            <div key={i} onClick={() => setStep(i)} style={{
+              width: i === step ? 20 : 6, height: 6, borderRadius: 3,
+              background: i === step ? s.color : 'var(--border)',
+              transition: 'all 0.25s', cursor: 'pointer',
+            }} />
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '20px 32px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button
+            className="btn btn-ghost"
+            onClick={onClose}
+            style={{ fontSize: 12, color: 'var(--text-3)' }}
+          >
+            Saltar introducción
+          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {step > 0 && (
+              <button className="btn" onClick={() => setStep(s => s - 1)}>
+                ← Anterior
+              </button>
+            )}
+            <button
+              className="btn btn-primary"
+              onClick={() => isLast ? onClose() : setStep(s => s + 1)}
+              style={{ background: s.color, borderColor: s.color, minWidth: 120 }}
+            >
+              {isLast ? '¡Empezar!' : 'Siguiente →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 const App = () => {
   const [store, setStore] = useState(null);
@@ -317,6 +457,7 @@ const App = () => {
   const [searchQ, setSearchQ] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('pb_tour_done'));
   const searchRef = useRef(null);
   const saveTimer = useRef(null);
   const lastSavedAt = useRef(0);
@@ -551,11 +692,19 @@ const App = () => {
           <Icon name="package" size={15} /> Proveedores
         </button>
 
+        <button
+          onClick={() => setShowWelcome(true)}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:6, border:0, background:'transparent', color:'var(--sidebar-text-muted)', fontSize:12, cursor:'pointer', width:'100%', textAlign:'left', marginBottom:4 }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+          onMouseLeave={e => e.currentTarget.style.background='transparent'}
+        >
+          <Icon name="info" size={14} /> Ver guía de uso
+        </button>
         <div className="sidebar-foot">
-          <div className="avatar">JC</div>
+          <div className="avatar">PB</div>
           <div style={{ flex:1, minWidth:0 }}>
-            <div className="who">Jorge Castillo</div>
-            <div className="role">Dueño · Pig Brothers</div>
+            <div className="who">Pig Brothers BBQ</div>
+            <div className="role">Sistema de costeo</div>
           </div>
         </div>
       </aside>
@@ -644,6 +793,12 @@ const App = () => {
       )}
       {tweaks.open && <TweaksPanel vals={tweaks.vals} set={tweaks.set} onClose={tweaks.close} />}
       <AIAssistant insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} />
+      {showWelcome && (
+        <WelcomeModal onClose={() => {
+          localStorage.setItem('pb_tour_done', '1');
+          setShowWelcome(false);
+        }} />
+      )}
     </div>
   );
 };
