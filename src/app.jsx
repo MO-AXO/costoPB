@@ -154,6 +154,7 @@ const App = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { id: 'ventas', label: 'Ventas', icon: 'trending' },
     { id: 'insumos', label: 'Insumos', icon: 'package', badge: insumos.length },
     { id: 'recetas', label: 'Recetas', icon: 'chef', badge: recetas.length + subrecetas.length },
     { id: 'rentabilidad', label: 'Rentabilidad', icon: 'pie' },
@@ -284,6 +285,7 @@ const App = () => {
 
         <div className="content">
           {page === 'dashboard' && <Dashboard insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onNavigate={setPage} onOpenReceta={goToReceta} />}
+          {page === 'ventas' && <Ventas recetas={recetas} setRecetas={setRecetas} insumos={insumos} subrecetas={subrecetas} fixedCosts={fixedCosts} />}
           {page === 'insumos' && <Insumos insumos={insumos} setInsumos={setInsumos} />}
           {page === 'recetas' && <Recetas insumos={insumos} subrecetas={subrecetas} setSubrecetas={setSubrecetas} recetas={recetas} setRecetas={setRecetas} fixedCosts={fixedCosts} openId={openRecetaId} />}
           {page === 'rentabilidad' && <Rentabilidad insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onOpenReceta={goToReceta} />}

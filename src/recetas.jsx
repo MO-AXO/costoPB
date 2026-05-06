@@ -382,7 +382,6 @@ const RecetaDetail = ({ receta, insumos, subrecetas, fixedCosts, onUpdate }) => 
           <div className="card-body" style={{display: 'flex', flexDirection: 'column', gap: 12}}>
             <ParamField label="Mano de obra (min)" value={receta.laborMinutes} onChange={(v) => onUpdate({ laborMinutes: v })} suffix="min" />
             <ParamField label="Food cost objetivo" value={receta.targetFoodCost} onChange={(v) => onUpdate({ targetFoodCost: v })} suffix="%" />
-            <ParamField label="Ventas mensuales" value={receta.monthlySales} onChange={(v) => onUpdate({ monthlySales: v })} suffix="u" />
             <div className="hint" style={{marginTop: 4}}>
               <b>Precio sugerido</b> = costo ingredientes ÷ food&nbsp;cost objetivo
             </div>
