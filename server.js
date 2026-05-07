@@ -43,6 +43,33 @@ app.post('/api/store', async (req, res) => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
+// ─── Listar modelos disponibles ───────────────────────────────────────────────
+app.get('/api/models', (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY no configurada' });
+
+  const options = {
+    hostname: 'api.anthropic.com',
+    path: '/v1/models',
+    method: 'GET',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+  };
+
+  const proxyReq = https.request(options, proxyRes => {
+    let data = '';
+    proxyRes.on('data', chunk => { data += chunk; });
+    proxyRes.on('end', () => {
+      try { res.json(JSON.parse(data)); }
+      catch (e) { res.status(500).send(data); }
+    });
+  });
+  proxyReq.on('error', e => res.status(500).json({ error: e.message }));
+  proxyReq.end();
+});
+
 // ─── Endpoint IA ──────────────────────────────────────────────────────────────
 app.post('/api/ai', async (req, res) => {
   const { messages, system } = req.body;
