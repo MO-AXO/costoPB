@@ -52,7 +52,7 @@ app.post('/api/ai', async (req, res) => {
   }
 
   const body = JSON.stringify({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-3-haiku-20240307',
     max_tokens: 1024,
     system,
     messages,
@@ -76,7 +76,11 @@ app.post('/api/ai', async (req, res) => {
     proxyRes.on('end', () => {
       try {
         const parsed = JSON.parse(data);
-        if (parsed.error) return res.status(400).json({ error: parsed.error.message });
+        if (parsed.error) {
+          const errMsg = parsed.error.message || JSON.stringify(parsed.error);
+          console.error('Anthropic API error:', JSON.stringify(parsed.error));
+          return res.status(400).json({ error: errMsg });
+        }
         res.json({ content: parsed.content?.[0]?.text || '' });
       } catch (e) {
         res.status(500).json({ error: 'Error parseando respuesta de Anthropic' });
