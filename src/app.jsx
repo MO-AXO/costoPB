@@ -591,7 +591,7 @@ const App = () => {
 
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
-  const { insumos, subrecetas, recetas, fixedCosts } = monthData;
+  const { insumos, subrecetas, recetas, fixedCosts, gastos, empleados } = monthData;
 
   // Setters: siempre escriben al mes activo (currentMonthId)
   const setInsumos = (v) => setStore(s => {
@@ -615,6 +615,16 @@ const App = () => {
   const setFixedCosts = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
     return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, fixedCosts: v } } };
+  });
+  const setGastos = (v) => setStore(s => {
+    const cur = s.months[s.currentMonthId];
+    const next = typeof v === 'function' ? v(cur.gastos || {}) : v;
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, gastos: next } } };
+  });
+  const setEmpleados = (v) => setStore(s => {
+    const cur = s.months[s.currentMonthId];
+    const next = typeof v === 'function' ? v(cur.empleados || {}) : v;
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: next } } };
   });
 
   const crearNuevoMes = (newId) => {
@@ -646,6 +656,8 @@ const App = () => {
     { id: 'rentabilidad', label: 'Rentabilidad', icon: 'pie' },
     { id: 'reportes', label: 'Reportes', icon: 'chart' },
     { id: 'historico', label: 'Histórico de precios', icon: 'history' },
+    { id: 'gastos', label: 'Gastos', icon: 'wallet', section: 'Administración' },
+    { id: 'empleados', label: 'Empleados', icon: 'users', section: 'Administración' },
   ];
 
   const crumbLabel = navItems.find(n => n.id === page)?.label || 'Dashboard';
@@ -675,12 +687,21 @@ const App = () => {
         </div>
 
         <div className="nav-section">Operación</div>
-        {navItems.map(item => (
+        {navItems.filter(i => !i.section).map(item => (
           <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
             onClick={() => { setPage(item.id); setOpenRecetaId(null); }}>
             <Icon name={item.icon} size={15} />
             {item.label}
             {item.badge != null && <span className="badge">{item.badge}</span>}
+          </button>
+        ))}
+
+        <div className="nav-section">Administración</div>
+        {navItems.filter(i => i.section === 'Administración').map(item => (
+          <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
+            onClick={() => { setPage(item.id); setOpenRecetaId(null); }}>
+            <Icon name={item.icon} size={15} />
+            {item.label}
           </button>
         ))}
 
@@ -784,6 +805,8 @@ const App = () => {
             {page === 'rentabilidad' && <Rentabilidad insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onOpenReceta={goToReceta} />}
             {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
+            {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
+            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
           </div>
         </div>
       </main>
