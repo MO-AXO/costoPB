@@ -641,6 +641,8 @@ const App = () => {
             subrecetas: cur.subrecetas,
             recetas: cur.recetas.map(r => ({ ...r, monthlySales: 0 })),
             fixedCosts: cur.fixedCosts,
+            gastos: { caja: [], formal: [] },
+            empleados: { lista: cur.empleados?.lista || [], pagos: [], ausencias: [] },
           }
         }
       };
@@ -798,12 +800,12 @@ const App = () => {
             </div>
           )}
           <div className={isCurrentMonth ? '' : 'pb-readonly'}>
-            {page === 'dashboard' && <Dashboard insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onNavigate={setPage} onOpenReceta={goToReceta} monthLabel={monthData.label} />}
+            {page === 'dashboard' && <Dashboard insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onNavigate={setPage} onOpenReceta={goToReceta} monthLabel={monthData.label} gastos={gastos} empleados={empleados} />}
             {page === 'ventas' && <Ventas recetas={recetas} setRecetas={setRecetas} insumos={insumos} subrecetas={subrecetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
             {page === 'insumos' && <Insumos insumos={insumos} setInsumos={setInsumos} />}
             {page === 'recetas' && <Recetas insumos={insumos} subrecetas={subrecetas} setSubrecetas={setSubrecetas} recetas={recetas} setRecetas={setRecetas} deleteReceta={deleteReceta} fixedCosts={fixedCosts} openId={openRecetaId} />}
             {page === 'rentabilidad' && <Rentabilidad insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onOpenReceta={goToReceta} />}
-            {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
+            {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} gastos={gastos} store={store} viewMonthId={viewMonthId} />}
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
             {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
