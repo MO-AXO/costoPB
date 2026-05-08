@@ -16,17 +16,20 @@ const Insumos = ({ insumos, setInsumos }) => {
   const addInsumo = (ins) => setInsumos(prev => [...prev, ins]);
   const deleteInsumo = (id) => setInsumos(prev => prev.filter(i => i.id !== id));
 
-  const totalValue = insumos.reduce((a, i) => a + i.cost * i.stock, 0);
   const editItem = editId ? insumos.find(i => i.id === editId) : null;
 
   const exportCSV = () => {
-    const headers = ['Nombre', 'Categoría', 'Unidad', 'Costo compra', 'Yield', 'Costo real/u', 'Stock', 'Proveedor'];
-    const rows = insumos.map(i => [
-      i.name, i.category, i.unit,
-      i.cost.toFixed(2), i.yield.toFixed(2),
-      (i.cost / Math.max(i.yield, 0.01)).toFixed(3),
-      i.stock, i.supplier,
-    ]);
+    const headers = ['Nombre', 'Categoría', 'Unidad', 'Precio compra', 'Cant. presentación', 'Costo/u', 'Yield', 'Costo real/u', 'Proveedor'];
+    const rows = insumos.map(i => {
+      const baseCost = (i.purchasePrice > 0 && i.purchaseQty > 0) ? i.purchasePrice / i.purchaseQty : (i.cost || 0);
+      const real = baseCost / Math.max(i.yield, 0.01);
+      return [
+        i.name, i.category, i.unit,
+        (i.purchasePrice || '').toString(), (i.purchaseQty || '').toString(),
+        baseCost.toFixed(4), i.yield.toFixed(2), real.toFixed(4),
+        i.supplier,
+      ];
+    });
     const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -66,17 +69,17 @@ const Insumos = ({ insumos, setInsumos }) => {
 
       <div className="card">
         <div className="hint" style={{margin: 16, marginBottom: 0}}>
-          <b>Costo real / unidad</b> = costo de compra ÷ yield (rendimiento). Por ejemplo, hombro de cerdo $3.85/lb con 55% yield = <b>$7.00/lb cocido</b>.
+          <b>Costo real / unidad</b> = (precio de compra ÷ cantidad presentación) ÷ yield. Ejemplo: $18 por 6 pzas con yield 0.90 = <b>$3.33/pza real</b>.
         </div>
         <table className="tbl">
           <thead><tr>
             <th>Insumo</th>
             <th>Categoría</th>
             <th>Unidad</th>
-            <th className="right">Costo compra</th>
+            <th className="right">Precio compra</th>
+            <th className="right">Cant. presentación</th>
             <th className="right" data-tip="Porcentaje aprovechable después de pérdida/cocción">Yield</th>
-            <th className="right">Costo real</th>
-            <th className="right">Stock</th>
+            <th className="right">Costo real/u</th>
             <th>Proveedor</th>
             <th className="right">Δ último</th>
             <th></th>
@@ -94,13 +97,15 @@ const Insumos = ({ insumos, setInsumos }) => {
                   <td><Tag>{ins.category}</Tag></td>
                   <td className="num" style={{color: 'var(--text-2)'}}>{ins.unit}</td>
                   <td className="right">
-                    <input type="number" step="0.01" value={ins.cost} onChange={e => update(ins.id, { cost: parseFloat(e.target.value) || 0 })} />
+                    <input type="number" step="0.01" value={ins.purchasePrice ?? ''} placeholder="—" onChange={e => update(ins.id, { purchasePrice: parseFloat(e.target.value) || 0 })} />
+                  </td>
+                  <td className="right">
+                    <input type="number" step="0.01" value={ins.purchaseQty ?? ''} placeholder="—" onChange={e => update(ins.id, { purchaseQty: parseFloat(e.target.value) || 0 })} />
                   </td>
                   <td className="right">
                     <input type="number" step="0.01" min="0" max="1" value={ins.yield} onChange={e => update(ins.id, { yield: parseFloat(e.target.value) || 1 })} />
                   </td>
                   <td className="right num" style={{fontWeight: 500}}>{fmt$(real)}</td>
-                  <td className="right num" style={{color: ins.stock < 5 ? 'var(--bad)' : 'var(--text)'}}>{ins.stock}</td>
                   <td style={{color: 'var(--text-2)', fontSize: 12}}>{ins.supplier}</td>
                   <td className="right">
                     <span className="num" style={{color: isUp ? 'var(--bad)' : isDown ? 'var(--good)' : 'var(--text-3)', fontSize: 12, fontWeight: 500}}>
@@ -142,13 +147,17 @@ const Insumos = ({ insumos, setInsumos }) => {
 const NewInsumoDrawer = ({ open, onClose, onAdd, existingCategories }) => {
   const [f, setF] = React.useState({
     name: '', category: existingCategories[0] || 'Carne cruda',
-    unit: 'lb', cost: 0, yield: 1, stock: 0, supplier: '',
+    unit: 'lb', purchasePrice: '', purchaseQty: '', yield: 1, supplier: '',
   });
   const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
   const canSave = f.name.trim().length > 0;
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
   const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
-  const realCost = (parseFloat(f.cost) || 0) / Math.max(parseFloat(f.yield) || 1, 0.01);
+
+  const pp = parseFloat(f.purchasePrice) || 0;
+  const pq = parseFloat(f.purchaseQty) || 0;
+  const baseCost = (pp > 0 && pq > 0) ? pp / pq : 0;
+  const realCost = baseCost / Math.max(parseFloat(f.yield) || 1, 0.01);
 
   return (
     <Drawer open={open} title="Nuevo insumo" subtitle="Agrega un ingrediente al catálogo" onClose={onClose}
@@ -159,9 +168,10 @@ const NewInsumoDrawer = ({ open, onClose, onAdd, existingCategories }) => {
             onAdd({
               id: 'ins_' + Date.now(),
               ...f,
-              cost: parseFloat(f.cost) || 0,
+              purchasePrice: parseFloat(f.purchasePrice) || 0,
+              purchaseQty: parseFloat(f.purchaseQty) || 0,
+              cost: baseCost,
               yield: parseFloat(f.yield) || 1,
-              stock: parseFloat(f.stock) || 0,
               lastChange: '–',
             });
             onClose();
@@ -189,20 +199,36 @@ const NewInsumoDrawer = ({ open, onClose, onAdd, existingCategories }) => {
             </select>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            {lbl('Costo de compra (USD)')}
-            <input type="number" step="0.01" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.cost} onChange={e => upd('cost', e.target.value)} />
+
+        <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Presentación de compra
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              {lbl('Precio de compra (USD)')}
+              <input type="number" step="0.01" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }}
+                value={f.purchasePrice} placeholder="Ej: 18.00"
+                onChange={e => upd('purchasePrice', e.target.value)} />
+            </div>
+            <div>
+              {lbl('Cantidad en presentación')}
+              <input type="number" step="0.01" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }}
+                value={f.purchaseQty} placeholder={`Ej: 6 ${f.unit}`}
+                onChange={e => upd('purchaseQty', e.target.value)} />
+            </div>
+          </div>
+          {pp > 0 && pq > 0 && (
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>
+              Costo base: <b>${baseCost.toFixed(4)}</b> / {f.unit}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
             {lbl('Yield (0.01 – 1.00)')}
             <input type="number" step="0.01" min="0.01" max="1" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.yield} onChange={e => upd('yield', e.target.value)} />
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            {lbl('Stock actual')}
-            <input type="number" step="1" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.stock} onChange={e => upd('stock', e.target.value)} />
           </div>
           <div>
             {lbl('Proveedor')}
@@ -210,7 +236,7 @@ const NewInsumoDrawer = ({ open, onClose, onAdd, existingCategories }) => {
           </div>
         </div>
         <div className="hint">
-          <b>Costo real</b> = ${realCost.toFixed(2)} / {f.unit || 'u'}
+          <b>Costo real</b> = ${realCost.toFixed(4)} / {f.unit || 'u'}
         </div>
       </div>
     </Drawer>
@@ -223,7 +249,11 @@ const EditInsumoDrawer = ({ open, item, onClose, onSave, onDelete }) => {
   const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
   const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
-  const realCost = (parseFloat(f.cost) || 0) / Math.max(parseFloat(f.yield) || 1, 0.01);
+
+  const pp = parseFloat(f.purchasePrice) || 0;
+  const pq = parseFloat(f.purchaseQty) || 0;
+  const baseCost = (pp > 0 && pq > 0) ? pp / pq : (parseFloat(f.cost) || 0);
+  const realCost = baseCost / Math.max(parseFloat(f.yield) || 1, 0.01);
 
   return (
     <Drawer open={open} title="Editar insumo" subtitle={item.name} onClose={onClose}
@@ -236,9 +266,10 @@ const EditInsumoDrawer = ({ open, item, onClose, onSave, onDelete }) => {
           <button className="btn" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={() => onSave({
             ...f,
-            cost: parseFloat(f.cost) || 0,
+            purchasePrice: parseFloat(f.purchasePrice) || 0,
+            purchaseQty: parseFloat(f.purchaseQty) || 0,
+            cost: baseCost,
             yield: parseFloat(f.yield) || 1,
-            stock: parseFloat(f.stock) || 0,
           })}>
             Guardar
           </button>
@@ -251,32 +282,48 @@ const EditInsumoDrawer = ({ open, item, onClose, onSave, onDelete }) => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
-            {lbl('Costo de compra (USD)')}
-            <input type="number" step="0.01" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.cost} onChange={e => upd('cost', e.target.value)} />
-          </div>
-          <div>
-            {lbl('Yield')}
-            <input type="number" step="0.01" min="0.01" max="1" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.yield} onChange={e => upd('yield', e.target.value)} />
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            {lbl('Stock')}
-            <input type="number" step="1" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.stock} onChange={e => upd('stock', e.target.value)} />
-          </div>
-          <div>
             {lbl('Unidad')}
             <select style={fl} value={f.unit} onChange={e => upd('unit', e.target.value)}>
               {['lb', 'oz', 'kg', 'g', 'gal', 'l', 'ml', 'pza'].map(u => <option key={u}>{u}</option>)}
             </select>
           </div>
+          <div>
+            {lbl('Proveedor')}
+            <input style={fl} value={f.supplier} onChange={e => upd('supplier', e.target.value)} />
+          </div>
         </div>
+
+        <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Presentación de compra
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              {lbl('Precio de compra (USD)')}
+              <input type="number" step="0.01" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }}
+                value={f.purchasePrice ?? ''} placeholder="Ej: 18.00"
+                onChange={e => upd('purchasePrice', e.target.value)} />
+            </div>
+            <div>
+              {lbl('Cantidad en presentación')}
+              <input type="number" step="0.01" min="0" style={{ ...fl, fontFamily: 'var(--font-mono)' }}
+                value={f.purchaseQty ?? ''} placeholder={`Ej: 6 ${f.unit}`}
+                onChange={e => upd('purchaseQty', e.target.value)} />
+            </div>
+          </div>
+          {pp > 0 && pq > 0 && (
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>
+              Costo base: <b>${baseCost.toFixed(4)}</b> / {f.unit}
+            </div>
+          )}
+        </div>
+
         <div>
-          {lbl('Proveedor')}
-          <input style={fl} value={f.supplier} onChange={e => upd('supplier', e.target.value)} />
+          {lbl('Yield (0.01 – 1.00)')}
+          <input type="number" step="0.01" min="0.01" max="1" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={f.yield} onChange={e => upd('yield', e.target.value)} />
         </div>
         <div className="hint">
-          <b>Costo real</b> = ${realCost.toFixed(2)} / {f.unit}
+          <b>Costo real</b> = ${realCost.toFixed(4)} / {f.unit}
         </div>
       </div>
     </Drawer>

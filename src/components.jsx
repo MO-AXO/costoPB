@@ -8,9 +8,15 @@ const fmt$0 = (n) => '$' + Math.round(n ?? 0).toLocaleString();
 const fmtPct = (n, d = 1) => (n ?? 0).toFixed(d) + '%';
 
 // Costo por unidad de un insumo, ajustado por yield (rendimiento)
+// Si tiene presentación de compra (purchasePrice + purchaseQty), el costo base
+// se calcula como purchasePrice / purchaseQty → costo por unidad antes del yield.
+// Si no, usa el campo legacy `cost` directamente.
 const insumoCostPerUnit = (insumo) => {
   if (!insumo) return 0;
-  return insumo.cost / Math.max(insumo.yield || 1, 0.01);
+  const baseCost = (insumo.purchasePrice > 0 && insumo.purchaseQty > 0)
+    ? insumo.purchasePrice / insumo.purchaseQty
+    : (insumo.cost || 0);
+  return baseCost / Math.max(insumo.yield || 1, 0.01);
 };
 
 // Conversión entre unidades (peso/volumen/pieza)
