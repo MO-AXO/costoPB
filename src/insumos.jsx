@@ -134,11 +134,60 @@ const Insumos = ({ insumos, setInsumos }) => {
         <EditInsumoDrawer
           open
           item={editItem}
+          existingCategories={[...new Set(insumos.map(i => i.category))]}
           onClose={() => setEditId(null)}
           onSave={(patch) => { update(editId, patch); setEditId(null); }}
           onDelete={() => { deleteInsumo(editId); setEditId(null); }}
         />
       )}
+    </div>
+  );
+};
+
+// ─── Selector de categoría con opción de crear nueva ─────────────────────────
+const CategorySelector = ({ value, onChange, existingCategories, fl, lbl }) => {
+  const [creatingNew, setCreatingNew] = React.useState(false);
+  const [newCat, setNewCat] = React.useState('');
+
+  if (creatingNew) {
+    return (
+      <div>
+        {lbl('Categoría nueva')}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            style={{ ...fl, flex: 1 }}
+            value={newCat}
+            onChange={e => setNewCat(e.target.value)}
+            placeholder="Ej: Bebidas especiales"
+            autoFocus
+            onKeyDown={e => {
+              if (e.key === 'Enter' && newCat.trim()) { onChange(newCat.trim()); setCreatingNew(false); }
+              if (e.key === 'Escape') setCreatingNew(false);
+            }}
+          />
+          <button className="btn btn-sm btn-primary" disabled={!newCat.trim()}
+            onClick={() => { onChange(newCat.trim()); setCreatingNew(false); }}>
+            OK
+          </button>
+          <button className="btn btn-sm" onClick={() => setCreatingNew(false)}>×</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {lbl('Categoría')}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <select style={{ ...fl, flex: 1 }} value={value} onChange={e => onChange(e.target.value)}>
+          {existingCategories.map(c => <option key={c}>{c}</option>)}
+        </select>
+        <button className="btn btn-sm" title="Crear nueva categoría"
+          onClick={() => { setNewCat(''); setCreatingNew(true); }}
+          style={{ whiteSpace: 'nowrap' }}>
+          + Nueva
+        </button>
+      </div>
     </div>
   );
 };
@@ -186,12 +235,12 @@ const NewInsumoDrawer = ({ open, onClose, onAdd, existingCategories }) => {
           <input style={fl} value={f.name} onChange={e => upd('name', e.target.value)} placeholder="Ej: Brisket de res" autoFocus />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            {lbl('Categoría')}
-            <select style={fl} value={f.category} onChange={e => upd('category', e.target.value)}>
-              {existingCategories.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
+          <CategorySelector
+            value={f.category}
+            onChange={v => upd('category', v)}
+            existingCategories={existingCategories}
+            fl={fl} lbl={lbl}
+          />
           <div>
             {lbl('Unidad')}
             <select style={fl} value={f.unit} onChange={e => upd('unit', e.target.value)}>
@@ -244,7 +293,7 @@ const NewInsumoDrawer = ({ open, onClose, onAdd, existingCategories }) => {
 };
 
 // ─── Drawer: Editar insumo ────────────────────────────────────────────────────
-const EditInsumoDrawer = ({ open, item, onClose, onSave, onDelete }) => {
+const EditInsumoDrawer = ({ open, item, onClose, onSave, onDelete, existingCategories }) => {
   const [f, setF] = React.useState({ ...item });
   const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
@@ -281,16 +330,22 @@ const EditInsumoDrawer = ({ open, item, onClose, onSave, onDelete }) => {
           <input style={fl} value={f.name} onChange={e => upd('name', e.target.value)} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <CategorySelector
+            value={f.category}
+            onChange={v => upd('category', v)}
+            existingCategories={existingCategories || []}
+            fl={fl} lbl={lbl}
+          />
           <div>
             {lbl('Unidad')}
             <select style={fl} value={f.unit} onChange={e => upd('unit', e.target.value)}>
               {['lb', 'oz', 'kg', 'g', 'gal', 'l', 'ml', 'pza'].map(u => <option key={u}>{u}</option>)}
             </select>
           </div>
-          <div>
-            {lbl('Proveedor')}
-            <input style={fl} value={f.supplier} onChange={e => upd('supplier', e.target.value)} />
-          </div>
+        </div>
+        <div>
+          {lbl('Proveedor')}
+          <input style={fl} value={f.supplier} onChange={e => upd('supplier', e.target.value)} />
         </div>
 
         <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>

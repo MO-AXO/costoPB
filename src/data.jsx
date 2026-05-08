@@ -304,6 +304,9 @@ const SEED_INSUMOS = [
   { id: 'i140', name: 'Soda (Coca-Cola)',      category: 'Empaque Delivery', unit: 'pza', cost: 0.62,  supplier: 'Local', yield: 1.00, lastChange: '0.0%' },
   // Bolsa Plástica: ~$0.01/pza
   { id: 'i141', name: 'Bolsa Plástica',        category: 'Empaque Delivery', unit: 'pza', cost: 0.01,  supplier: 'Local', yield: 1.00, lastChange: '0.0%' },
+
+  // ===== BEBIDAS =====
+  { id: 'i145', name: 'Agua embotellada',       category: 'Bebidas', unit: 'pza', cost: 0.00, supplier: 'Local', yield: 1.00, lastChange: '0.0%' },
 ];
 
 // Sub-recetas (salsas y rubs reutilizables)
