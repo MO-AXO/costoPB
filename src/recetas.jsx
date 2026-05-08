@@ -319,35 +319,41 @@ const NewSubRecetaDrawer = ({ open, onClose, onAdd }) => {
 // ─── Drawer: Agregar ingrediente ──────────────────────────────────────────────
 const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas, onlyInsumos }) => {
   const [type, setType] = React.useState('insumo');
-  const [itemId, setItemId] = React.useState(insumos[0]?.id || '');
+  const [search, setSearch] = React.useState('');
+  const [itemId, setItemId] = React.useState('');
   const [qty, setQty] = React.useState(1);
-  const [unit, setUnit] = React.useState(insumos[0]?.unit || 'lb');
+  const [unit, setUnit] = React.useState('');
 
   const units = ['lb', 'oz', 'kg', 'g', 'gal', 'l', 'ml', 'pza'];
 
+  // Lista filtrada según búsqueda
+  const sourceList = type === 'insumo' ? insumos : (subrecetas || []);
+  const filtered = search.trim()
+    ? sourceList.filter(x => x.name.toLowerCase().includes(search.toLowerCase()))
+    : sourceList;
+
+  // Item seleccionado actualmente
+  const selectedItem = sourceList.find(x => x.id === itemId);
+
   const handleTypeChange = (t) => {
     setType(t);
-    const first = t === 'insumo' ? insumos[0] : (subrecetas || [])[0];
-    if (first) { setItemId(first.id); setUnit(t === 'insumo' ? first.unit : first.yieldUnit); }
+    setSearch('');
+    setItemId('');
+    setUnit('');
   };
 
-  const handleItemChange = (id) => {
-    setItemId(id);
-    if (type === 'insumo') {
-      const ins = insumos.find(i => i.id === id);
-      if (ins) setUnit(ins.unit);
-    } else {
-      const sub = (subrecetas || []).find(s => s.id === id);
-      if (sub) setUnit(sub.yieldUnit);
-    }
+  const handleSelect = (item) => {
+    setItemId(item.id);
+    setUnit(type === 'insumo' ? item.unit : item.yieldUnit);
+    setSearch('');
   };
 
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
   const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
-  const canSave = itemId && qty > 0;
+  const canSave = itemId && parseFloat(qty) > 0;
 
   return (
-    <Drawer open={open} title="Agregar ingrediente" subtitle="Selecciona insumo o sub-receta y especifica la cantidad" onClose={onClose}
+    <Drawer open={open} title="Agregar ingrediente" subtitle="Busca y selecciona el insumo o sub-receta" onClose={onClose}
       footer={
         <>
           <button className="btn" onClick={onClose}>Cancelar</button>
@@ -363,6 +369,8 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas, onlyI
         </>
       }>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Selector de tipo */}
         {!onlyInsumos && (
           <div>
             {lbl('Tipo')}
@@ -372,44 +380,80 @@ const AddIngredienteDrawer = ({ open, onClose, onAdd, insumos, subrecetas, onlyI
             </div>
           </div>
         )}
+
+        {/* Buscador + lista */}
         <div>
-          {lbl(type === 'insumo' ? 'Insumo' : 'Sub-receta')}
-          <select style={fl} value={itemId} onChange={e => handleItemChange(e.target.value)}>
-            {type === 'insumo' ? (
-              insumos.map(x => <option key={x.id} value={x.id}>{x.name}</option>)
-            ) : (() => {
-              const catOrder = ['Proteína cocida', 'Aderezos', 'Salsas', 'Otros'];
-              const grouped = (subrecetas || []).reduce((acc, s) => {
-                const cat = s.category || 'Otros';
-                if (!acc[cat]) acc[cat] = [];
-                acc[cat].push(s);
-                return acc;
-              }, {});
-              const sortedCats = Object.keys(grouped).sort((a, b) => {
-                const ia = catOrder.indexOf(a);
-                const ib = catOrder.indexOf(b);
-                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-              });
-              return sortedCats.map(cat => (
-                <optgroup key={cat} label={cat}>
-                  {grouped[cat].map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-                </optgroup>
-              ));
-            })()}
-          </select>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            {lbl('Cantidad')}
-            <input type="number" step="0.01" min="0.01" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={qty} onChange={e => setQty(e.target.value)} />
+          {lbl(type === 'insumo' ? 'Buscar insumo' : 'Buscar sub-receta')}
+
+          {/* Chip del seleccionado */}
+          {selectedItem && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 10px', background: 'var(--accent-soft)', border: '1px solid var(--accent)', borderRadius: 6 }}>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--accent-text)' }}>{selectedItem.name}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{type === 'insumo' ? selectedItem.category : selectedItem.category}</span>
+              <button style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--text-3)', fontSize: 14, lineHeight: 1, padding: '0 2px' }} onClick={() => { setItemId(''); setUnit(''); }}>×</button>
+            </div>
+          )}
+
+          {/* Input de búsqueda */}
+          <div className="search" style={{ marginBottom: 6 }}>
+            <Icon name="search" size={14} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={type === 'insumo' ? 'Ej: cebolla, pollo, sal...' : 'Ej: pulled pork, coleslaw...'}
+              autoFocus={!selectedItem}
+            />
           </div>
-          <div>
-            {lbl('Unidad')}
-            <select style={fl} value={unit} onChange={e => setUnit(e.target.value)}>
-              {units.map(u => <option key={u}>{u}</option>)}
-            </select>
-          </div>
+
+          {/* Lista de resultados */}
+          {search.trim().length > 0 && (
+            <div style={{ border: '1px solid var(--border)', borderRadius: 6, maxHeight: 220, overflowY: 'auto', background: 'var(--surface)' }}>
+              {filtered.length === 0 ? (
+                <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--text-3)', textAlign: 'center' }}>Sin resultados para "{search}"</div>
+              ) : (
+                filtered.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelect(item)}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '10px 14px',
+                      border: 0, borderBottom: '1px solid var(--border)',
+                      background: item.id === itemId ? 'var(--accent-soft)' : 'transparent',
+                      cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: 13, fontWeight: 500, color: item.id === itemId ? 'var(--accent-text)' : 'var(--text)' }}>{item.name}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{item.category} · {type === 'insumo' ? item.unit : item.yieldUnit}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Hint si no hay búsqueda y no hay seleccionado */}
+          {search.trim().length === 0 && !selectedItem && (
+            <div style={{ fontSize: 12, color: 'var(--text-3)', padding: '6px 2px' }}>
+              Escribe para buscar entre {sourceList.length} {type === 'insumo' ? 'insumos' : 'sub-recetas'}
+            </div>
+          )}
         </div>
+
+        {/* Cantidad y unidad — solo si hay algo seleccionado */}
+        {selectedItem && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              {lbl('Cantidad')}
+              <input type="number" step="0.01" min="0.01" style={{ ...fl, fontFamily: 'var(--font-mono)' }} value={qty} onChange={e => setQty(e.target.value)} autoFocus />
+            </div>
+            <div>
+              {lbl('Unidad')}
+              <select style={fl} value={unit} onChange={e => setUnit(e.target.value)}>
+                {units.map(u => <option key={u}>{u}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+
       </div>
     </Drawer>
   );
