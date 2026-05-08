@@ -565,6 +565,10 @@ const App = () => {
   }, [store]);
 
   // Polling cada 5 s — detecta cambios de otros usuarios
+  // Usa una ref para acceder al store actual sin crear dependencias en el efecto
+  const storeRef = useRef(null);
+  useEffect(() => { storeRef.current = store; }, [store]);
+
   useEffect(() => {
     const fetchRemote = () => {
       fetch('/api/store')
@@ -573,6 +577,7 @@ const App = () => {
           if (data && data.savedAt && data.savedAt > lastSavedAt.current) {
             lastSavedAt.current = data.savedAt;
             remoteUpdate.current = true;
+            // Aplica mergeSeeds sobre los datos remotos para incorporar nuevos seeds
             const merged = mergeSeeds(data);
             setStore(merged);
             setViewMonthId(v => merged.months[v] ? v : merged.currentMonthId);
@@ -582,9 +587,8 @@ const App = () => {
     };
     const id = setInterval(fetchRemote, 5000);
     // También sincroniza cuando el usuario vuelve a la pestaña
-    const onFocus = () => fetchRemote();
-    window.addEventListener('focus', onFocus);
-    return () => { clearInterval(id); window.removeEventListener('focus', onFocus); };
+    window.addEventListener('focus', fetchRemote);
+    return () => { clearInterval(id); window.removeEventListener('focus', fetchRemote); };
   }, []);
 
   // Atajo de teclado — debe estar antes del early return
