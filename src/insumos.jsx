@@ -43,7 +43,7 @@ const Insumos = ({ insumos, setInsumos }) => {
       <div className="page-head">
         <div>
           <h1 className="page-title">Insumos</h1>
-          <div className="page-sub">{insumos.length} ingredientes activos · Valor de inventario {fmt$0(totalValue)}</div>
+          <div className="page-sub">{insumos.length} ingredientes activos</div>
         </div>
         <div className="page-actions">
           <button className="btn" onClick={exportCSV}><Icon name="download" /> Exportar CSV</button>
