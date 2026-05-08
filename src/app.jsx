@@ -488,16 +488,31 @@ const App = () => {
     Object.keys(months).forEach(mid => {
       const m = { ...months[mid] };
 
-      // INSUMOS: siempre sincroniza del SEED (son datos de costo/referencia, no editables por el usuario)
+      // INSUMOS: combina el SEED con los cambios del usuario.
+      // Si el usuario editó un insumo del SEED (purchasePrice, category, etc.), se preservan sus cambios.
+      // Solo se agregan campos nuevos del SEED que el usuario no tenga todavía.
+      const savedInsumoMap = new Map((m.insumos || []).map(x => [x.id, x]));
+      const mergedSeedInsumos = SD.SEED_INSUMOS.map(seedIns => {
+        const saved = savedInsumoMap.get(seedIns.id);
+        if (saved) {
+          // Preserva todo lo que el usuario guardó; solo agrega campos del seed que falten
+          return { ...seedIns, ...saved };
+        }
+        return seedIns;
+      });
       const userInsumos = (m.insumos || []).filter(x => !seedInsumoIds.has(x.id));
-      m.insumos = [...SD.SEED_INSUMOS, ...userInsumos];
+      m.insumos = [...mergedSeedInsumos, ...userInsumos];
 
-      // SUB-RECETAS: siempre sincroniza del SEED, conserva las creadas manualmente
+      // SUB-RECETAS: igual que insumos — preserva edits del usuario sobre el seed
+      const savedSubMap = new Map((m.subrecetas || []).map(x => [x.id, x]));
+      const mergedSeedSubs = SD.SEED_SUBRECETAS.map(seedSub => {
+        const saved = savedSubMap.get(seedSub.id);
+        return saved ? { ...seedSub, ...saved } : seedSub;
+      });
       const userSubs = (m.subrecetas || []).filter(x => !seedSubIds.has(x.id));
-      m.subrecetas = [...SD.SEED_SUBRECETAS, ...userSubs];
+      m.subrecetas = [...mergedSeedSubs, ...userSubs];
 
       // RECETAS: solo agrega las del SEED que el usuario NO haya eliminado nunca.
-      // Se usa una lista negra de IDs eliminados guardada en el store.
       const deletedIds = new Set(m.deletedRecetaIds || []);
       const existingRecetaIds = new Set((m.recetas || []).map(x => x.id));
       const seedToAdd = SD.SEED_RECETAS.filter(r => !existingRecetaIds.has(r.id) && !deletedIds.has(r.id));
@@ -549,22 +564,27 @@ const App = () => {
     return () => clearTimeout(saveTimer.current);
   }, [store]);
 
-  // Polling cada 15 s — detecta cambios de otros usuarios
+  // Polling cada 5 s — detecta cambios de otros usuarios
   useEffect(() => {
-    const id = setInterval(() => {
+    const fetchRemote = () => {
       fetch('/api/store')
         .then(r => r.json())
         .then(data => {
           if (data && data.savedAt && data.savedAt > lastSavedAt.current) {
             lastSavedAt.current = data.savedAt;
             remoteUpdate.current = true;
-            setStore(data);
-            setViewMonthId(v => data.months[v] ? v : data.currentMonthId);
+            const merged = mergeSeeds(data);
+            setStore(merged);
+            setViewMonthId(v => merged.months[v] ? v : merged.currentMonthId);
           }
         })
         .catch(() => {});
-    }, 15000);
-    return () => clearInterval(id);
+    };
+    const id = setInterval(fetchRemote, 5000);
+    // También sincroniza cuando el usuario vuelve a la pestaña
+    const onFocus = () => fetchRemote();
+    window.addEventListener('focus', onFocus);
+    return () => { clearInterval(id); window.removeEventListener('focus', onFocus); };
   }, []);
 
   // Atajo de teclado — debe estar antes del early return
