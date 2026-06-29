@@ -615,7 +615,7 @@ const App = () => {
 
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
-  const { insumos, subrecetas, recetas, fixedCosts, gastos, empleados } = monthData;
+  const { insumos, subrecetas, recetas, fixedCosts, gastos, empleados, aiConversations } = monthData;
 
   // Setters: siempre escriben al mes activo (currentMonthId)
   const setInsumos = (v) => setStore(s => {
@@ -650,6 +650,11 @@ const App = () => {
     const next = typeof v === 'function' ? v(cur.empleados || {}) : v;
     return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: next } } };
   });
+  const setAIConversations = (v) => setStore(s => {
+    const cur = s.months[s.currentMonthId];
+    const next = typeof v === 'function' ? v(cur.aiConversations || []) : v;
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, aiConversations: next } } };
+  });
 
   const crearNuevoMes = (newId) => {
     setStore(s => {
@@ -682,6 +687,7 @@ const App = () => {
     { id: 'rentabilidad', label: 'Rentabilidad', icon: 'pie' },
     { id: 'reportes', label: 'Reportes', icon: 'chart' },
     { id: 'historico', label: 'Histórico de precios', icon: 'history' },
+    { id: 'asesores', label: 'Asesores IA', icon: 'sparkles', section: 'Estrategia' },
     { id: 'gastos', label: 'Gastos', icon: 'wallet', section: 'Administración' },
     { id: 'empleados', label: 'Empleados', icon: 'users', section: 'Administración' },
   ];
@@ -719,6 +725,15 @@ const App = () => {
             <Icon name={item.icon} size={15} />
             {item.label}
             {item.badge != null && <span className="badge">{item.badge}</span>}
+          </button>
+        ))}
+
+        <div className="nav-section">Estrategia</div>
+        {navItems.filter(i => i.section === 'Estrategia').map(item => (
+          <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
+            onClick={() => { setPage(item.id); setOpenRecetaId(null); }}>
+            <Icon name={item.icon} size={15} />
+            {item.label}
           </button>
         ))}
 
@@ -833,6 +848,7 @@ const App = () => {
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
             {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
+            {page === 'asesores' && <AIPage insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} conversations={aiConversations} setConversations={setAIConversations} />}
           </div>
         </div>
       </main>
@@ -841,7 +857,6 @@ const App = () => {
         <FixedCostsDrawer costs={fixedCosts} onSave={setFixedCosts} onClose={() => setShowFixedCosts(false)} />
       )}
       {tweaks.open && <TweaksPanel vals={tweaks.vals} set={tweaks.set} onClose={tweaks.close} />}
-      <AIAssistant insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} />
       {showWelcome && (
         <WelcomeModal onClose={() => {
           localStorage.setItem('pb_tour_done', '1');
