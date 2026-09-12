@@ -65,7 +65,7 @@ const EmpleadosPage = ({ empleados, setEmpleados, config }) => {
   // ── CRUD Empleado ──
   const openNew = () => {
     setEditId(null);
-    setForm({ nombre: '', puesto: PUESTOS[0], salario: '', tipoPago: 'Quincenal', horasDia: 8, diasSemana: 6, fechaIngreso: hoy(), estado: 'Activo', dpi: '', telefono: '', nota: '' });
+    setForm({ nombre: '', puesto: PUESTOS[0], salario: '', tipoPago: 'Quincenal', fechaIngreso: hoy(), estado: 'Activo', dpi: '', telefono: '', nota: '' });
     setShowForm(true);
     setTimeout(() => inputRef.current?.focus(), 80);
   };
