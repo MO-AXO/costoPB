@@ -241,12 +241,13 @@ const App = () => {
 
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
-  const { insumos = [], subrecetas = [], recetas = [], fixedCosts = {}, gastos, empleados } = monthData;
+  const { insumos = [], subrecetas = [], recetas = [], fixedCosts = {}, gastos, empleados, ventas } = monthData;
 
   // Setters: siempre escriben al mes activo (currentMonthId)
-  const setRecetas = (v) => setStore(s => {
+  const setVentas = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, recetas: typeof v==='function' ? v(cur.recetas) : v } } };
+    const next = typeof v === 'function' ? v(cur.ventas || []) : v;
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, ventas: next } } };
   });
   const setGastos = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
@@ -273,6 +274,7 @@ const App = () => {
             subrecetas: cur.subrecetas,
             recetas: cur.recetas.map(r => ({ ...r, monthlySales: 0 })),
             fixedCosts: cur.fixedCosts,
+            ventas: [],
             gastos: { caja: [], formal: [] },
             empleados: { lista: cur.empleados?.lista || [], pagos: [], ausencias: [] },
           }
@@ -369,7 +371,7 @@ const App = () => {
             </div>
           )}
           <div className={isCurrentMonth ? '' : 'pb-readonly'}>
-            {page === 'ventas' && <Ventas recetas={recetas} setRecetas={setRecetas} insumos={insumos} subrecetas={subrecetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
+            {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
             {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} gastos={gastos} store={store} viewMonthId={viewMonthId} />}
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
