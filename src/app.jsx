@@ -292,8 +292,7 @@ const App = () => {
   const navItems = [
     { id: 'ventas', label: 'Ventas', icon: 'trending' },
     { id: 'gastos', label: 'Gastos', icon: 'wallet' },
-    { id: 'reportes', label: 'Reportes', icon: 'chart' },
-    { id: 'historico', label: 'Histórico', icon: 'history' },
+
     { id: 'empleados', label: 'Empleados', icon: 'users' },
     { id: 'configuracion', label: 'Configuración', icon: 'settings' },
   ];
@@ -379,8 +378,7 @@ const App = () => {
           <div className={isCurrentMonth ? '' : 'pb-readonly'}>
             {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
-            {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} gastos={gastos} store={store} viewMonthId={viewMonthId} />}
-            {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
+
             {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
