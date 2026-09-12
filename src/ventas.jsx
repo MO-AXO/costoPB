@@ -1,5 +1,5 @@
 // Ventas — Registro de ingresos por documento
-const Ventas = ({ ventas, setVentas, monthLabel }) => {
+const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
   const { useState, useRef, useMemo } = React;
 
   const TIPOS_DOC = ['Crédito Fiscal', 'Factura'];
@@ -76,11 +76,19 @@ const Ventas = ({ ventas, setVentas, monthLabel }) => {
     }, {});
   }, [ventas]);
 
+  const tasaImpuesto = config?.tasaImpuesto ?? 13;
+  const tasaComision = config?.tasaComision ?? 3;
+
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
   const hoy = () => new Date().toISOString().slice(0, 10);
 
   const calcNeto = (total, comision, impuestos) =>
     (parseFloat(total) || 0) - (parseFloat(comision) || 0) - (parseFloat(impuestos) || 0);
+
+  const calcFromTotal = (total) => {
+    const t = parseFloat(total) || 0;
+    return { comision: +(t * tasaComision / 100).toFixed(2), impuestos: +(t * tasaImpuesto / 100).toFixed(2) };
+  };
 
   const openNew = () => {
     setEditId(null);
@@ -130,7 +138,14 @@ const Ventas = ({ ventas, setVentas, monthLabel }) => {
     setVentas(prev => (prev || []).filter(x => x.id !== id));
   };
 
-  const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const upd = (k, v) => {
+    if (k === 'ingresoTotal') {
+      const calc = calcFromTotal(v);
+      setForm(p => ({ ...p, ingresoTotal: v, comision: calc.comision, impuestos: calc.impuestos }));
+    } else {
+      setForm(p => ({ ...p, [k]: v }));
+    }
+  };
 
   const fmt$ = (n) => '$' + (n || 0).toFixed(2);
   const fmt$0 = (n) => '$' + Math.round(n || 0).toLocaleString();
@@ -392,15 +407,15 @@ const Ventas = ({ ventas, setVentas, monthLabel }) => {
                       style={{ ...fl, fontFamily: 'var(--font-mono)' }} />
                   </div>
                   <div>
-                    {lbl('Comisión ($)')}
+                    {lbl(`Comisión (${tasaComision}%)`)}
                     <input type="number" min="0" step="0.01" placeholder="0.00"
-                      value={form.comision || ''} onChange={e => upd('comision', e.target.value)}
+                      value={form.comision ?? ''} onChange={e => upd('comision', e.target.value)}
                       style={{ ...fl, fontFamily: 'var(--font-mono)' }} />
                   </div>
                   <div>
-                    {lbl('Impuestos ($)')}
+                    {lbl(`Impuestos (${tasaImpuesto}%)`)}
                     <input type="number" min="0" step="0.01" placeholder="0.00"
-                      value={form.impuestos || ''} onChange={e => upd('impuestos', e.target.value)}
+                      value={form.impuestos ?? ''} onChange={e => upd('impuestos', e.target.value)}
                       style={{ ...fl, fontFamily: 'var(--font-mono)' }} />
                   </div>
                 </div>

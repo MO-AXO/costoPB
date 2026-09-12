@@ -17,6 +17,7 @@ const seedStore = () => {
   const id = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   return {
     currentMonthId: id,
+    config: { tasaImpuesto: 13, tasaComision: 3 },
     months: {
       [id]: {
         label: mesLabel(id),
@@ -149,6 +150,8 @@ const App = () => {
       m.fixedCosts = { ...defaultCosts, ...(m.fixedCosts || {}) };
       months[mid] = m;
     });
+    // CONFIG: inyecta defaults si no existe
+    if (!s.config) s = { ...s, config: { tasaImpuesto: 13, tasaComision: 3 } };
     return { ...s, months };
   };
 
@@ -242,8 +245,10 @@ const App = () => {
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
   const { insumos = [], subrecetas = [], recetas = [], fixedCosts = {}, gastos, empleados, ventas } = monthData;
+  const config = store.config || { tasaImpuesto: 13, tasaComision: 3 };
 
-  // Setters: siempre escriben al mes activo (currentMonthId)
+  // Setters
+  const setConfig = (v) => setStore(s => ({ ...s, config: v }));
   const setVentas = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
     const next = typeof v === 'function' ? v(cur.ventas || []) : v;
@@ -290,6 +295,7 @@ const App = () => {
     { id: 'reportes', label: 'Reportes', icon: 'chart' },
     { id: 'historico', label: 'Histórico', icon: 'history' },
     { id: 'empleados', label: 'Empleados', icon: 'users' },
+    { id: 'configuracion', label: 'Configuración', icon: 'settings' },
   ];
 
   const crumbLabel = navItems.find(n => n.id === page)?.label || 'Ventas';
@@ -371,11 +377,12 @@ const App = () => {
             </div>
           )}
           <div className={isCurrentMonth ? '' : 'pb-readonly'}>
-            {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} />}
+            {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
             {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} gastos={gastos} store={store} viewMonthId={viewMonthId} />}
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
             {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
+            {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
         </div>
       </main>
