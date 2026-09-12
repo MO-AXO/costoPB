@@ -4,7 +4,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
 
   const TIPOS_DOC = ['Crédito Fiscal', 'Factura'];
   const CATEGORIAS = ['Restaurante', 'Evento', 'Pedidos Ya', 'Banquete'];
-  const MEDIOS_PAGO = ['BAC', 'NICO', 'Pedidos Ya'];
+  const MEDIOS_PAGO = ['Efectivo', 'BAC', 'NICO', 'Pedidos Ya'];
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
