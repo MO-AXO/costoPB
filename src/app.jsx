@@ -52,231 +52,6 @@ const seedStore = () => {
   };
 };
 
-// ─── Drawer: Costos Fijos ─────────────────────────────────────────────────────
-const FixedCostsDrawer = ({ costs, onSave, onClose }) => {
-  const [v, setV] = useState({ ...costs });
-  const [staff, setStaff] = useState(
-    costs.staff && costs.staff.length > 0
-      ? costs.staff
-      : [
-          { role: 'Jefe de cocina',     salary: 500, dailyHours: 12 },
-          { role: 'Ayudante de cocina', salary: 450, dailyHours: 12 },
-          { role: 'Ayudante de cocina', salary: 450, dailyHours: 12 },
-        ]
-  );
-
-  const upd = (k, val) => setV(p => ({ ...p, [k]: parseFloat(val) || 0 }));
-  const updStaff = (i, k, val) => setStaff(s => s.map((m, j) => j === i ? { ...m, [k]: k === 'role' ? val : (parseFloat(val) || 0) } : m));
-  const addStaff = () => setStaff(s => [...s, { role: 'Empleado', salary: 0, dailyHours: 8 }]);
-  const removeStaff = (i) => setStaff(s => s.filter((_, j) => j !== i));
-
-  // Cálculos de personal
-  const WEEKS_PER_MONTH = 4;
-  const DAYS_PER_WEEK = 6;
-  const staffCalc = staff.map(m => ({
-    ...m,
-    weeklyHours: m.dailyHours * DAYS_PER_WEEK,
-    monthlyHours: m.dailyHours * DAYS_PER_WEEK * WEEKS_PER_MONTH,
-    hourRate: m.salary / Math.max(m.dailyHours * DAYS_PER_WEEK * WEEKS_PER_MONTH, 1),
-  }));
-  const totalStaffSalary = staffCalc.reduce((a, m) => a + m.salary, 0);
-  const totalStaffHours  = staffCalc.reduce((a, m) => a + m.monthlyHours, 0);
-  const blendedLaborRate = totalStaffHours > 0 ? totalStaffSalary / totalStaffHours : 0;
-
-  const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13, fontFamily: 'var(--font-mono)' };
-  const lbl = (t) => <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>{t}</label>;
-  const field = (label, key, sfx = 'USD/mes') => (
-    <div>
-      {lbl(label)}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="number" step="1" min="0" value={v[key] ?? 0} onChange={e => upd(key, e.target.value)} style={fl} />
-        <span style={{ fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>{sfx}</span>
-      </div>
-    </div>
-  );
-
-  const total = (v.rent||0) + (v.gas||0) + (v.water||0) + (v.internet||0) +
-                (v.gasoline||0) + (v.charcoal||0) + (v.wood||0) + (v.aluminum||0) +
-                (v.electricity||0) + (v.accountant||0) + (v.cleaning||0) + totalStaffSalary;
-  const perCover = total / Math.max(v.monthlyCovers||1, 1);
-
-  const thSt = { padding: '6px 10px', fontSize: 11, fontWeight: 600, textAlign: 'left', color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' };
-  const tdSt = { padding: '8px 10px', fontSize: 13, borderBottom: '1px solid var(--border)', verticalAlign: 'middle' };
-  const inpSt = { fontFamily: 'var(--font-mono)', fontSize: 13, width: '100%', border: '1px solid var(--border)', borderRadius: 4, padding: '4px 6px', background: 'var(--surface)', textAlign: 'right' };
-
-  return (
-    <Drawer open title="Costos fijos mensuales" subtitle="Se prorratean por cubierta para calcular el costo por plato"
-      onClose={onClose}
-      footer={<>
-        <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={() => {
-          onSave({ ...v, staff, laborRatePerHour: blendedLaborRate });
-          onClose();
-        }}>Guardar cambios</button>
-      </>}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        <div className="hint" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>Total fijos: <b>${Math.round(total).toLocaleString()}/mes</b></span>
-          <span>Por cubierta: <b>${perCover.toFixed(2)}</b></span>
-        </div>
-
-        {/* ── PERSONAL ── */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Personal de cocina</div>
-            <button className="btn btn-sm" onClick={addStaff}><Icon name="plus" size={12} /> Agregar</button>
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-            <thead>
-              <tr>
-                <th style={thSt}>Puesto</th>
-                <th style={{...thSt, textAlign:'right'}}>Salario/mes</th>
-                <th style={{...thSt, textAlign:'right'}}>Hrs/día</th>
-                <th style={{...thSt, textAlign:'right'}}>Hrs/mes</th>
-                <th style={{...thSt, textAlign:'right'}}>$/hora</th>
-                <th style={{...thSt}}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {staffCalc.map((m, i) => (
-                <tr key={i}>
-                  <td style={tdSt}>
-                    <input style={{...inpSt, textAlign:'left'}} value={m.role} onChange={e => updStaff(i, 'role', e.target.value)} />
-                  </td>
-                  <td style={tdSt}>
-                    <input type="number" style={inpSt} value={m.salary} onChange={e => updStaff(i, 'salary', e.target.value)} />
-                  </td>
-                  <td style={tdSt}>
-                    <input type="number" style={inpSt} value={m.dailyHours} onChange={e => updStaff(i, 'dailyHours', e.target.value)} />
-                  </td>
-                  <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', color:'var(--text-2)'}}>{m.monthlyHours}</td>
-                  <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', color: 'var(--good)', fontWeight:600}}>${m.hourRate.toFixed(2)}</td>
-                  <td style={{...tdSt, textAlign:'center'}}>
-                    <button className="icon-btn" onClick={() => removeStaff(i)}><Icon name="trash" size={13} /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr style={{ background: 'var(--surface-2)' }}>
-                <td style={{...tdSt, fontWeight:600}}>Total</td>
-                <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:600}}>${totalStaffSalary.toLocaleString()}</td>
-                <td style={tdSt}></td>
-                <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:600}}>{totalStaffHours}</td>
-                <td style={{...tdSt, textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:700, color:'var(--accent)'}}>${blendedLaborRate.toFixed(2)}/hr</td>
-                <td style={tdSt}></td>
-              </tr>
-            </tfoot>
-          </table>
-          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>
-            Calculado con 6 días/semana × 4 semanas. Tasa blended se aplica automáticamente a todas las recetas.
-          </div>
-        </div>
-
-        {/* ── COSTOS OPERATIVOS ── */}
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Instalación</div>
-        {field('Alquiler', 'rent')}
-        {field('Contador', 'accountant')}
-
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Servicios</div>
-        {field('Electricidad', 'electricity')}
-        {field('Gas', 'gas')}
-        {field('Agua', 'water')}
-        {field('Internet', 'internet')}
-        {field('Gasolina', 'gasoline')}
-
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Insumos de operación</div>
-        {field('Carbón', 'charcoal')}
-        {field('Madera', 'wood')}
-        {field('Aluminio (foil)', 'aluminum')}
-        {field('Equipo de limpieza', 'cleaning')}
-
-        <div className="divider" />
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Operación</div>
-        {field('Cubiertas mensuales estimadas', 'monthlyCovers', 'platos/mes')}
-      </div>
-    </Drawer>
-  );
-};
-
-// ─── Búsqueda global ──────────────────────────────────────────────────────────
-const SearchDropdown = ({ query, recetas, insumos, onOpenReceta, onNavigate }) => {
-  if (query.length < 2) return null;
-  const rr = recetas.filter(r => r.name.toLowerCase().includes(query.toLowerCase())).slice(0, 5);
-  const ii = insumos.filter(i => i.name.toLowerCase().includes(query.toLowerCase())).slice(0, 5);
-  const total = rr.length + ii.length;
-  const itemSt = { display:'flex', alignItems:'center', gap:10, width:'100%', padding:'8px 12px', border:0, background:'transparent', textAlign:'left', cursor:'pointer', fontSize:13 };
-  return (
-    <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, boxShadow:'var(--shadow-md)', zIndex:20, overflow:'hidden' }}>
-      {total === 0 ? (
-        <div style={{ padding:'14px 12px', fontSize:13, color:'var(--text-3)', textAlign:'center' }}>Sin resultados para «{query}»</div>
-      ) : (
-        <>
-          {rr.length > 0 && <div style={{ padding:'8px 12px 4px', fontSize:10, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--text-3)', fontWeight:600 }}>Recetas</div>}
-          {rr.map(r => (
-            <button key={r.id} onMouseDown={() => onOpenReceta(r.id)} style={itemSt}>
-              <Icon name="chef" size={14} /><span style={{ fontWeight:500, flex:1 }}>{r.name}</span><span style={{ fontSize:11, color:'var(--text-3)' }}>{r.category}</span>
-            </button>
-          ))}
-          {ii.length > 0 && <div style={{ padding:'8px 12px 4px', fontSize:10, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--text-3)', fontWeight:600, borderTop: rr.length > 0 ? '1px solid var(--border)' : 0 }}>Insumos</div>}
-          {ii.map(i => (
-            <button key={i.id} onMouseDown={() => onNavigate('insumos')} style={itemSt}>
-              <Icon name="package" size={14} /><span style={{ fontWeight:500, flex:1 }}>{i.name}</span><span style={{ fontSize:11, color:'var(--text-3)' }}>{i.category}</span>
-            </button>
-          ))}
-        </>
-      )}
-    </div>
-  );
-};
-
-// ─── Panel de notificaciones ──────────────────────────────────────────────────
-const NotifPanel = ({ open, onClose, insumos, recetas, subrecetas, fixedCosts }) => {
-  if (!open) return null;
-  const C = window.PB_CALC;
-  const alerts = [];
-  recetas.forEach(r => {
-    const m = C.recetaMetrics(r, insumos, subrecetas, fixedCosts);
-    if (m.foodCostPct > r.targetFoodCost + 5)
-      alerts.push({ kind:'bad', icon:'warn', title:r.name, body:`Food cost ${m.foodCostPct.toFixed(1)}% (obj. ${r.targetFoodCost}%)` });
-  });
-  D.SEED_PRICE_HISTORY.slice(0, 6).forEach(h => {
-    if (Math.abs(h.change) > 5) {
-      const ins = insumos.find(i => i.id === h.insumoId);
-      if (ins) alerts.push({ kind: h.change>0?'warn':'good', icon: h.change>0?'arrow-up':'arrow-down', title: ins.name, body: `${h.change>0?'+':''}${h.change.toFixed(1)}% el ${h.date}` });
-    }
-  });
-  return (
-    <>
-      <div style={{ position:'fixed', inset:0, zIndex:29 }} onClick={onClose} />
-      <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, width:320, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, boxShadow:'var(--shadow-md)', zIndex:30, overflow:'hidden' }}>
-        <div style={{ padding:'10px 14px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontSize:13, fontWeight:600 }}>Notificaciones</span>
-          <Tag kind={alerts.length > 0 ? 'warn' : 'good'}>{alerts.length} alertas</Tag>
-        </div>
-        {alerts.length === 0 ? (
-          <div style={{ padding:16, fontSize:13, color:'var(--text-3)', textAlign:'center' }}>Sin alertas activas ✓</div>
-        ) : (
-          <div style={{ maxHeight:340, overflowY:'auto' }}>
-            {alerts.map((a,i) => (
-              <div key={i} style={{ padding:'10px 14px', borderBottom: i<alerts.length-1?'1px solid var(--border)':0, display:'flex', gap:10, alignItems:'flex-start' }}>
-                <div style={{ width:26, height:26, borderRadius:6, flexShrink:0, display:'grid', placeItems:'center', marginTop:2, background: a.kind==='bad'?'var(--bad-soft)':a.kind==='good'?'var(--good-soft)':'var(--warn-soft)', color: a.kind==='bad'?'var(--bad)':a.kind==='good'?'var(--good)':'var(--warn)' }}>
-                  <Icon name={a.icon} size={12} />
-                </div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:500 }}>{a.title}</div>
-                  <div style={{ fontSize:11, color:'var(--text-3)', marginTop:2 }}>{a.body}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
 // ─── Selector de mes ──────────────────────────────────────────────────────────
 const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onClose }) => {
   const ids = Object.keys(store.months).sort().reverse();
@@ -304,166 +79,18 @@ const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onClose }) => {
   );
 };
 
-// ─── Modal de bienvenida ──────────────────────────────────────────────────────
-const TOUR_STEPS = [
-  {
-    icon: 'dashboard',
-    title: 'Dashboard',
-    color: 'var(--accent)',
-    desc: 'Tu resumen mensual de un vistazo. Ves el Food Cost total, márgenes, utilidad estimada y alertas de platos que están sobre el objetivo. Es la primera pantalla que verás cada vez que entres.',
-  },
-  {
-    icon: 'trending',
-    title: 'Ventas',
-    color: '#0a7a52',
-    desc: 'Aquí registras cuántas unidades vendiste de cada plato en el mes. Solo edita el número de unidades — todo lo demás (ingresos, utilidad, márgenes) se recalcula automáticamente.',
-  },
-  {
-    icon: 'package',
-    title: 'Insumos',
-    color: '#b45309',
-    desc: 'El catálogo de todos los ingredientes con su costo por unidad. Si un proveedor sube el precio de la nuca de cerdo, cámbialo aquí y todas las recetas que la usan se actualizan al instante.',
-  },
-  {
-    icon: 'chef',
-    title: 'Recetas',
-    color: '#b42318',
-    desc: 'El corazón del sistema. Cada plato tiene su ficha técnica con ingredientes, costos, food cost, margen y un simulador de precio para probar qué pasa si subes o bajas el precio sin compromiso.',
-  },
-  {
-    icon: 'pie',
-    title: 'Rentabilidad',
-    color: '#6941c6',
-    desc: 'La Matriz de Menu Engineering clasifica tus platos en 4 categorías: Estrellas (venden mucho y dejan buen margen), Caballos de tiro, Acertijos y Perros. Te dice qué promover y qué evaluar.',
-  },
-  {
-    icon: 'chart',
-    title: 'Reportes',
-    color: '#344054',
-    desc: 'El Estado de Resultados (P&L) del mes: ingresos, costo de ingredientes, mano de obra, empaques, costos fijos y utilidad operativa. Útil para cerrar el mes y ver la foto completa.',
-  },
-  {
-    icon: 'sparkles',
-    title: 'Asesor IA',
-    color: 'var(--accent)',
-    desc: 'El botón azul en la esquina inferior derecha. Puedes preguntarle cosas como "¿cuál es mi plato más rentable?" o "¿qué pasa si el brisket sube 10%?" y responde con tus datos reales.',
-  },
-];
-
-const WelcomeModal = ({ onClose }) => {
-  const [step, setStep] = useState(0);
-  const isLast = step === TOUR_STEPS.length - 1;
-  const s = TOUR_STEPS[step];
-
-  return (
-    <>
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,25,0.55)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-        width: 520, background: 'var(--surface)', borderRadius: 16,
-        boxShadow: '0 24px 80px rgba(15,20,25,0.28)', zIndex: 201,
-        overflow: 'hidden', display: 'flex', flexDirection: 'column',
-      }}>
-        {/* Barra de progreso */}
-        <div style={{ height: 3, background: 'var(--surface-sunk)' }}>
-          <div style={{ height: '100%', background: s.color, width: `${((step + 1) / TOUR_STEPS.length) * 100}%`, transition: 'width 0.3s' }} />
-        </div>
-
-        {/* Header */}
-        <div style={{ padding: '28px 32px 0' }}>
-          {step === 0 ? (
-            <>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
-                Pig Brothers — Sistema de Costeo
-              </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>
-                Bienvenido 👋
-              </div>
-              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 8 }}>
-                Esta herramienta calcula en tiempo real el costo de cada plato, tu food cost, márgenes y utilidad mensual. Todos los datos se guardan automáticamente.
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 4 }}>
-                Te vamos a explicar cada sección en {TOUR_STEPS.length - 1} pasos rápidos.
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: s.color + '18', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <Icon name={s.icon} size={22} style={{ color: s.color }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                    {step} de {TOUR_STEPS.length - 1}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.title}</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.7 }}>{s.desc}</div>
-            </>
-          )}
-        </div>
-
-        {/* Dots */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '20px 32px 0' }}>
-          {TOUR_STEPS.map((_, i) => (
-            <div key={i} onClick={() => setStep(i)} style={{
-              width: i === step ? 20 : 6, height: 6, borderRadius: 3,
-              background: i === step ? s.color : 'var(--border)',
-              transition: 'all 0.25s', cursor: 'pointer',
-            }} />
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: '20px 32px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button
-            className="btn btn-ghost"
-            onClick={onClose}
-            style={{ fontSize: 12, color: 'var(--text-3)' }}
-          >
-            Saltar introducción
-          </button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {step > 0 && (
-              <button className="btn" onClick={() => setStep(s => s - 1)}>
-                ← Anterior
-              </button>
-            )}
-            <button
-              className="btn btn-primary"
-              onClick={() => isLast ? onClose() : setStep(s => s + 1)}
-              style={{ background: s.color, borderColor: s.color, minWidth: 120 }}
-            >
-              {isLast ? '¡Empezar!' : 'Siguiente →'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
 // ─── App ──────────────────────────────────────────────────────────────────────
 const App = () => {
   const [store, setStore] = useState(null);
   const [viewMonthId, setViewMonthId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('ok'); // 'ok' | 'saving' | 'error'
-  const [page, setPage] = useState('dashboard');
-  const [openRecetaId, setOpenRecetaId] = useState(null);
-  const [showFixedCosts, setShowFixedCosts] = useState(false);
+  const [page, setPage] = useState('ventas');
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [searchQ, setSearchQ] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [showNotifs, setShowNotifs] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('pb_tour_done'));
-  const searchRef = useRef(null);
   const saveTimer = useRef(null);
   const lastSavedAt = useRef(0);
   const initialized = useRef(false);
   const remoteUpdate = useRef(false);
-  const tweaks = window.useTweaksPanel();
 
   // Carga inicial desde la API
   // Sincroniza SEED con el store:
@@ -591,11 +218,10 @@ const App = () => {
     return () => { clearInterval(id); window.removeEventListener('focus', fetchRemote); };
   }, []);
 
-  // Atajo de teclado — debe estar antes del early return
+  // Atajo de teclado
   useEffect(() => {
     const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); searchRef.current?.focus(); setSearchOpen(true); }
-      if (e.key === 'Escape') { setSearchOpen(false); setSearchQ(''); setShowNotifs(false); setShowFixedCosts(false); setShowMonthPicker(false); }
+      if (e.key === 'Escape') { setShowMonthPicker(false); }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
@@ -615,30 +241,12 @@ const App = () => {
 
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
-  const { insumos, subrecetas, recetas, fixedCosts, gastos, empleados, aiConversations } = monthData;
+  const { insumos = [], subrecetas = [], recetas = [], fixedCosts = {}, gastos, empleados } = monthData;
 
   // Setters: siempre escriben al mes activo (currentMonthId)
-  const setInsumos = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, insumos: typeof v==='function' ? v(cur.insumos) : v } } };
-  });
-  const setSubrecetas = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, subrecetas: typeof v==='function' ? v(cur.subrecetas) : v } } };
-  });
   const setRecetas = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
     return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, recetas: typeof v==='function' ? v(cur.recetas) : v } } };
-  });
-  const deleteReceta = (id) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
-    const deletedIds = [...new Set([...(cur.deletedRecetaIds || []), id])];
-    const recetas = (cur.recetas || []).filter(r => r.id !== id);
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, recetas, deletedRecetaIds: deletedIds } } };
-  });
-  const setFixedCosts = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, fixedCosts: v } } };
   });
   const setGastos = (v) => setStore(s => {
     const cur = s.months[s.currentMonthId];
@@ -649,11 +257,6 @@ const App = () => {
     const cur = s.months[s.currentMonthId];
     const next = typeof v === 'function' ? v(cur.empleados || {}) : v;
     return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: next } } };
-  });
-  const setAIConversations = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
-    const next = typeof v === 'function' ? v(cur.aiConversations || []) : v;
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, aiConversations: next } } };
   });
 
   const crearNuevoMes = (newId) => {
@@ -680,26 +283,14 @@ const App = () => {
   };
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'ventas', label: 'Ventas', icon: 'trending' },
-    { id: 'insumos', label: 'Insumos', icon: 'package', badge: insumos.length },
-    { id: 'recetas', label: 'Recetas', icon: 'chef', badge: recetas.length + subrecetas.length },
-    { id: 'rentabilidad', label: 'Rentabilidad', icon: 'pie' },
+    { id: 'gastos', label: 'Gastos', icon: 'wallet' },
     { id: 'reportes', label: 'Reportes', icon: 'chart' },
-    { id: 'historico', label: 'Histórico de precios', icon: 'history' },
-    { id: 'asesores', label: 'Asesores IA', icon: 'sparkles', section: 'Estrategia' },
-    { id: 'gastos', label: 'Gastos', icon: 'wallet', section: 'Administración' },
-    { id: 'empleados', label: 'Empleados', icon: 'users', section: 'Administración' },
+    { id: 'historico', label: 'Histórico', icon: 'history' },
+    { id: 'empleados', label: 'Empleados', icon: 'users' },
   ];
 
-  const crumbLabel = navItems.find(n => n.id === page)?.label || 'Dashboard';
-  const goToReceta = (id) => { setOpenRecetaId(id); setPage('recetas'); };
-
-  const C = window.PB_CALC;
-  const alertCount = recetas.filter(r => {
-    const m = C.recetaMetrics(r, insumos, subrecetas, fixedCosts);
-    return m.foodCostPct > r.targetFoodCost + 5;
-  }).length;
+  const crumbLabel = navItems.find(n => n.id === page)?.label || 'Ventas';
 
   const syncDot = syncStatus === 'saving'
     ? { color: 'var(--warn)', label: 'Guardando…' }
@@ -714,59 +305,24 @@ const App = () => {
           <div className="brand-mark">PB</div>
           <div>
             <div className="brand-name">Pig Brothers</div>
-            <div className="brand-sub">Costeo</div>
+            <div className="brand-sub">Control</div>
           </div>
         </div>
 
-        <div className="nav-section">Operación</div>
-        {navItems.filter(i => !i.section).map(item => (
+        <div className="nav-section">Menú</div>
+        {navItems.map(item => (
           <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
-            onClick={() => { setPage(item.id); setOpenRecetaId(null); }}>
-            <Icon name={item.icon} size={15} />
-            {item.label}
-            {item.badge != null && <span className="badge">{item.badge}</span>}
-          </button>
-        ))}
-
-        <div className="nav-section">Estrategia</div>
-        {navItems.filter(i => i.section === 'Estrategia').map(item => (
-          <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
-            onClick={() => { setPage(item.id); setOpenRecetaId(null); }}>
+            onClick={() => setPage(item.id)}>
             <Icon name={item.icon} size={15} />
             {item.label}
           </button>
         ))}
 
-        <div className="nav-section">Administración</div>
-        {navItems.filter(i => i.section === 'Administración').map(item => (
-          <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
-            onClick={() => { setPage(item.id); setOpenRecetaId(null); }}>
-            <Icon name={item.icon} size={15} />
-            {item.label}
-          </button>
-        ))}
-
-        <div className="nav-section">Configuración</div>
-        <button className="nav-item" onClick={() => isCurrentMonth && setShowFixedCosts(true)}>
-          <Icon name="settings" size={15} /> Costos fijos
-        </button>
-        <button className="nav-item" onClick={() => { setPage('insumos'); setOpenRecetaId(null); }}>
-          <Icon name="package" size={15} /> Proveedores
-        </button>
-
-        <button
-          onClick={() => setShowWelcome(true)}
-          style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:6, border:0, background:'transparent', color:'var(--sidebar-text-muted)', fontSize:12, cursor:'pointer', width:'100%', textAlign:'left', marginBottom:4 }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
-          onMouseLeave={e => e.currentTarget.style.background='transparent'}
-        >
-          <Icon name="info" size={14} /> Ver guía de uso
-        </button>
         <div className="sidebar-foot">
           <div className="avatar">PB</div>
           <div style={{ flex:1, minWidth:0 }}>
             <div className="who">Pig Brothers BBQ</div>
-            <div className="role">Sistema de costeo</div>
+            <div className="role">Control operativo</div>
           </div>
         </div>
       </aside>
@@ -779,32 +335,6 @@ const App = () => {
             <span className="here">{crumbLabel}</span>
           </div>
           <div className="topbar-spacer" />
-
-          <div style={{ position:'relative' }}>
-            <div className="search">
-              <Icon name="search" size={14} />
-              <input ref={searchRef} value={searchQ}
-                onChange={e => { setSearchQ(e.target.value); setSearchOpen(true); }}
-                onFocus={() => setSearchOpen(true)}
-                onBlur={() => setTimeout(() => setSearchOpen(false), 160)}
-                placeholder="Buscar insumo, receta..." />
-              <kbd>⌘K</kbd>
-            </div>
-            {searchOpen && (
-              <SearchDropdown query={searchQ} recetas={recetas} insumos={insumos}
-                onOpenReceta={(id) => { goToReceta(id); setSearchQ(''); setSearchOpen(false); }}
-                onNavigate={(p) => { setPage(p); setSearchQ(''); setSearchOpen(false); }} />
-            )}
-          </div>
-
-          <div style={{ position:'relative' }}>
-            <button className="icon-btn" onClick={() => setShowNotifs(v => !v)} style={{ position:'relative' }}>
-              <Icon name="bell" size={15} />
-              {alertCount > 0 && <span style={{ position:'absolute', top:5, right:5, width:7, height:7, borderRadius:'50%', background:'var(--bad)', border:'2px solid var(--surface)' }} />}
-            </button>
-            <NotifPanel open={showNotifs} onClose={() => setShowNotifs(false)}
-              insumos={insumos} recetas={recetas} subrecetas={subrecetas} fixedCosts={fixedCosts} />
-          </div>
 
           <span title={syncDot.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--text-3)', userSelect:'none' }}>
             <span style={{ width:7, height:7, borderRadius:'50%', background: syncDot.color, display:'inline-block' }} />
@@ -839,32 +369,14 @@ const App = () => {
             </div>
           )}
           <div className={isCurrentMonth ? '' : 'pb-readonly'}>
-            {page === 'dashboard' && <Dashboard insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onNavigate={setPage} onOpenReceta={goToReceta} monthLabel={monthData.label} gastos={gastos} empleados={empleados} />}
             {page === 'ventas' && <Ventas recetas={recetas} setRecetas={setRecetas} insumos={insumos} subrecetas={subrecetas} fixedCosts={fixedCosts} monthLabel={monthData.label} />}
-            {page === 'insumos' && <Insumos insumos={insumos} setInsumos={setInsumos} />}
-            {page === 'recetas' && <Recetas insumos={insumos} subrecetas={subrecetas} setSubrecetas={setSubrecetas} recetas={recetas} setRecetas={setRecetas} deleteReceta={deleteReceta} fixedCosts={fixedCosts} openId={openRecetaId} />}
-            {page === 'rentabilidad' && <Rentabilidad insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} onOpenReceta={goToReceta} />}
+            {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
             {page === 'reportes' && <Reportes insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} monthLabel={monthData.label} gastos={gastos} store={store} viewMonthId={viewMonthId} />}
             {page === 'historico' && <Historico insumos={insumos} recetas={recetas} subrecetas={subrecetas} />}
-            {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
             {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
-            {page === 'asesores' && <AIPage insumos={insumos} subrecetas={subrecetas} recetas={recetas} fixedCosts={fixedCosts} conversations={aiConversations} setConversations={setAIConversations} />}
           </div>
         </div>
       </main>
-
-      {showFixedCosts && isCurrentMonth && (
-        <FixedCostsDrawer costs={fixedCosts} onSave={setFixedCosts} onClose={() => setShowFixedCosts(false)} />
-      )}
-      {tweaks.open && <TweaksPanel vals={tweaks.vals} set={tweaks.set} onClose={tweaks.close} />}
-      {showWelcome && (
-        <WelcomeModal onClose={() => {
-          localStorage.setItem('pb_tour_done', '1');
-          setShowWelcome(false);
-        }} />
-      )}
     </div>
   );
 };
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
