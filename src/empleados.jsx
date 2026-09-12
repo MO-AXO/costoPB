@@ -1,6 +1,10 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
-const EmpleadosPage = ({ empleados, setEmpleados }) => {
+const EmpleadosPage = ({ empleados, setEmpleados, config }) => {
   const { useState, useRef } = React;
+
+  const tasaISS   = config?.tasaISS   ?? 3;
+  const tasaAFP   = config?.tasaAFP   ?? 7.25;
+  const tasaRenta = config?.tasaRenta ?? 10;
 
   const PUESTOS     = ['Jefe de cocina', 'Ayudante de cocina', 'Cajero/a', 'Mesero/a', 'Repartidor', 'Limpieza', 'Administración', 'Otro'];
   const TIPOS_PAGO  = ['Quincenal', 'Semanal', 'Mensual'];
@@ -33,9 +37,14 @@ const EmpleadosPage = ({ empleados, setEmpleados }) => {
   const totalDeduc   = pagos.reduce((a, p) => a + (p.deduccion || 0), 0);
 
   // ── Helpers por empleado ──
-  const calcEmp = (emp) => {
-    const hrsmes = (emp.horasDia || 0) * (emp.diasSemana || 0) * 4;
-    return { hrsmes, costoHora: hrsmes > 0 ? (emp.salario || 0) / hrsmes : 0 };
+  const calcDesc = (salario) => {
+    const s = salario || 0;
+    return {
+      isss: +(s * tasaISS / 100).toFixed(2),
+      afp: +(s * tasaAFP / 100).toFixed(2),
+      renta: +(s * tasaRenta / 100).toFixed(2),
+      total: +(s * (tasaISS + tasaAFP + tasaRenta) / 100).toFixed(2),
+    };
   };
   const pagosEmp    = (id) => pagos.filter(p => p.empId === id).sort((a, b) => b.fecha.localeCompare(a.fecha));
   const ausenciasEmp= (id) => ausencias.filter(a => a.empId === id).sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -170,12 +179,15 @@ const EmpleadosPage = ({ empleados, setEmpleados }) => {
               <table className="tbl">
                 <thead><tr>
                   <th>Nombre</th><th>Puesto</th><th className="center">Estado</th>
-                  <th className="right">Salario/mes</th><th className="right">Hrs/mes</th>
-                  <th className="right">$/hora</th><th>Tipo pago</th><th>Ingreso</th><th className="center">Acciones</th>
+                  <th className="right">Salario/mes</th>
+                  <th className="right">ISSS ({tasaISS}%)</th>
+                  <th className="right">AFP ({tasaAFP}%)</th>
+                  <th className="right">Renta ({tasaRenta}%)</th>
+                  <th>Tipo pago</th><th>Ingreso</th><th className="center">Acciones</th>
                 </tr></thead>
                 <tbody>
                   {lista.map(emp => {
-                    const { hrsmes, costoHora } = calcEmp(emp);
+                    const d = calcDesc(emp.salario);
                     const desc = descuentoAusencias(emp);
                     return (
                       <tr key={emp.id}>
@@ -186,8 +198,9 @@ const EmpleadosPage = ({ empleados, setEmpleados }) => {
                         <td style={{ fontSize: 13 }}>{emp.puesto}</td>
                         <td className="center"><span className={`tag ${estadoColor[emp.estado]||''}`}>{emp.estado}</span></td>
                         <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${(emp.salario||0).toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)' }}>{hrsmes}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', color: 'var(--good)', fontWeight: 600 }}>${costoHora.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.isss.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.afp.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.renta.toFixed(2)}</td>
                         <td style={{ fontSize: 12 }}>{emp.tipoPago}</td>
                         <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)' }}>{emp.fechaIngreso||'—'}</td>
                         <td className="center">
@@ -209,7 +222,10 @@ const EmpleadosPage = ({ empleados, setEmpleados }) => {
                   <tr style={{ background: 'var(--surface-2)' }}>
                     <td colSpan={3} style={{ padding: '10px 14px', fontWeight: 600 }}>Total ({empActivos} activos)</td>
                     <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14 }}>${totalNomina.toFixed(2)}</td>
-                    <td colSpan={5} />
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${(totalNomina * tasaISS / 100).toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${(totalNomina * tasaAFP / 100).toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${(totalNomina * tasaRenta / 100).toFixed(2)}</td>
+                    <td colSpan={3} />
                   </tr>
                 </tfoot>
               </table>
@@ -401,13 +417,14 @@ const EmpleadosPage = ({ empleados, setEmpleados }) => {
                   <div>{lbl('Salario mensual (USD)')}<input type="number" min="0" step="0.01" value={form.salario||''} onChange={e=>updForm('salario',e.target.value)} style={{ ...fl,fontFamily:'var(--font-mono)' }}/></div>
                   <div>{lbl('Tipo de pago')}<select value={form.tipoPago||'Quincenal'} onChange={e=>updForm('tipoPago',e.target.value)} style={fl}>{TIPOS_PAGO.map(t=><option key={t}>{t}</option>)}</select></div>
                 </div>
-                <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
-                  <div>{lbl('Horas por día')}<input type="number" min="0" max="24" step="0.5" value={form.horasDia||''} onChange={e=>updForm('horasDia',parseFloat(e.target.value)||0)} style={{ ...fl,fontFamily:'var(--font-mono)' }}/></div>
-                  <div>{lbl('Días por semana')}<input type="number" min="0" max="7" value={form.diasSemana||''} onChange={e=>updForm('diasSemana',parseFloat(e.target.value)||0)} style={{ ...fl,fontFamily:'var(--font-mono)' }}/></div>
-                </div>
-                {form.salario&&form.horasDia&&form.diasSemana&&(
-                  <div className="hint"><b>Costo/hora:</b> ${(parseFloat(form.salario)/Math.max(parseFloat(form.horasDia)*parseFloat(form.diasSemana)*4,1)).toFixed(2)} · <b>Hrs/mes:</b> {parseFloat(form.horasDia)*parseFloat(form.diasSemana)*4}</div>
-                )}
+                {form.salario && (() => {
+                  const d = calcDesc(parseFloat(form.salario));
+                  return (
+                    <div className="hint">
+                      <b>Descuentos:</b> ISSS ${d.isss.toFixed(2)} + AFP ${d.afp.toFixed(2)} + Renta ${d.renta.toFixed(2)} = <b>${d.total.toFixed(2)}</b>
+                    </div>
+                  );
+                })()}
                 <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
                   <div>{lbl('Fecha de ingreso')}<input type="date" value={form.fechaIngreso||''} onChange={e=>updForm('fechaIngreso',e.target.value)} style={fl}/></div>
                   <div>{lbl('Teléfono')}<input type="text" placeholder="0000-0000" value={form.telefono||''} onChange={e=>updForm('telefono',e.target.value)} style={fl}/></div>

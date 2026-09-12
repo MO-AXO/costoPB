@@ -17,7 +17,7 @@ const seedStore = () => {
   const id = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   return {
     currentMonthId: id,
-    config: { tasaImpuesto: 13, tasaComision: 3 },
+    config: { tasaImpuesto: 13, tasaComision: 3, tasaISS: 3, tasaAFP: 7.25, tasaRenta: 10 },
     months: {
       [id]: {
         label: mesLabel(id),
@@ -379,7 +379,7 @@ const App = () => {
             {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
 
-            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} />}
+            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} config={config} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
         </div>

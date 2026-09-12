@@ -2,6 +2,9 @@
 const Configuracion = ({ config, setConfig }) => {
   const tasaImpuesto = config?.tasaImpuesto ?? 13;
   const tasaComision = config?.tasaComision ?? 3;
+  const tasaISS  = config?.tasaISS  ?? 3;
+  const tasaAFP  = config?.tasaAFP  ?? 7.25;
+  const tasaRenta = config?.tasaRenta ?? 10;
 
   const upd = (k, v) => {
     const num = parseFloat(v);
@@ -101,6 +104,94 @@ const Configuracion = ({ config, setConfig }) => {
 
           <div className="hint">
             <b>Nota:</b> Al registrar una venta, la comisión y el impuesto se calculan automáticamente con estas tasas. Puedes ajustar los montos manualmente en cada registro si es necesario.
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tasas de planilla ── */}
+      <div className="card" style={{ maxWidth: 520, marginTop: 20 }}>
+        <div className="card-head">
+          <div>
+            <div className="card-title">Descuentos de planilla</div>
+            <div className="card-sub">Se calculan automáticamente sobre el salario de cada empleado</div>
+          </div>
+        </div>
+        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* ISSS */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 6 }}>
+              <Icon name="users" size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+              ISSS (Seguro Social)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="number" min="0" max="100" step="0.01"
+                value={tasaISS} onChange={e => upd('tasaISS', e.target.value)}
+                style={{ ...fl, width: 120, textAlign: 'right' }} />
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-2)' }}>%</span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>Porcentaje sobre el salario mensual.</div>
+          </div>
+
+          {/* AFP */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 6 }}>
+              <Icon name="users" size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+              AFP (Fondo de Pensiones)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="number" min="0" max="100" step="0.01"
+                value={tasaAFP} onChange={e => upd('tasaAFP', e.target.value)}
+                style={{ ...fl, width: 120, textAlign: 'right' }} />
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-2)' }}>%</span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>Porcentaje sobre el salario mensual.</div>
+          </div>
+
+          {/* Renta */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 6 }}>
+              <Icon name="trending" size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+              Renta (ISR)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="number" min="0" max="100" step="0.01"
+                value={tasaRenta} onChange={e => upd('tasaRenta', e.target.value)}
+                style={{ ...fl, width: 120, textAlign: 'right' }} />
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-2)' }}>%</span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>Porcentaje sobre el salario mensual.</div>
+          </div>
+
+          {/* Preview planilla */}
+          <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '14px 16px' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
+              Ejemplo con salario de $500.00
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-2)' }}>Salario bruto</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>$500.00</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'var(--bad)' }}>− ISSS ({tasaISS}%)</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-${(500 * tasaISS / 100).toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'var(--bad)' }}>− AFP ({tasaAFP}%)</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-${(500 * tasaAFP / 100).toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'var(--bad)' }}>− Renta ({tasaRenta}%)</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-${(500 * tasaRenta / 100).toFixed(2)}</span>
+              </div>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-2)' }}>Total descuentos</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--bad)' }}>
+                  -${(500 * (tasaISS + tasaAFP + tasaRenta) / 100).toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
