@@ -4,12 +4,12 @@ const GastosPage = ({ gastos, setGastos }) => {
 
   const CATEGORIAS = [
     'Gas', 'Carnes', 'Bebidas y licores', 'Empaques y desechables', 'Vegetales',
-    'Agua', 'Luz', 'Internet', 'Limpieza y desinfeccion', 'Servicios contables y legales',
-    'Marketing', 'Mantenimiento de vehiculos', 'Combustible', 'Materia Prima produccion',
+    'Agua', 'Luz', 'Internet', 'Limpieza y desinfección', 'Servicios contables y legales',
+    'Marketing', 'Mantenimiento de vehículos', 'Combustible', 'Materia Prima producción',
     'Mobiliario y equipo de cocina', 'Planilla', 'ISSS', 'AFP',
     'Programa de fidelidad de clientes', 'POS', 'Equipamiento de personal',
     'Alquiler', 'Condimentos', 'Panes', 'Papas Fritas', 'Materia Prima ahumar',
-    'Pago Mano de Obra EXTRA', 'Merchandising', 'Materiales de Construccion', 'Nómina', 'Otro',
+    'Pago Mano de Obra EXTRA', 'Merchandising', 'Materiales de Construcción', 'Nómina', 'Otro',
   ];
   const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
 

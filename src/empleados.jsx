@@ -135,8 +135,8 @@ const EmpleadosPage = ({ store, setStore, config }) => {
     var gastoEntry = {
       id: '_g' + pagoId.slice(1),
       fecha: pagoForm.fecha,
-      descripcion: 'Pago nomina: ' + empName + periodo,
-      categoria: 'Nomina',
+      descripcion: 'Pago nómina: ' + empName + periodo,
+      categoria: 'Nómina',
       monto: neto,
       metodoPago: 'Transferencia',
       comprobante: '',
