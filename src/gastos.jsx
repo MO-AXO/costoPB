@@ -1,8 +1,8 @@
-// Gastos — Caja Chica + Gastos Formales
+// Gastos — Registro de gastos del negocio
 const GastosPage = ({ gastos, setGastos }) => {
   const { useState, useRef } = React;
 
-  const CATEGORIAS_GASTOS = [
+  const CATEGORIAS = [
     'Gas', 'Carnes', 'Bebidas y licores', 'Empaques y desechables', 'Vegetales',
     'Agua', 'Luz', 'Internet', 'Limpieza y desinfeccion', 'Servicios contables y legales',
     'Marketing', 'Mantenimiento de vehiculos', 'Combustible', 'Materia Prima produccion',
@@ -11,29 +11,22 @@ const GastosPage = ({ gastos, setGastos }) => {
     'Alquiler', 'Condimentos', 'Panes', 'Papas Fritas', 'Materia Prima ahumar',
     'Pago Mano de Obra EXTRA', 'Merchandising', 'Materiales de Construccion', 'Nómina', 'Otro',
   ];
-  const CATEGORIAS_CAJA = CATEGORIAS_GASTOS;
-  const CATEGORIAS_FORMAL = CATEGORIAS_GASTOS;
   const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
 
-  const [tab, setTab] = useState('caja');
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [form, setForm] = useState({});
   const inputRef = useRef(null);
 
-  const cajaItems   = (gastos?.caja   || []).slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
-  const formalItems = (gastos?.formal || []).slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
-
-  const items    = tab === 'caja' ? cajaItems : formalItems;
-  const cats     = tab === 'caja' ? CATEGORIAS_CAJA : CATEGORIAS_FORMAL;
+  const items = (gastos?.formal || []).slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
   const filtered = filtroCategoria ? items.filter(i => i.categoria === filtroCategoria) : items;
 
   const totalGeneral = items.reduce((a, i) => a + (i.monto || 0), 0);
   const totalFiltrado = filtered.reduce((a, i) => a + (i.monto || 0), 0);
 
   // Resumen por categoría
-  const porCategoria = cats.reduce((acc, cat) => {
+  const porCategoria = CATEGORIAS.reduce((acc, cat) => {
     const total = items.filter(i => i.categoria === cat).reduce((a, i) => a + (i.monto || 0), 0);
     if (total > 0) acc[cat] = total;
     return acc;
@@ -47,7 +40,7 @@ const GastosPage = ({ gastos, setGastos }) => {
     setForm({
       fecha: hoy(),
       descripcion: '',
-      categoria: cats[0],
+      categoria: CATEGORIAS[0],
       monto: '',
       metodoPago: 'Efectivo',
       comprobante: '',
@@ -66,13 +59,12 @@ const GastosPage = ({ gastos, setGastos }) => {
 
   const save = () => {
     if (!form.descripcion?.trim() || !form.monto) return;
-    const key = tab === 'caja' ? 'caja' : 'formal';
     const item = { ...form, monto: parseFloat(form.monto) || 0, id: editId || uid() };
     setGastos(prev => {
-      const list = prev?.[key] || [];
+      const list = prev?.formal || [];
       return {
         ...prev,
-        [key]: editId ? list.map(x => x.id === editId ? item : x) : [...list, item],
+        formal: editId ? list.map(x => x.id === editId ? item : x) : [...list, item],
       };
     });
     setShowForm(false);
@@ -80,8 +72,7 @@ const GastosPage = ({ gastos, setGastos }) => {
   };
 
   const remove = (id) => {
-    const key = tab === 'caja' ? 'caja' : 'formal';
-    setGastos(prev => ({ ...prev, [key]: (prev?.[key] || []).filter(x => x.id !== id) }));
+    setGastos(prev => ({ ...prev, formal: (prev?.formal || []).filter(x => x.id !== id) }));
   };
 
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -98,7 +89,7 @@ const GastosPage = ({ gastos, setGastos }) => {
       <div className="page-head">
         <div>
           <h1 className="page-title">Gastos</h1>
-          <div className="page-sub">Control de caja chica y gastos formales del negocio</div>
+          <div className="page-sub">Control de gastos del negocio</div>
         </div>
         <div className="page-actions">
           <button className="btn btn-primary" onClick={openNew}>
@@ -108,47 +99,29 @@ const GastosPage = ({ gastos, setGastos }) => {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 20 }}>
         <div className="kpi">
-          <div className="kpi-label">Total caja chica</div>
-          <div className="kpi-value">${(gastos?.caja || []).reduce((a, i) => a + (i.monto || 0), 0).toFixed(2)}</div>
-          <div className="kpi-foot"><span className="kpi-target">{(gastos?.caja || []).length} movimientos</span></div>
+          <div className="kpi-label">Total del mes</div>
+          <div className="kpi-value">${totalGeneral.toFixed(2)}</div>
+          <div className="kpi-foot"><span className="kpi-target">{items.length} registros</span></div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Total gastos formales</div>
-          <div className="kpi-value">${(gastos?.formal || []).reduce((a, i) => a + (i.monto || 0), 0).toFixed(2)}</div>
-          <div className="kpi-foot"><span className="kpi-target">{(gastos?.formal || []).length} registros</span></div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label">Total general del mes</div>
-          <div className="kpi-value">
-            ${((gastos?.caja || []).reduce((a, i) => a + (i.monto || 0), 0) +
-               (gastos?.formal || []).reduce((a, i) => a + (i.monto || 0), 0)).toFixed(2)}
-          </div>
-          <div className="kpi-foot"><span className="kpi-target">Caja + Formales</span></div>
+          <div className="kpi-label">Categorías con gasto</div>
+          <div className="kpi-value">{Object.keys(porCategoria).length}</div>
+          <div className="kpi-foot"><span className="kpi-target">de {CATEGORIAS.length} disponibles</span></div>
         </div>
       </div>
 
       <div className="two-col" style={{ gap: 16 }}>
         {/* Panel izquierdo: tabla */}
         <div className="card">
-          {/* Tabs */}
-          <div style={{ padding: '0 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 4 }}>
-            {[{ id: 'caja', label: 'Caja Chica' }, { id: 'formal', label: 'Gastos Formales' }].map(t => (
-              <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`}
-                onClick={() => { setTab(t.id); setFiltroCategoria(''); }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {/* Filtro + resumen */}
           <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
             <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Filtrar:</span>
             <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
               style={{ fontSize: 12, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--surface)' }}>
               <option value="">Todas las categorías</option>
-              {cats.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>
               ${totalFiltrado.toFixed(2)}
@@ -169,8 +142,8 @@ const GastosPage = ({ gastos, setGastos }) => {
                     <th>Fecha</th>
                     <th>Descripción</th>
                     <th>Categoría</th>
-                    {tab === 'formal' && <th>Método de pago</th>}
-                    {tab === 'formal' && <th>Comprobante</th>}
+                    <th>Método de pago</th>
+                    <th>Comprobante</th>
                     <th className="right">Monto</th>
                     <th className="center"></th>
                   </tr>
@@ -184,12 +157,10 @@ const GastosPage = ({ gastos, setGastos }) => {
                         {item.nota && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{item.nota}</div>}
                       </td>
                       <td><span className="tag">{item.categoria}</span></td>
-                      {tab === 'formal' && <td style={{ fontSize: 12 }}>{item.metodoPago || '—'}</td>}
-                      {tab === 'formal' && (
-                        <td style={{ fontSize: 12, color: item.comprobante ? 'var(--good)' : 'var(--text-3)' }}>
-                          {item.comprobante || 'Sin comprobante'}
-                        </td>
-                      )}
+                      <td style={{ fontSize: 12 }}>{item.metodoPago || '—'}</td>
+                      <td style={{ fontSize: 12, color: item.comprobante ? 'var(--good)' : 'var(--text-3)' }}>
+                        {item.comprobante || 'Sin comprobante'}
+                      </td>
                       <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${(item.monto || 0).toFixed(2)}</td>
                       <td className="center">
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
@@ -216,7 +187,7 @@ const GastosPage = ({ gastos, setGastos }) => {
             <div className="card-head">
               <div>
                 <div className="card-title">Por categoría</div>
-                <div className="card-sub">{tab === 'caja' ? 'Caja chica' : 'Gastos formales'}</div>
+                <div className="card-sub">Gastos del mes</div>
               </div>
             </div>
             <div className="card-body">
@@ -273,9 +244,6 @@ const GastosPage = ({ gastos, setGastos }) => {
             <div className="drawer-head">
               <div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>{editId ? 'Editar gasto' : 'Registrar gasto'}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3 }}>
-                  {tab === 'caja' ? 'Caja chica — gastos menores en efectivo' : 'Gasto formal — con comprobante'}
-                </div>
               </div>
               <button className="icon-btn" onClick={() => setShowForm(false)}><Icon name="close" size={15} /></button>
             </div>
@@ -302,38 +270,28 @@ const GastosPage = ({ gastos, setGastos }) => {
 
                 <div>
                   {lbl('Categoría')}
-                  <select value={form.categoria || cats[0]} onChange={e => upd('categoria', e.target.value)} style={fl}>
-                    {cats.map(c => <option key={c} value={c}>{c}</option>)}
+                  <select value={form.categoria || CATEGORIAS[0]} onChange={e => upd('categoria', e.target.value)} style={fl}>
+                    {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
-                {tab === 'formal' && (
-                  <>
-                    <div>
-                      {lbl('Método de pago')}
-                      <select value={form.metodoPago || 'Efectivo'} onChange={e => upd('metodoPago', e.target.value)} style={fl}>
-                        {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      {lbl('Número de comprobante / factura')}
-                      <input type="text" placeholder="Ej: FAC-00123" value={form.comprobante || ''}
-                        onChange={e => upd('comprobante', e.target.value)} style={fl} />
-                    </div>
-                  </>
-                )}
+                <div>
+                  {lbl('Método de pago')}
+                  <select value={form.metodoPago || 'Efectivo'} onChange={e => upd('metodoPago', e.target.value)} style={fl}>
+                    {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  {lbl('Número de comprobante / factura')}
+                  <input type="text" placeholder="Ej: FAC-00123" value={form.comprobante || ''}
+                    onChange={e => upd('comprobante', e.target.value)} style={fl} />
+                </div>
 
                 <div>
                   {lbl('Nota (opcional)')}
                   <textarea rows={3} placeholder="Observaciones adicionales..."
                     value={form.nota || ''} onChange={e => upd('nota', e.target.value)}
                     style={{ ...fl, resize: 'vertical' }} />
-                </div>
-
-                <div className="hint">
-                  <b>Tip:</b> {tab === 'caja'
-                    ? 'La caja chica cubre gastos menores del día a día que se pagan en efectivo.'
-                    : 'Los gastos formales deben tener comprobante (factura, recibo) para el contador.'}
                 </div>
               </div>
             </div>
