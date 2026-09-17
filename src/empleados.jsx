@@ -1,6 +1,8 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
-const EmpleadosPage = ({ empleados, setEmpleados, config, setGastos }) => {
+const EmpleadosPage = ({ store, setStore, config }) => {
   const { useState, useRef } = React;
+
+  const empleados = store.months[store.currentMonthId]?.empleados || {};
 
   const tasaISS   = config?.tasaISS   ?? 3;
   const tasaAFP   = config?.tasaAFP   ?? 7.25;
@@ -72,12 +74,17 @@ const EmpleadosPage = ({ empleados, setEmpleados, config, setGastos }) => {
   const openEdit = (emp) => { setEditId(emp.id); setForm({ ...emp }); setShowForm(true); setTimeout(() => inputRef.current?.focus(), 80); };
   const saveEmp  = () => {
     if (!form.nombre?.trim()) return;
-    const emp = { ...form, salario: parseFloat(form.salario) || 0, id: editId || uid() };
-    setEmpleados(prev => ({ ...prev, lista: editId ? (prev?.lista||[]).map(x=>x.id===editId?emp:x) : [...(prev?.lista||[]), emp] }));
+    var emp = Object.assign({}, form, { salario: parseFloat(form.salario) || 0, id: editId || uid() });
+    var newLista = editId ? lista.map(function(x) { return x.id === editId ? emp : x; }) : lista.concat([emp]);
+    updateMonth({ empleados: { lista: newLista, pagos: pagos, ausencias: ausencias } });
     setShowForm(false);
   };
   const removeEmp = (id) => {
-    setEmpleados(prev => ({ ...prev, lista: (prev?.lista||[]).filter(x=>x.id!==id), pagos: (prev?.pagos||[]).filter(x=>x.empId!==id), ausencias: (prev?.ausencias||[]).filter(x=>x.empId!==id) }));
+    updateMonth({ empleados: {
+      lista: lista.filter(function(x) { return x.id !== id; }),
+      pagos: pagos.filter(function(x) { return x.empId !== id; }),
+      ausencias: ausencias.filter(function(x) { return x.empId !== id; }),
+    }});
     if (selectedEmpId === id) setSelectedEmpId(null);
   };
   const updForm = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -89,63 +96,84 @@ const EmpleadosPage = ({ empleados, setEmpleados, config, setGastos }) => {
     setPagoForm({ empId, fecha: hoy(), periodo: '', monto: emp?.salario || '', tipo: emp?.tipoPago || 'Quincenal', bonificacion: '', deduccion: desc > 0 ? desc.toFixed(2) : '', notaBono: '', notaDeduc: desc > 0 ? 'Descuento por ausencias sin goce' : '', nota: '' });
     setShowPagoForm(true);
   };
-  const savePago = () => {
+  const updateMonth = (updates) => {
+    setStore(function(s) {
+      var cur = s.months[s.currentMonthId];
+      return Object.assign({}, s, {
+        months: Object.assign({}, s.months, {
+          [s.currentMonthId]: Object.assign({}, cur, updates)
+        })
+      });
+    });
+  };
+
+  var savePago = function() {
     if (!pagoForm.monto) return;
-    const pagoId = uid();
-    const monto = parseFloat(pagoForm.monto)||0;
-    const bonificacion = parseFloat(pagoForm.bonificacion)||0;
-    const deduccion = parseFloat(pagoForm.deduccion)||0;
-    const neto = monto + bonificacion - deduccion;
-    const pago = { ...pagoForm, monto, bonificacion, deduccion, id: pagoId };
-    const emp = lista.find(e => e.id === pagoForm.empId);
-    // Actualizar empleados directamente con el valor actual
-    const newEmpleados = {
-      lista: lista,
-      pagos: [...pagos, pago],
-      ausencias: ausencias,
-    };
-    setEmpleados(newEmpleados);
-    // Sincronizar a gastos
-    if (setGastos) {
-      setTimeout(function() {
-        setGastos(function(prev) {
-          return {
-            caja: prev?.caja || [],
-            formal: [...(prev?.formal || []), {
-              id: '_g' + pagoId.slice(1),
-              fecha: pagoForm.fecha,
-              descripcion: 'Pago nomina: ' + (emp ? emp.nombre : 'Empleado') + (pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''),
-              categoria: 'Nomina',
-              monto: neto,
-              metodoPago: 'Transferencia',
-              comprobante: '',
-              nota: pagoForm.nota || '',
-              pagoEmpleadoId: pagoId,
-            }],
-          };
-        });
-      }, 150);
-    }
+    var pagoId = uid();
+    var monto = parseFloat(pagoForm.monto)||0;
+    var bonificacion = parseFloat(pagoForm.bonificacion)||0;
+    var deduccion = parseFloat(pagoForm.deduccion)||0;
+    var neto = monto + bonificacion - deduccion;
+    var pago = Object.assign({}, pagoForm, { monto: monto, bonificacion: bonificacion, deduccion: deduccion, id: pagoId });
+    var emp = lista.find(function(e) { return e.id === pagoForm.empId; });
+    var empName = emp ? emp.nombre : 'Empleado';
+    var periodo = pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : '';
+    // Una sola actualizacion con empleados + gastos
+    var curMonth = store.months[store.currentMonthId];
+    var curEmp = curMonth.empleados || {};
+    var curGas = curMonth.gastos || {};
+    updateMonth({
+      empleados: {
+        lista: curEmp.lista || [],
+        pagos: (curEmp.pagos || []).concat([pago]),
+        ausencias: curEmp.ausencias || [],
+      },
+      gastos: {
+        caja: curGas.caja || [],
+        formal: (curGas.formal || []).concat([{
+          id: '_g' + pagoId.slice(1),
+          fecha: pagoForm.fecha,
+          descripcion: 'Pago nomina: ' + empName + periodo,
+          categoria: 'Nomina',
+          monto: neto,
+          metodoPago: 'Transferencia',
+          comprobante: '',
+          nota: pagoForm.nota || '',
+          pagoEmpleadoId: pagoId,
+        }]),
+      },
+    });
     setShowPagoForm(false);
   };
-  const removePago = (id) => {
-    const newEmpleados = {
-      lista: lista,
-      pagos: pagos.filter(x => x.id !== id),
-      ausencias: ausencias,
-    };
-    setEmpleados(newEmpleados);
+  var removePago = function(id) {
+    var curMonth = store.months[store.currentMonthId];
+    var curEmp = curMonth.empleados || {};
+    var curGas = curMonth.gastos || {};
+    var gastoId = '_g' + id.slice(1);
+    updateMonth({
+      empleados: {
+        lista: curEmp.lista || [],
+        pagos: (curEmp.pagos || []).filter(function(x) { return x.id !== id; }),
+        ausencias: curEmp.ausencias || [],
+      },
+      gastos: {
+        caja: curGas.caja || [],
+        formal: (curGas.formal || []).filter(function(x) { return x.id !== gastoId && x.pagoEmpleadoId !== id; }),
+      },
+    });
   };
 
   // ── Ausencias ──
   const openAus = (empId) => { setAusForm({ empId, fecha: hoy(), tipo: TIPOS_AUS[0], dias: 1, nota: '' }); setShowAusForm(true); };
   const saveAus = () => {
     if (!ausForm.dias) return;
-    const aus = { ...ausForm, dias: parseFloat(ausForm.dias)||0, id: uid() };
-    setEmpleados(prev => ({ ...prev, ausencias: [...(prev?.ausencias||[]), aus] }));
+    var aus = Object.assign({}, ausForm, { dias: parseFloat(ausForm.dias)||0, id: uid() });
+    updateMonth({ empleados: { lista: lista, pagos: pagos, ausencias: ausencias.concat([aus]) } });
     setShowAusForm(false);
   };
-  const removeAus = (id) => setEmpleados(prev => ({ ...prev, ausencias: (prev?.ausencias||[]).filter(x=>x.id!==id) }));
+  var removeAus = function(id) {
+    updateMonth({ empleados: { lista: lista, pagos: pagos, ausencias: ausencias.filter(function(x) { return x.id !== id; }) } });
+  };
 
   // Estilos
   const fl  = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
