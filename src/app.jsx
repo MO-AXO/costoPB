@@ -308,8 +308,8 @@ const App = () => {
   const navItems = [
     { id: 'ventas', label: 'Ventas', icon: 'trending' },
     { id: 'gastos', label: 'Gastos', icon: 'wallet' },
-
     { id: 'empleados', label: 'Empleados', icon: 'users' },
+    { id: 'reportes', label: 'Reporte Mensual', icon: 'chart' },
     { id: 'configuracion', label: 'Configuración', icon: 'settings' },
   ];
 
@@ -396,6 +396,7 @@ const App = () => {
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
 
             {page === 'empleados' && <EmpleadosPage store={store} setStore={setStore} config={config} />}
+            {page === 'reportes' && <Reportes ventas={ventas} gastos={gastos} empleados={empleados} monthLabel={monthData.label} store={store} viewMonthId={viewMonthId} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
         </div>
