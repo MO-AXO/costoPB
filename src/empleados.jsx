@@ -1,5 +1,5 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
-const EmpleadosPage = ({ empleados, setEmpleados, config, onSavePago, onRemovePago }) => {
+const EmpleadosPage = ({ empleados, setEmpleados, config, onSavePago, onRemovePago, setGastos }) => {
   const { useState, useRef } = React;
 
   const tasaISS   = config?.tasaISS   ?? 3;
@@ -98,22 +98,46 @@ const EmpleadosPage = ({ empleados, setEmpleados, config, onSavePago, onRemovePa
     const neto = monto + bonificacion - deduccion;
     const pago = { ...pagoForm, monto, bonificacion, deduccion, id: pagoId };
     const emp = lista.find(e => e.id === pagoForm.empId);
-    const gastoEntry = {
-      id: '_g' + pagoId.slice(1),
-      fecha: pagoForm.fecha,
-      descripcion: `Pago n\u00f3mina: ${emp?.nombre || 'Empleado'}${pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''}`,
-      categoria: 'N\u00f3mina',
-      monto: neto,
-      metodoPago: 'Transferencia',
-      comprobante: '',
-      nota: pagoForm.nota || '',
-      pagoEmpleadoId: pagoId,
-    };
-    onSavePago(pago, gastoEntry);
+    // Actualizar empleados
+    setEmpleados(prev => ({
+      ...prev,
+      pagos: [...(prev?.pagos || []), pago],
+    }));
+    // Sincronizar a gastos
+    if (setGastos) {
+      setTimeout(() => {
+        setGastos(prev => ({
+          ...prev,
+          formal: [...(prev?.formal || []), {
+            id: '_g' + pagoId.slice(1),
+            fecha: pagoForm.fecha,
+            descripcion: 'Pago nomina: ' + (emp?.nombre || 'Empleado') + (pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''),
+            categoria: 'Nomina',
+            monto: neto,
+            metodoPago: 'Transferencia',
+            comprobante: '',
+            nota: pagoForm.nota || '',
+            pagoEmpleadoId: pagoId,
+          }],
+        }));
+      }, 100);
+    }
     setShowPagoForm(false);
   };
   const removePago = (id) => {
-    onRemovePago(id);
+    setEmpleados(prev => ({
+      ...prev,
+      pagos: (prev?.pagos || []).filter(x => x.id !== id),
+    }));
+    if (setGastos) {
+      setTimeout(() => {
+        const gastoId = '_g' + id.slice(1);
+        setGastos(prev => ({
+          ...prev,
+          formal: (prev?.formal || []).filter(x => x.id !== gastoId && x.pagoEmpleadoId !== id),
+        }));
+      }, 100);
+    }
   };
 
   // ── Ausencias ──

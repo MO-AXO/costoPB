@@ -395,7 +395,7 @@ const App = () => {
             {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
 
-            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} config={config} onSavePago={onSavePago} onRemovePago={onRemovePago} />}
+            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} config={config} setGastos={setGastos} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
         </div>
