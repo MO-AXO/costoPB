@@ -2,8 +2,17 @@
 const GastosPage = ({ gastos, setGastos }) => {
   const { useState, useRef } = React;
 
-  const CATEGORIAS_CAJA = ['Mercado', 'Limpieza', 'Combustible', 'Herramientas', 'Varios', 'Otro'];
-  const CATEGORIAS_FORMAL = ['Alquiler', 'Servicios', 'Nómina', 'Proveedor', 'Impuestos', 'Publicidad', 'Mantenimiento', 'Otro'];
+  const CATEGORIAS_GASTOS = [
+    'Gas', 'Carnes', 'Bebidas y licores', 'Empaques y desechables', 'Vegetales',
+    'Agua', 'Luz', 'Internet', 'Limpieza y desinfeccion', 'Servicios contables y legales',
+    'Marketing', 'Mantenimiento de vehiculos', 'Combustible', 'Materia Prima produccion',
+    'Mobiliario y equipo de cocina', 'Planilla', 'ISSS', 'AFP',
+    'Programa de fidelidad de clientes', 'POS', 'Equipamiento de personal',
+    'Alquiler', 'Condimentos', 'Panes', 'Papas Fritas', 'Materia Prima ahumar',
+    'Pago Mano de Obra EXTRA', 'Merchandising', 'Materiales de Construccion', 'Nómina', 'Otro',
+  ];
+  const CATEGORIAS_CAJA = CATEGORIAS_GASTOS;
+  const CATEGORIAS_FORMAL = CATEGORIAS_GASTOS;
   const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
 
   const [tab, setTab] = useState('caja');
