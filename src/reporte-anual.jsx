@@ -217,8 +217,8 @@ const ReporteAnual = ({ store }) => {
                 { label: 'Impuestos totales', value: fmt$0(totals.impuestos) },
                 { label: 'Promedio ingreso/mes', value: fmt$0(promedios.ingresoNeto) },
                 { label: 'Promedio gastos/mes', value: fmt$0(promedios.gastos) },
-                { label: 'Promedio n\u00f3mina/mes', value: fmt$0(promedios.nomina) },
-                { label: 'Costo n\u00f3mina / ingreso', value: totals.ingresoNeto > 0 ? (totals.nomina / totals.ingresoNeto * 100).toFixed(1) + '%' : '0%' },
+                { label: 'Promedio nómina/mes', value: fmt$0(promedios.nomina) },
+                { label: 'Costo nómina / ingreso', value: totals.ingresoNeto > 0 ? (totals.nomina / totals.ingresoNeto * 100).toFixed(1) + '%' : '0%' },
                 { label: 'Gastos op. / ingreso', value: totals.ingresoNeto > 0 ? (totals.gastos / totals.ingresoNeto * 100).toFixed(1) + '%' : '0%' },
               ].map(function(item, i) {
                 return (

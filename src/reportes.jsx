@@ -193,9 +193,9 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 8)
                 .map(([cat, total]) => plRow(cat, -total, { sub: true, color: 'var(--bad)' }))}
-              {Object.keys(gastosData.porCategoria).length > 8 && plRow('... y ' + (Object.keys(gastosData.porCategoria).length - 8) + ' m\u00e1s', '', { sub: true })}
+              {Object.keys(gastosData.porCategoria).length > 8 && plRow('... y ' + (Object.keys(gastosData.porCategoria).length - 8) + ' más', '', { sub: true })}
 
-              {plRow('N\u00f3mina', -nomina.totalPagos, { bold: true, color: 'var(--bad)' })}
+              {plRow('Nómina', -nomina.totalPagos, { bold: true, color: 'var(--bad)' })}
               {plRow('Salarios base', -nomina.totalBase, { sub: true, color: 'var(--bad)' })}
               {nomina.totalBonos > 0 && plRow('Bonificaciones', -nomina.totalBonos, { sub: true, color: 'var(--bad)' })}
               {nomina.totalDeduc > 0 && plRow('Deducciones recuperadas', nomina.totalDeduc, { sub: true, color: 'var(--good)' })}
@@ -209,7 +209,7 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
           <div className="card">
             <div className="card-head">
               <div>
-                <div className="card-title">Resumen de N\u00f3mina</div>
+                <div className="card-title">Resumen de Nómina</div>
                 <div className="card-sub">{nomina.count} pagos registrados · {listaEmp.filter(e => e.estado === 'Activo').length} empleados activos</div>
               </div>
             </div>
@@ -244,7 +244,7 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
           <div className="card">
             <div className="card-head">
               <div>
-                <div className="card-title">Ingresos por Categor\u00eda</div>
+                <div className="card-title">Ingresos por Categoría</div>
                 <div className="card-sub">Ingreso neto</div>
               </div>
             </div>
@@ -294,7 +294,7 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
           <div className="card">
             <div className="card-head">
               <div>
-                <div className="card-title">Gastos por Categor\u00eda</div>
+                <div className="card-title">Gastos por Categoría</div>
                 <div className="card-sub">{gastosData.count} registros</div>
               </div>
             </div>
@@ -322,7 +322,7 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
               {[
                 { label: 'Ticket promedio', value: ingresos.count > 0 ? fmt$(ingresos.neto / ingresos.count) : '$0.00' },
                 { label: 'Gasto promedio por registro', value: gastosData.count > 0 ? fmt$(gastosData.total / gastosData.count) : '$0.00' },
-                { label: 'Costo n\u00f3mina / ingreso', value: ingresos.neto > 0 ? (nomina.totalPagos / ingresos.neto * 100).toFixed(1) + '%' : '0%' },
+                { label: 'Costo nómina / ingreso', value: ingresos.neto > 0 ? (nomina.totalPagos / ingresos.neto * 100).toFixed(1) + '%' : '0%' },
                 { label: 'Gastos op. / ingreso', value: ingresos.neto > 0 ? (gastosData.total / ingresos.neto * 100).toFixed(1) + '%' : '0%' },
                 { label: 'Empleados con pago', value: new Set(pagosList.map(p => p.empId)).size + ' / ' + listaEmp.length },
               ].map((item, i) => (
