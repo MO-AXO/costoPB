@@ -1,5 +1,5 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
-const EmpleadosPage = ({ empleados, setEmpleados, config, setGastos }) => {
+const EmpleadosPage = ({ empleados, setEmpleados, config, onSavePago, onRemovePago }) => {
   const { useState, useRef } = React;
 
   const tasaISS   = config?.tasaISS   ?? 3;
@@ -98,33 +98,22 @@ const EmpleadosPage = ({ empleados, setEmpleados, config, setGastos }) => {
     const neto = monto + bonificacion - deduccion;
     const pago = { ...pagoForm, monto, bonificacion, deduccion, id: pagoId };
     const emp = lista.find(e => e.id === pagoForm.empId);
-    setEmpleados(prev => ({ ...prev, pagos: [...(prev?.pagos||[]), pago] }));
-    // Registrar automáticamente en gastos formales
-    if (setGastos) {
-      setGastos(prev => ({
-        ...prev,
-        formal: [...(prev?.formal||[]), {
-          id: '_g' + pagoId.slice(1),
-          fecha: pagoForm.fecha,
-          descripcion: `Pago nómina: ${emp?.nombre || 'Empleado'}${pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''}`,
-          categoria: 'Nómina',
-          monto: neto,
-          metodoPago: 'Transferencia',
-          comprobante: '',
-          nota: pagoForm.nota || '',
-          pagoEmpleadoId: pagoId,
-        }],
-      }));
-    }
+    const gastoEntry = {
+      id: '_g' + pagoId.slice(1),
+      fecha: pagoForm.fecha,
+      descripcion: `Pago n\u00f3mina: ${emp?.nombre || 'Empleado'}${pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''}`,
+      categoria: 'N\u00f3mina',
+      monto: neto,
+      metodoPago: 'Transferencia',
+      comprobante: '',
+      nota: pagoForm.nota || '',
+      pagoEmpleadoId: pagoId,
+    };
+    onSavePago(pago, gastoEntry);
     setShowPagoForm(false);
   };
   const removePago = (id) => {
-    setEmpleados(prev => ({ ...prev, pagos: (prev?.pagos||[]).filter(x=>x.id!==id) }));
-    // Eliminar el gasto asociado
-    if (setGastos) {
-      const gastoId = '_g' + id.slice(1);
-      setGastos(prev => ({ ...prev, formal: (prev?.formal||[]).filter(x => x.id !== gastoId && x.pagoEmpleadoId !== id) }));
-    }
+    onRemovePago(id);
   };
 
   // ── Ausencias ──

@@ -265,6 +265,22 @@ const App = () => {
     return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: next } } };
   });
 
+  // Guarda pago + gasto en una sola operación atómica
+  const onSavePago = (pago, gastoEntry) => setStore(s => {
+    const cur = s.months[s.currentMonthId];
+    const emp = { ...(cur.empleados || {}), pagos: [...(cur.empleados?.pagos || []), pago] };
+    const gas = { ...(cur.gastos || {}), formal: [...(cur.gastos?.formal || []), gastoEntry] };
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: emp, gastos: gas } } };
+  });
+
+  const onRemovePago = (pagoId) => setStore(s => {
+    const cur = s.months[s.currentMonthId];
+    const emp = { ...(cur.empleados || {}), pagos: (cur.empleados?.pagos || []).filter(x => x.id !== pagoId) };
+    const gastoId = '_g' + pagoId.slice(1);
+    const gas = { ...(cur.gastos || {}), formal: (cur.gastos?.formal || []).filter(x => x.id !== gastoId && x.pagoEmpleadoId !== pagoId) };
+    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: emp, gastos: gas } } };
+  });
+
   const crearNuevoMes = (newId) => {
     setStore(s => {
       const cur = s.months[s.currentMonthId];
@@ -379,7 +395,7 @@ const App = () => {
             {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
 
-            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} config={config} setGastos={setGastos} />}
+            {page === 'empleados' && <EmpleadosPage empleados={empleados} setEmpleados={setEmpleados} config={config} onSavePago={onSavePago} onRemovePago={onRemovePago} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
         </div>
