@@ -328,8 +328,7 @@ const EmpleadosPage = ({ store, setStore, config }) => {
                         <div style={{ fontSize:11,color:'var(--text-3)' }}>{emp.puesto}</div>
                       </div>
                       <div style={{ textAlign:'right',flexShrink:0 }}>
-                        <div style={{ fontFamily:'var(--font-mono)',fontSize:12,fontWeight:600 }}>${(emp.salario||0).toFixed(0)}/mes</div>
-                        {pdte>0&&<div style={{ fontSize:10,color:'var(--bad)',fontFamily:'var(--font-mono)' }}>-${pdte.toFixed(0)} pdte.</div>}
+                        <div style={{ fontFamily:'var(--font-mono)',fontSize:12,fontWeight:600,color:neto>0?'var(--good)':'var(--text-3)' }}>${neto.toFixed(0)} pagado</div>
                       </div>
                     </button>
                   );
