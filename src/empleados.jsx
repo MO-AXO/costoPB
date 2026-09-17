@@ -1,5 +1,5 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
-const EmpleadosPage = ({ empleados, setEmpleados, config, onSavePago, onRemovePago, setGastos }) => {
+const EmpleadosPage = ({ empleados, setEmpleados, config, setGastos }) => {
   const { useState, useRef } = React;
 
   const tasaISS   = config?.tasaISS   ?? 3;
@@ -98,46 +98,43 @@ const EmpleadosPage = ({ empleados, setEmpleados, config, onSavePago, onRemovePa
     const neto = monto + bonificacion - deduccion;
     const pago = { ...pagoForm, monto, bonificacion, deduccion, id: pagoId };
     const emp = lista.find(e => e.id === pagoForm.empId);
-    // Actualizar empleados
-    setEmpleados(prev => ({
-      ...prev,
-      pagos: [...(prev?.pagos || []), pago],
-    }));
+    // Actualizar empleados directamente con el valor actual
+    const newEmpleados = {
+      lista: lista,
+      pagos: [...pagos, pago],
+      ausencias: ausencias,
+    };
+    setEmpleados(newEmpleados);
     // Sincronizar a gastos
     if (setGastos) {
-      setTimeout(() => {
-        setGastos(prev => ({
-          ...prev,
-          formal: [...(prev?.formal || []), {
-            id: '_g' + pagoId.slice(1),
-            fecha: pagoForm.fecha,
-            descripcion: 'Pago nomina: ' + (emp?.nombre || 'Empleado') + (pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''),
-            categoria: 'Nomina',
-            monto: neto,
-            metodoPago: 'Transferencia',
-            comprobante: '',
-            nota: pagoForm.nota || '',
-            pagoEmpleadoId: pagoId,
-          }],
-        }));
-      }, 100);
+      setTimeout(function() {
+        setGastos(function(prev) {
+          return {
+            caja: prev?.caja || [],
+            formal: [...(prev?.formal || []), {
+              id: '_g' + pagoId.slice(1),
+              fecha: pagoForm.fecha,
+              descripcion: 'Pago nomina: ' + (emp ? emp.nombre : 'Empleado') + (pagoForm.periodo ? ' (' + pagoForm.periodo + ')' : ''),
+              categoria: 'Nomina',
+              monto: neto,
+              metodoPago: 'Transferencia',
+              comprobante: '',
+              nota: pagoForm.nota || '',
+              pagoEmpleadoId: pagoId,
+            }],
+          };
+        });
+      }, 150);
     }
     setShowPagoForm(false);
   };
   const removePago = (id) => {
-    setEmpleados(prev => ({
-      ...prev,
-      pagos: (prev?.pagos || []).filter(x => x.id !== id),
-    }));
-    if (setGastos) {
-      setTimeout(() => {
-        const gastoId = '_g' + id.slice(1);
-        setGastos(prev => ({
-          ...prev,
-          formal: (prev?.formal || []).filter(x => x.id !== gastoId && x.pagoEmpleadoId !== id),
-        }));
-      }, 100);
-    }
+    const newEmpleados = {
+      lista: lista,
+      pagos: pagos.filter(x => x.id !== id),
+      ausencias: ausencias,
+    };
+    setEmpleados(newEmpleados);
   };
 
   // ── Ausencias ──
