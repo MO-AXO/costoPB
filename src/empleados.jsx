@@ -1,8 +1,8 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
 const EmpleadosPage = ({ store, setStore, config }) => {
-  const { useState, useRef } = React;
+  const { useState, useRef, useEffect } = React;
 
-  const empleados = store.months[store.currentMonthId]?.empleados || {};
+  const storeEmpleados = store.months[store.currentMonthId]?.empleados || {};
 
   const tasaISS   = config?.tasaISS   ?? 3;
   const tasaAFP   = config?.tasaAFP   ?? 7.25;
@@ -13,6 +13,8 @@ const EmpleadosPage = ({ store, setStore, config }) => {
   const ESTADOS     = ['Activo', 'Inactivo', 'Vacaciones', 'Licencia'];
   const TIPOS_AUS   = ['Falta sin aviso', 'Permiso con goce', 'Permiso sin goce', 'Vacaciones', 'Enfermedad', 'Licencia especial'];
 
+  // Estado local para UI instantánea
+  const [localEmp, setLocalEmp] = useState(storeEmpleados);
   const [tab, setTab]                 = useState('planilla');
   const [showForm, setShowForm]       = useState(false);
   const [editId, setEditId]           = useState(null);
@@ -24,9 +26,28 @@ const EmpleadosPage = ({ store, setStore, config }) => {
   const [form, setForm]               = useState({});
   const inputRef = useRef(null);
 
-  const lista    = empleados?.lista    || [];
-  const pagos    = empleados?.pagos    || [];
-  const ausencias= empleados?.ausencias|| [];
+  // Sincronizar cuando el store cambia externamente (polling, cambio de mes)
+  useEffect(function() {
+    setLocalEmp(storeEmpleados);
+  }, [store.currentMonthId, storeEmpleados?.lista?.length, storeEmpleados?.pagos?.length, storeEmpleados?.ausencias?.length]);
+
+  // Helper: guardar al store para persistencia
+  var persistToStore = function(newEmp, extraUpdates) {
+    var mid = store.currentMonthId;
+    var curMonth = store.months[mid];
+    var monthUpdate = { empleados: newEmp };
+    if (extraUpdates) {
+      for (var k in extraUpdates) monthUpdate[k] = extraUpdates[k];
+    }
+    var newMonth = Object.assign({}, curMonth, monthUpdate);
+    var newMonths = Object.assign({}, store.months);
+    newMonths[mid] = newMonth;
+    setStore(Object.assign({}, store, { months: newMonths }));
+  };
+
+  const lista    = localEmp?.lista    || [];
+  const pagos    = localEmp?.pagos    || [];
+  const ausencias= localEmp?.ausencias|| [];
 
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
   const hoy = () => new Date().toISOString().slice(0, 10);
@@ -76,25 +97,19 @@ const EmpleadosPage = ({ store, setStore, config }) => {
     if (!form.nombre?.trim()) return;
     var emp = Object.assign({}, form, { salario: parseFloat(form.salario) || 0, id: editId || uid() });
     var newLista = editId ? lista.map(function(x) { return x.id === editId ? emp : x; }) : lista.concat([emp]);
-    var mid = store.currentMonthId;
-    var curMonth = store.months[mid];
-    var newMonth = Object.assign({}, curMonth, { empleados: { lista: newLista, pagos: pagos, ausencias: ausencias } });
-    var newMonths = Object.assign({}, store.months);
-    newMonths[mid] = newMonth;
-    setStore(Object.assign({}, store, { months: newMonths }));
+    var newEmp = { lista: newLista, pagos: pagos, ausencias: ausencias };
+    setLocalEmp(newEmp);
+    persistToStore(newEmp);
     setShowForm(false);
   };
   const removeEmp = (id) => {
-    var mid = store.currentMonthId;
-    var curMonth = store.months[mid];
-    var newMonth = Object.assign({}, curMonth, { empleados: {
+    var newEmp = {
       lista: lista.filter(function(x) { return x.id !== id; }),
       pagos: pagos.filter(function(x) { return x.empId !== id; }),
       ausencias: ausencias.filter(function(x) { return x.empId !== id; }),
-    }});
-    var newMonths = Object.assign({}, store.months);
-    newMonths[mid] = newMonth;
-    setStore(Object.assign({}, store, { months: newMonths }));
+    };
+    setLocalEmp(newEmp);
+    persistToStore(newEmp);
     if (selectedEmpId === id) setSelectedEmpId(null);
   };
   const updForm = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -128,34 +143,24 @@ const EmpleadosPage = ({ store, setStore, config }) => {
       nota: pagoForm.nota || '',
       pagoEmpleadoId: pagoId,
     };
-    // Construir nuevo store completo
-    var mid = store.currentMonthId;
-    var curMonth = store.months[mid];
-    var curEmp = curMonth.empleados || {};
-    var curGas = curMonth.gastos || {};
-    var newMonth = Object.assign({}, curMonth, {
-      empleados: { lista: curEmp.lista || [], pagos: (curEmp.pagos || []).concat([pago]), ausencias: curEmp.ausencias || [] },
+    // 1) UI instantánea via estado local
+    var newEmp = { lista: lista, pagos: pagos.concat([pago]), ausencias: ausencias };
+    setLocalEmp(newEmp);
+    setShowPagoForm(false);
+    // 2) Persistir al store (incluye gasto)
+    var curGas = store.months[store.currentMonthId]?.gastos || {};
+    persistToStore(newEmp, {
       gastos: { caja: curGas.caja || [], formal: (curGas.formal || []).concat([gastoEntry]) },
     });
-    var newMonths = Object.assign({}, store.months);
-    newMonths[mid] = newMonth;
-    var newStore = Object.assign({}, store, { months: newMonths });
-    setShowPagoForm(false);
-    setStore(newStore);
   };
   var removePago = function(id) {
-    var mid = store.currentMonthId;
-    var curMonth = store.months[mid];
-    var curEmp = curMonth.empleados || {};
-    var curGas = curMonth.gastos || {};
+    var newEmp = { lista: lista, pagos: pagos.filter(function(x) { return x.id !== id; }), ausencias: ausencias };
+    setLocalEmp(newEmp);
+    var curGas = store.months[store.currentMonthId]?.gastos || {};
     var gastoId = '_g' + id.slice(1);
-    var newMonth = Object.assign({}, curMonth, {
-      empleados: { lista: curEmp.lista || [], pagos: (curEmp.pagos || []).filter(function(x) { return x.id !== id; }), ausencias: curEmp.ausencias || [] },
+    persistToStore(newEmp, {
       gastos: { caja: curGas.caja || [], formal: (curGas.formal || []).filter(function(x) { return x.id !== gastoId && x.pagoEmpleadoId !== id; }) },
     });
-    var newMonths = Object.assign({}, store.months);
-    newMonths[mid] = newMonth;
-    setStore(Object.assign({}, store, { months: newMonths }));
   };
 
   // ── Ausencias ──
@@ -163,21 +168,15 @@ const EmpleadosPage = ({ store, setStore, config }) => {
   const saveAus = () => {
     if (!ausForm.dias) return;
     var aus = Object.assign({}, ausForm, { dias: parseFloat(ausForm.dias)||0, id: uid() });
-    var mid = store.currentMonthId;
-    var curMonth = store.months[mid];
-    var newMonth = Object.assign({}, curMonth, { empleados: { lista: lista, pagos: pagos, ausencias: ausencias.concat([aus]) } });
-    var newMonths = Object.assign({}, store.months);
-    newMonths[mid] = newMonth;
-    setStore(Object.assign({}, store, { months: newMonths }));
+    var newEmp = { lista: lista, pagos: pagos, ausencias: ausencias.concat([aus]) };
+    setLocalEmp(newEmp);
+    persistToStore(newEmp);
     setShowAusForm(false);
   };
   var removeAus = function(id) {
-    var mid = store.currentMonthId;
-    var curMonth = store.months[mid];
-    var newMonth = Object.assign({}, curMonth, { empleados: { lista: lista, pagos: pagos, ausencias: ausencias.filter(function(x) { return x.id !== id; }) } });
-    var newMonths = Object.assign({}, store.months);
-    newMonths[mid] = newMonth;
-    setStore(Object.assign({}, store, { months: newMonths }));
+    var newEmp = { lista: lista, pagos: pagos, ausencias: ausencias.filter(function(x) { return x.id !== id; }) };
+    setLocalEmp(newEmp);
+    persistToStore(newEmp);
   };
 
   // Estilos
