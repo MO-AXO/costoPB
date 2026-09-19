@@ -15,8 +15,9 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
     const total      = ventasList.reduce((a, v) => a + (v.ingresoTotal || 0), 0);
     const comisiones = ventasList.reduce((a, v) => a + (v.comision || 0), 0);
     const impuestos  = ventasList.reduce((a, v) => a + (v.impuestos || 0), 0);
+    const propinas    = ventasList.reduce((a, v) => a + (v.propina || 0), 0);
     const neto       = ventasList.reduce((a, v) => a + (v.ingresoNeto || 0), 0);
-    return { total, comisiones, impuestos, neto, count: ventasList.length };
+    return { total, comisiones, impuestos, propinas, neto, count: ventasList.length };
   }, [ventasList]);
 
   // ── Gastos (sin nomina para no duplicar) ──
@@ -182,6 +183,7 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
             </div>
             <div className="card-body" style={{ display: 'flex', flexDirection: 'column' }}>
               {plRow('Ingreso Total (bruto)', ingresos.total, { bold: true })}
+              {ingresos.propinas > 0 && plRow('Propinas incluidas (BAC)', ingresos.propinas, { sub: true, color: 'var(--text-2)' })}
               {plRow('Comisiones', -ingresos.comisiones, { sub: true, color: 'var(--bad)' })}
               {plRow('Impuestos', -ingresos.impuestos, { sub: true, color: 'var(--bad)' })}
               {plRow('Ingreso Neto', ingresos.neto, { bold: true, border: true, color: 'var(--good)' })}
