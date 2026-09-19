@@ -35,9 +35,10 @@ const GastosPage = ({ gastos, setGastos }) => {
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
   const hoy = () => new Date().toISOString().slice(0, 10);
 
-  const openNew = () => {
+  const openNew = (tipoRegistro = 'sin_factura') => {
     setEditId(null);
     setForm({
+      tipoRegistro,
       fecha: hoy(),
       descripcion: '',
       categoria: CATEGORIAS[0],
@@ -52,13 +53,14 @@ const GastosPage = ({ gastos, setGastos }) => {
 
   const openEdit = (item) => {
     setEditId(item.id);
-    setForm({ ...item });
+    setForm({ ...item, tipoRegistro: item.tipoRegistro || (item.comprobante ? 'con_factura' : 'sin_factura') });
     setShowForm(true);
     setTimeout(() => inputRef.current?.focus(), 80);
   };
 
   const save = () => {
     if (!form.descripcion?.trim() || !form.monto) return;
+    if (form.tipoRegistro === 'con_factura' && !form.comprobante?.trim()) return;
     const item = { ...form, monto: parseFloat(form.monto) || 0, id: editId || uid() };
     setGastos(prev => {
       const list = prev?.formal || [];
@@ -92,8 +94,11 @@ const GastosPage = ({ gastos, setGastos }) => {
           <div className="page-sub">Control de gastos del negocio</div>
         </div>
         <div className="page-actions">
-          <button className="btn btn-primary" onClick={openNew}>
-            <Icon name="plus" size={14} /> Registrar gasto
+          <button className="btn" onClick={() => openNew('sin_factura')}>
+            <Icon name="plus" size={14} /> Gasto sin factura
+          </button>
+          <button className="btn btn-primary" onClick={() => openNew('con_factura')}>
+            <Icon name="plus" size={14} /> Gasto con factura
           </button>
         </div>
       </div>
@@ -243,7 +248,10 @@ const GastosPage = ({ gastos, setGastos }) => {
           <div className="drawer">
             <div className="drawer-head">
               <div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>{editId ? 'Editar gasto' : 'Registrar gasto'}</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>{editId ? 'Editar gasto' : (form.tipoRegistro === 'con_factura' ? 'Registrar gasto con factura' : 'Registrar gasto sin factura')}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3 }}>
+                  {form.tipoRegistro === 'con_factura' ? 'Registro completo con comprobante o factura' : 'Registro simplificado sin comprobante fiscal'}
+                </div>
               </div>
               <button className="icon-btn" onClick={() => setShowForm(false)}><Icon name="close" size={15} /></button>
             </div>
@@ -281,11 +289,13 @@ const GastosPage = ({ gastos, setGastos }) => {
                     {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
-                <div>
-                  {lbl('Número de comprobante / factura')}
-                  <input type="text" placeholder="Ej: FAC-00123" value={form.comprobante || ''}
-                    onChange={e => upd('comprobante', e.target.value)} style={fl} />
-                </div>
+                {form.tipoRegistro === 'con_factura' && (
+                  <div>
+                    {lbl('Número de comprobante / factura')}
+                    <input type="text" placeholder="Ej: FAC-00123" value={form.comprobante || ''}
+                      onChange={e => upd('comprobante', e.target.value)} style={fl} />
+                  </div>
+                )}
 
                 <div>
                   {lbl('Nota (opcional)')}
@@ -298,7 +308,7 @@ const GastosPage = ({ gastos, setGastos }) => {
             <div className="drawer-foot">
               <button className="btn" onClick={() => setShowForm(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={save}
-                disabled={!form.descripcion?.trim() || !form.monto}>
+                disabled={!form.descripcion?.trim() || !form.monto || (form.tipoRegistro === 'con_factura' && !form.comprobante?.trim())}>
                 {editId ? 'Guardar cambios' : 'Registrar'}
               </button>
             </div>
