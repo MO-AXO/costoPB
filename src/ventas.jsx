@@ -80,8 +80,6 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
   // fórmulas sean explícitas y no dependan de la configuración general.
   const tasaIvaLiquidacion = 0.13;
   const tasaPercepcionIva = 0.02;
-  const tasaComisionGeneral = config?.tasaComision ?? 3;
-  const tasaImpuestoGeneral = config?.tasaImpuesto ?? 13;
 
   const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
   const calcularLiquidacion = (montoBruto, medioPago) => {
@@ -89,16 +87,14 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
     const esTarjeta = medioPago === 'BAC' || medioPago === 'NICO';
     const porcentajeComisionLiquidacion = medioPago === 'NICO' ? 0.0235 : 0.0285;
     if (!esTarjeta) {
-      const comision = round2(bruto * tasaComisionGeneral / 100);
-      const impuestos = round2(bruto * tasaImpuestoGeneral / 100);
       return {
         esTarjeta: false,
         montoBruto: bruto,
-        comision,
-        impuestos,
+        comision: 0,
+        impuestos: 0,
         ivaComision: 0,
         ivaPercibido: 0,
-        valorPagarAgente: round2(bruto - comision - impuestos),
+        valorPagarAgente: bruto,
       };
     }
     const baseGravable = round2(bruto / (1 + tasaIvaLiquidacion));
@@ -462,16 +458,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${round2(c.comision + c.ivaComision + c.ivaPercibido).toFixed(2)}</span>
                       </div>
                     </div>
-                  ) : (
-                    <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 16px', fontSize: 12, color: 'var(--text-2)' }}>
-                      <div style={{ fontWeight: 600, marginBottom: 5 }}>Cálculo general</div>
-                      Para {form.medioPago || 'este medio de pago'} no se aplica la liquidación BAC/NICO. Se conserva el cálculo general de comisión e impuestos.
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
-                        <span>Ingreso neto</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--good)' }}>${c.valorPagarAgente.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  );
+                  ) : null;
                 })()}
 
                 <div>
