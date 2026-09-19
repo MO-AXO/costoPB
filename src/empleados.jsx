@@ -6,7 +6,7 @@ const EmpleadosPage = ({ store, setStore, config }) => {
 
   const tasaISS   = config?.tasaISS   ?? 3;
   const tasaAFP   = config?.tasaAFP   ?? 7.25;
-  const tasaRenta = config?.tasaRenta ?? 10;
+
 
   const PUESTOS     = ['Jefe de cocina', 'Ayudante de cocina', 'Cajero/a', 'Mesero/a', 'Repartidor', 'Limpieza', 'Administración', 'Otro'];
   const TIPOS_PAGO  = ['Quincenal', 'Semanal', 'Mensual'];
@@ -53,7 +53,8 @@ const EmpleadosPage = ({ store, setStore, config }) => {
   const hoy = () => new Date().toISOString().slice(0, 10);
 
   // ── Totales globales ──
-  const totalNomina  = lista.filter(e => e.estado === 'Activo').reduce((a, e) => a + (e.salario || 0), 0);
+  const activos = lista.filter(e => e.estado === 'Activo');
+  const totalNomina  = activos.reduce((a, e) => a + (e.salario || 0), 0);
   const totalPagado  = pagos.reduce((a, p) => a + (p.monto || 0), 0);
   const empActivos   = lista.filter(e => e.estado === 'Activo').length;
   const totalBonos   = pagos.reduce((a, p) => a + (p.bonificacion || 0), 0);
@@ -61,14 +62,27 @@ const EmpleadosPage = ({ store, setStore, config }) => {
 
   // ── Helpers por empleado ──
   const calcDesc = (salario) => {
-    const s = salario || 0;
-    return {
-      isss: +(s * tasaISS / 100).toFixed(2),
-      afp: +(s * tasaAFP / 100).toFixed(2),
-      renta: +(s * tasaRenta / 100).toFixed(2),
-      total: +(s * (tasaISS + tasaAFP + tasaRenta) / 100).toFixed(2),
-    };
+    const s = Number(salario) || 0;
+    // ISSS: aporte del empleado con salario cotizable máximo de $1,000.
+    const isss = Math.min(s, 1000) * tasaISS / 100;
+    const afp = s * tasaAFP / 100;
+    const rentaGravable = Math.max(s - isss - afp, 0);
+    // ISR mensual salvadoreño por tramos, según la tabla de planilla.
+    let isr = 0;
+    if (rentaGravable > 2038.11) {
+      isr = (rentaGravable - 2038.11) * 0.30 + 288.57;
+    } else if (rentaGravable > 895.24) {
+      isr = (rentaGravable - 895.24) * 0.20 + 60.00;
+    } else if (rentaGravable > 550.00) {
+      isr = (rentaGravable - 550.00) * 0.10 + 17.67;
+    }
+    const total = isss + afp + isr;
+    return { isss, afp, rentaGravable, isr, total, liquido: s - total };
   };
+  const totalesPlanilla = activos.reduce((acc, e) => {
+    const d = calcDesc(e.salario);
+    return { isss: acc.isss + d.isss, afp: acc.afp + d.afp, isr: acc.isr + d.isr, total: acc.total + d.total, liquido: acc.liquido + d.liquido };
+  }, { isss: 0, afp: 0, isr: 0, total: 0, liquido: 0 });
   const pagosEmp    = (id) => pagos.filter(p => p.empId === id).sort((a, b) => b.fecha.localeCompare(a.fecha));
   const ausenciasEmp= (id) => ausencias.filter(a => a.empId === id).sort((a, b) => b.fecha.localeCompare(a.fecha));
 
@@ -247,15 +261,18 @@ const EmpleadosPage = ({ store, setStore, config }) => {
           {lista.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>No hay empleados. Presiona "Agregar empleado".</div>
           ) : (
+            <>
             <div style={{ overflowX: 'auto' }}>
               <table className="tbl">
                 <thead><tr>
-                  <th>Nombre</th><th>Puesto</th><th className="center">Estado</th>
-                  <th className="right">Salario/mes</th>
-                  <th className="right">ISSS ({tasaISS}%)</th>
-                  <th className="right">AFP ({tasaAFP}%)</th>
-                  <th className="right">Renta ({tasaRenta}%)</th>
-                  <th>Tipo pago</th><th>Ingreso</th><th className="center">Acciones</th>
+                  <th>No.</th><th>NIT/DUI</th><th>Nombre del Empleado</th><th>Institución AFP</th>
+                  <th className="right">Salario Mensual ($)</th>
+                  <th className="right">ISSS 3%<br /><span style={{ fontSize: 10 }}>(tope base $1,000)</span></th>
+                  <th className="right">AFP 7.25%</th>
+                  <th className="right">Renta Gravable</th>
+                  <th className="right">ISR (Retención Renta)</th>
+                  <th className="right">Total Descuentos</th>
+                  <th className="right">Líquido a Pagar</th><th className="center">Acciones</th>
                 </tr></thead>
                 <tbody>
                   {lista.map(emp => {
@@ -263,18 +280,20 @@ const EmpleadosPage = ({ store, setStore, config }) => {
                     const desc = descuentoAusencias(emp);
                     return (
                       <tr key={emp.id}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{lista.indexOf(emp) + 1}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{emp.dpi || '—'}</td>
                         <td>
                           <div style={{ fontWeight: 600 }}>{emp.nombre}</div>
                           {emp.telefono && <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{emp.telefono}</div>}
                         </td>
-                        <td style={{ fontSize: 13 }}>{emp.puesto}</td>
-                        <td className="center"><span className={`tag ${estadoColor[emp.estado]||''}`}>{emp.estado}</span></td>
+                        <td style={{ fontSize: 12 }}>{emp.institucionAFP || 'AFP CONFIA'}</td>
                         <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${(emp.salario||0).toFixed(2)}</td>
                         <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.isss.toFixed(2)}</td>
                         <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.afp.toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.renta.toFixed(2)}</td>
-                        <td style={{ fontSize: 12 }}>{emp.tipoPago}</td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)' }}>{emp.fechaIngreso||'—'}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>${d.rentaGravable.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.isr.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.total.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--good)' }}>${d.liquido.toFixed(2)}</td>
                         <td className="center">
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                             {desc > 0 && <span className="tag bad" style={{ fontSize: 10 }} data-tip={`Descuento por ausencias: $${desc.toFixed(2)}`}>-${desc.toFixed(0)}</span>}
@@ -292,16 +311,26 @@ const EmpleadosPage = ({ store, setStore, config }) => {
                 </tbody>
                 <tfoot>
                   <tr style={{ background: 'var(--surface-2)' }}>
-                    <td colSpan={3} style={{ padding: '10px 14px', fontWeight: 600 }}>Total ({empActivos} activos)</td>
+                    <td colSpan={4} style={{ padding: '10px 14px', fontWeight: 600 }}>Total ({empActivos} activos)</td>
                     <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14 }}>${totalNomina.toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${(totalNomina * tasaISS / 100).toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${(totalNomina * tasaAFP / 100).toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${(totalNomina * tasaRenta / 100).toFixed(2)}</td>
-                    <td colSpan={3} />
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.isss.toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.afp.toFixed(2)}</td>
+                    <td className="right" />
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.isr.toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.total.toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, color: 'var(--good)' }}>${totalesPlanilla.liquido.toFixed(2)}</td>
+                    <td />
                   </tr>
                 </tfoot>
               </table>
             </div>
+            <div className="hint" style={{ margin: '12px 16px 16px' }}>
+              <b>Notas y base legal (planilla mensual):</b><br />
+              1) ISSS: 3% sobre salario, con tope de base cotizable de $1,000 mensuales.<br />
+              2) AFP: 7.25% sobre salario.<br />
+              3) ISR: retención mensual progresiva. Hasta $550 no se retiene; de $550.01 a $895.24: 10% sobre exceso + $17.67; de $895.25 a $2,038.10: 20% sobre exceso + $60.00; sobre $2,038.11: 30% sobre exceso + $288.57.
+            </div>
+            </>
           )}
         </div>
       )}
@@ -492,7 +521,7 @@ const EmpleadosPage = ({ store, setStore, config }) => {
                   const d = calcDesc(parseFloat(form.salario));
                   return (
                     <div className="hint">
-                      <b>Descuentos:</b> ISSS ${d.isss.toFixed(2)} + AFP ${d.afp.toFixed(2)} + Renta ${d.renta.toFixed(2)} = <b>${d.total.toFixed(2)}</b>
+                      <b>Descuentos:</b> ISSS ${d.isss.toFixed(2)} + AFP ${d.afp.toFixed(2)} + ISR ${d.isr.toFixed(2)} = <b>${d.total.toFixed(2)}</b>
                     </div>
                   );
                 })()}
