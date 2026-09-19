@@ -97,13 +97,16 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
         valorPagarAgente: bruto,
       };
     }
-    const baseGravable = round2(bruto / (1 + tasaIvaLiquidacion));
-    const ivaOperaciones = round2(bruto - baseGravable);
+    const incluyePropina = medioPago === 'BAC';
+    const subtotalConIva = incluyePropina ? round2(bruto / 1.10) : bruto;
+    const propina = incluyePropina ? round2(bruto - subtotalConIva) : 0;
+    const baseGravable = round2(subtotalConIva / (1 + tasaIvaLiquidacion));
+    const ivaOperaciones = round2(subtotalConIva - baseGravable);
     const ivaPercibido = round2(baseGravable * tasaPercepcionIva);
     const comision = round2(baseGravable * porcentajeComisionLiquidacion);
     const ivaComision = round2(comision * tasaIvaLiquidacion);
     const valorPagarAgente = round2(bruto - comision - ivaComision - ivaPercibido);
-    return { esTarjeta: true, montoBruto: bruto, baseGravable, ivaOperaciones, ivaPercibido, comision, ivaComision, valorPagarAgente, porcentajeComisionLiquidacion };
+    return { esTarjeta: true, incluyePropina, montoBruto: bruto, subtotalConIva, propina, baseGravable, ivaOperaciones, ivaPercibido, comision, ivaComision, valorPagarAgente, porcentajeComisionLiquidacion };
   };
 
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
@@ -141,6 +144,8 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
       ...form,
       ingresoTotal: liquidacion.montoBruto,
       montoBruto: liquidacion.montoBruto,
+      subtotalConIva: liquidacion.subtotalConIva,
+      propina: liquidacion.propina,
       baseGravable: liquidacion.baseGravable,
       ivaOperaciones: liquidacion.ivaOperaciones,
       ivaPercibido: liquidacion.ivaPercibido,
@@ -441,8 +446,10 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                   return c.esTarjeta ? (
                     <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 16px' }}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Desglose de liquidación {form.medioPago}</div>
-                      {row('Base gravable', `${c.montoBruto.toFixed(2)} ÷ 1.13`, c.baseGravable)}
-                      {row('IVA de operaciones', `${c.montoBruto.toFixed(2)} − ${c.baseGravable.toFixed(2)}`, c.ivaOperaciones)}
+                      {c.incluyePropina && row('Subtotal con IVA', `${c.montoBruto.toFixed(2)} ÷ 1.10`, c.subtotalConIva)}
+                      {c.incluyePropina && row('Propina (10%, sin retenciones)', `${c.montoBruto.toFixed(2)} − ${c.subtotalConIva.toFixed(2)}`, c.propina, 'var(--text-2)')}
+                      {row('Base gravable', `${c.subtotalConIva.toFixed(2)} ÷ 1.13`, c.baseGravable)}
+                      {row('IVA de operaciones', `${c.subtotalConIva.toFixed(2)} − ${c.baseGravable.toFixed(2)}`, c.ivaOperaciones)}
                       {row('IVA percibido', `${c.baseGravable.toFixed(2)} × 0.02`, c.ivaPercibido, 'var(--warn)')}
                       {row('Comisión', `${c.baseGravable.toFixed(2)} × ${c.porcentajeComisionLiquidacion.toFixed(4)}`, c.comision, 'var(--bad)')}
                       {row('IVA de la comisión', `${c.comision.toFixed(2)} × 0.13`, c.ivaComision, 'var(--bad)')}
