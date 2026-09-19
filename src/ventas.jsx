@@ -80,24 +80,40 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
   // fórmulas sean explícitas y no dependan de la configuración general.
   const tasaIvaLiquidacion = 0.13;
   const tasaPercepcionIva = 0.02;
-  const porcentajeComisionLiquidacion = 0.0285;
+  const tasaComisionGeneral = config?.tasaComision ?? 3;
+  const tasaImpuestoGeneral = config?.tasaImpuesto ?? 13;
 
   const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
-  const calcularLiquidacion = (montoBruto) => {
+  const calcularLiquidacion = (montoBruto, medioPago) => {
     const bruto = round2(parseFloat(montoBruto) || 0);
+    const esTarjeta = medioPago === 'BAC' || medioPago === 'NICO';
+    const porcentajeComisionLiquidacion = medioPago === 'NICO' ? 0.0235 : 0.0285;
+    if (!esTarjeta) {
+      const comision = round2(bruto * tasaComisionGeneral / 100);
+      const impuestos = round2(bruto * tasaImpuestoGeneral / 100);
+      return {
+        esTarjeta: false,
+        montoBruto: bruto,
+        comision,
+        impuestos,
+        ivaComision: 0,
+        ivaPercibido: 0,
+        valorPagarAgente: round2(bruto - comision - impuestos),
+      };
+    }
     const baseGravable = round2(bruto / (1 + tasaIvaLiquidacion));
     const ivaOperaciones = round2(bruto - baseGravable);
     const ivaPercibido = round2(baseGravable * tasaPercepcionIva);
     const comision = round2(baseGravable * porcentajeComisionLiquidacion);
     const ivaComision = round2(comision * tasaIvaLiquidacion);
     const valorPagarAgente = round2(bruto - comision - ivaComision - ivaPercibido);
-    return { montoBruto: bruto, baseGravable, ivaOperaciones, ivaPercibido, comision, ivaComision, valorPagarAgente };
+    return { esTarjeta: true, montoBruto: bruto, baseGravable, ivaOperaciones, ivaPercibido, comision, ivaComision, valorPagarAgente, porcentajeComisionLiquidacion };
   };
 
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
   const hoy = () => new Date().toISOString().slice(0, 10);
 
-  const calcNeto = (total) => calcularLiquidacion(total).valorPagarAgente;
+  const calcNeto = (total, medioPago) => calcularLiquidacion(total, medioPago).valorPagarAgente;
 
   const openNew = () => {
     setEditId(null);
@@ -124,7 +140,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
 
   const save = () => {
     if (!form.ingresoTotal) return;
-    const liquidacion = calcularLiquidacion(form.ingresoTotal);
+    const liquidacion = calcularLiquidacion(form.ingresoTotal, form.medioPago);
     const item = {
       ...form,
       ingresoTotal: liquidacion.montoBruto,
@@ -134,7 +150,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
       ivaPercibido: liquidacion.ivaPercibido,
       comision: liquidacion.comision,
       ivaComision: liquidacion.ivaComision,
-      impuestos: round2(liquidacion.ivaComision + liquidacion.ivaPercibido),
+      impuestos: liquidacion.esTarjeta ? round2(liquidacion.ivaComision + liquidacion.ivaPercibido) : liquidacion.impuestos,
       ingresoNeto: liquidacion.valorPagarAgente,
       id: editId || uid(),
     };
@@ -418,7 +434,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
 
                 {/* Desglose de liquidación */}
                 {(() => {
-                  const c = calcularLiquidacion(form.ingresoTotal);
+                  const c = calcularLiquidacion(form.ingresoTotal, form.medioPago);
                   const row = (label, formula, value, color) => (
                     <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.7fr auto', gap: 8, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
                       <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{label}</span>
@@ -426,13 +442,13 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                       <span style={{ fontSize: 12, fontWeight: 600, color: color || 'var(--text)', fontFamily: 'var(--font-mono)' }}>${value.toFixed(2)}</span>
                     </div>
                   );
-                  return (
+                  return c.esTarjeta ? (
                     <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 16px' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Desglose de liquidación</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Desglose de liquidación {form.medioPago}</div>
                       {row('Base gravable', `${c.montoBruto.toFixed(2)} ÷ 1.13`, c.baseGravable)}
                       {row('IVA de operaciones', `${c.montoBruto.toFixed(2)} − ${c.baseGravable.toFixed(2)}`, c.ivaOperaciones)}
                       {row('IVA percibido', `${c.baseGravable.toFixed(2)} × 0.02`, c.ivaPercibido, 'var(--warn)')}
-                      {row('Comisión', `${c.baseGravable.toFixed(2)} × 0.0285`, c.comision, 'var(--bad)')}
+                      {row('Comisión', `${c.baseGravable.toFixed(2)} × ${c.porcentajeComisionLiquidacion.toFixed(4)}`, c.comision, 'var(--bad)')}
                       {row('IVA de la comisión', `${c.comision.toFixed(2)} × 0.13`, c.ivaComision, 'var(--bad)')}
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, paddingTop: 10 }}>
                         <span style={{ fontSize: 13, fontWeight: 600 }}>Valor a pagar al agente</span>
@@ -444,6 +460,15 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 12, color: 'var(--bad)' }}>
                         <span>Total retenido (comisión + IVA comisión + IVA percibido)</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${round2(c.comision + c.ivaComision + c.ivaPercibido).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 16px', fontSize: 12, color: 'var(--text-2)' }}>
+                      <div style={{ fontWeight: 600, marginBottom: 5 }}>Cálculo general</div>
+                      Para {form.medioPago || 'este medio de pago'} no se aplica la liquidación BAC/NICO. Se conserva el cálculo general de comisión e impuestos.
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
+                        <span>Ingreso neto</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--good)' }}>${c.valorPagarAgente.toFixed(2)}</span>
                       </div>
                     </div>
                   );
