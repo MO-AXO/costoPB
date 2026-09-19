@@ -2,6 +2,17 @@
 const { useState, useRef, useEffect } = React;
 const D = window.PB_DATA;
 
+// Empleados base de la tabla de planilla proporcionada.
+const PLANILLA_SEED = [
+  { id: 'pl1', nombre: 'DIEGO MAURICIO ORELLANA ARRIAGA', dpi: '054026799', salario: 825.00, institucionAFP: 'AFP CONFIA' },
+  { id: 'pl2', nombre: 'ANA YAMILET CASTRO ROSA', salario: 676.52, institucionAFP: 'AFP CONFIA' },
+  { id: 'pl3', nombre: 'JUAN CARLOS ARTEAGA PEREZ', salario: 576.52, institucionAFP: 'AFP CONFIA' },
+  { id: 'pl4', nombre: 'MARIA DEL PILAR MONTES MEZA', salario: 450.00, institucionAFP: 'AFP CONFIA' },
+  { id: 'pl5', nombre: 'CARLOS JOSE PAREDES SALINAS', salario: 576.52, institucionAFP: 'AFP CONFIA' },
+  { id: 'pl6', nombre: 'FRANCISCO LEONEL RODRIGUEZ', salario: 850.00, institucionAFP: 'AFP CONFIA' },
+  { id: 'pl7', nombre: 'WILSON ALEXANDER AGUILAR FUENTE', salario: 480.00, institucionAFP: 'AFP CRECER' },
+];
+
 // ─── Helpers de mes ───────────────────────────────────────────────────────────
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -148,6 +159,20 @@ const App = () => {
 
       // COSTOS FIJOS: inyecta campos nuevos si no existen, preserva los que el usuario ya editó
       m.fixedCosts = { ...defaultCosts, ...(m.fixedCosts || {}) };
+
+      // PLANILLA: incorpora los empleados de la tabla sin duplicar registros.
+      const empleadosActuales = m.empleados || { lista: [], pagos: [], ausencias: [] };
+      const listaActual = empleadosActuales.lista || [];
+      const normalizarNombre = (nombre) => (nombre || '').trim().toUpperCase().replace(/\s+/g, ' ');
+      const listaPlanilla = PLANILLA_SEED.map(seedEmp => {
+        const guardado = listaActual.find(emp => normalizarNombre(emp.nombre) === normalizarNombre(seedEmp.nombre) || emp.id === seedEmp.id);
+        return guardado
+          ? { ...guardado, salario: seedEmp.salario, institucionAFP: seedEmp.institucionAFP, dpi: seedEmp.dpi || guardado.dpi || '' }
+          : { ...seedEmp, puesto: 'Otro', tipoPago: 'Mensual', estado: 'Activo', fechaIngreso: '', telefono: '', nota: '' };
+      });
+      const nombresPlanilla = new Set(PLANILLA_SEED.map(x => normalizarNombre(x.nombre)));
+      const empleadosAdicionales = listaActual.filter(emp => !nombresPlanilla.has(normalizarNombre(emp.nombre)) && !PLANILLA_SEED.some(x => x.id === emp.id));
+      m.empleados = { ...empleadosActuales, lista: [...listaPlanilla, ...empleadosAdicionales] };
       months[mid] = m;
     });
     // CONFIG: inyecta defaults si no existe
