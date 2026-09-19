@@ -76,19 +76,28 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
     }, {});
   }, [ventas]);
 
-  const tasaImpuesto = config?.tasaImpuesto ?? 13;
-  const tasaComision = config?.tasaComision ?? 3;
+  // Tasas de liquidación BAC. Se expresan como proporciones para que las
+  // fórmulas sean explícitas y no dependan de la configuración general.
+  const tasaIvaLiquidacion = 0.13;
+  const tasaPercepcionIva = 0.02;
+  const porcentajeComisionLiquidacion = 0.0285;
+
+  const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+  const calcularLiquidacion = (montoBruto) => {
+    const bruto = round2(parseFloat(montoBruto) || 0);
+    const baseGravable = round2(bruto / (1 + tasaIvaLiquidacion));
+    const ivaOperaciones = round2(bruto - baseGravable);
+    const ivaPercibido = round2(baseGravable * tasaPercepcionIva);
+    const comision = round2(baseGravable * porcentajeComisionLiquidacion);
+    const ivaComision = round2(comision * tasaIvaLiquidacion);
+    const valorPagarAgente = round2(bruto - comision - ivaComision - ivaPercibido);
+    return { montoBruto: bruto, baseGravable, ivaOperaciones, ivaPercibido, comision, ivaComision, valorPagarAgente };
+  };
 
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
   const hoy = () => new Date().toISOString().slice(0, 10);
 
-  const calcNeto = (total, comision, impuestos) =>
-    (parseFloat(total) || 0) - (parseFloat(comision) || 0) - (parseFloat(impuestos) || 0);
-
-  const calcFromTotal = (total) => {
-    const t = parseFloat(total) || 0;
-    return { comision: +(t * tasaComision / 100).toFixed(2), impuestos: +(t * tasaImpuesto / 100).toFixed(2) };
-  };
+  const calcNeto = (total) => calcularLiquidacion(total).valorPagarAgente;
 
   const openNew = () => {
     setEditId(null);
@@ -108,22 +117,25 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
 
   const openEdit = (item) => {
     setEditId(item.id);
-    setForm({ ...item });
+    setForm({ ...item, ingresoTotal: item.ingresoTotal ?? item.montoBruto ?? '' });
     setShowForm(true);
     setTimeout(() => inputRef.current?.focus(), 80);
   };
 
   const save = () => {
     if (!form.ingresoTotal) return;
-    const ingresoTotal = parseFloat(form.ingresoTotal) || 0;
-    const comision = parseFloat(form.comision) || 0;
-    const impuestos = parseFloat(form.impuestos) || 0;
+    const liquidacion = calcularLiquidacion(form.ingresoTotal);
     const item = {
       ...form,
-      ingresoTotal,
-      comision,
-      impuestos,
-      ingresoNeto: ingresoTotal - comision - impuestos,
+      ingresoTotal: liquidacion.montoBruto,
+      montoBruto: liquidacion.montoBruto,
+      baseGravable: liquidacion.baseGravable,
+      ivaOperaciones: liquidacion.ivaOperaciones,
+      ivaPercibido: liquidacion.ivaPercibido,
+      comision: liquidacion.comision,
+      ivaComision: liquidacion.ivaComision,
+      impuestos: round2(liquidacion.ivaComision + liquidacion.ivaPercibido),
+      ingresoNeto: liquidacion.valorPagarAgente,
       id: editId || uid(),
     };
     setVentas(prev => {
@@ -139,12 +151,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
   };
 
   const upd = (k, v) => {
-    if (k === 'ingresoTotal') {
-      const calc = calcFromTotal(v);
-      setForm(p => ({ ...p, ingresoTotal: v, comision: calc.comision, impuestos: calc.impuestos }));
-    } else {
-      setForm(p => ({ ...p, [k]: v }));
-    }
+    setForm(p => ({ ...p, [k]: v }));
   };
 
   const fmt$ = (n) => '$' + (n || 0).toFixed(2);
@@ -363,7 +370,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
               <div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>{editId ? 'Editar venta' : 'Registrar venta'}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3 }}>
-                  Ingreso neto = Ingreso Total − Comisión − Impuestos
+                  Liquidación de tarjeta: cálculo automático a partir del monto bruto
                 </div>
               </div>
               <button className="icon-btn" onClick={() => setShowForm(false)}><Icon name="close" size={15} /></button>
@@ -399,34 +406,48 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                  <div>
-                    {lbl('Ingreso Total ($)')}
-                    <input type="number" min="0" step="0.01" placeholder="0.00"
-                      value={form.ingresoTotal || ''} onChange={e => upd('ingresoTotal', e.target.value)}
-                      style={{ ...fl, fontFamily: 'var(--font-mono)' }} />
-                  </div>
-                  <div>
-                    {lbl(`Comisión (${tasaComision}%)`)}
-                    <input type="number" min="0" step="0.01" placeholder="0.00"
-                      value={form.comision ?? ''} onChange={e => upd('comision', e.target.value)}
-                      style={{ ...fl, fontFamily: 'var(--font-mono)' }} />
-                  </div>
-                  <div>
-                    {lbl(`Impuestos (${tasaImpuesto}%)`)}
-                    <input type="number" min="0" step="0.01" placeholder="0.00"
-                      value={form.impuestos ?? ''} onChange={e => upd('impuestos', e.target.value)}
-                      style={{ ...fl, fontFamily: 'var(--font-mono)' }} />
+                <div>
+                  {lbl('Monto bruto de la liquidación ($)')}
+                  <input type="number" min="0" step="0.01" placeholder="0.00"
+                    value={form.ingresoTotal || ''} onChange={e => upd('ingresoTotal', e.target.value)}
+                    style={{ ...fl, fontFamily: 'var(--font-mono)', fontSize: 16 }} />
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 5 }}>
+                    Ingresa únicamente el valor total de las operaciones a liquidar.
                   </div>
                 </div>
 
-                {/* Preview ingreso neto */}
-                <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)' }}>Ingreso Neto</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--good)' }}>
-                    ${calcNeto(form.ingresoTotal, form.comision, form.impuestos).toFixed(2)}
-                  </span>
-                </div>
+                {/* Desglose de liquidación */}
+                {(() => {
+                  const c = calcularLiquidacion(form.ingresoTotal);
+                  const row = (label, formula, value, color) => (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.7fr auto', gap: 8, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{label}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{formula}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: color || 'var(--text)', fontFamily: 'var(--font-mono)' }}>${value.toFixed(2)}</span>
+                    </div>
+                  );
+                  return (
+                    <div style={{ background: 'var(--surface-sunk)', borderRadius: 8, padding: '12px 16px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Desglose de liquidación</div>
+                      {row('Base gravable', `${c.montoBruto.toFixed(2)} ÷ 1.13`, c.baseGravable)}
+                      {row('IVA de operaciones', `${c.montoBruto.toFixed(2)} − ${c.baseGravable.toFixed(2)}`, c.ivaOperaciones)}
+                      {row('IVA percibido', `${c.baseGravable.toFixed(2)} × 0.02`, c.ivaPercibido, 'var(--warn)')}
+                      {row('Comisión', `${c.baseGravable.toFixed(2)} × 0.0285`, c.comision, 'var(--bad)')}
+                      {row('IVA de la comisión', `${c.comision.toFixed(2)} × 0.13`, c.ivaComision, 'var(--bad)')}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, paddingTop: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>Valor a pagar al agente</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--good)' }}>${c.valorPagarAgente.toFixed(2)}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 7 }}>
+                        Fórmula final: {c.montoBruto.toFixed(2)} − {c.comision.toFixed(2)} − {c.ivaComision.toFixed(2)} − {c.ivaPercibido.toFixed(2)} = ${c.valorPagarAgente.toFixed(2)}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 12, color: 'var(--bad)' }}>
+                        <span>Total retenido (comisión + IVA comisión + IVA percibido)</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${round2(c.comision + c.ivaComision + c.ivaPercibido).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div>
                   {lbl('Nota (opcional)')}
