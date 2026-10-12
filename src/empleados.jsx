@@ -1,8 +1,9 @@
 // Empleados — Planilla, pagos, bonificaciones, deducciones y ausencias
-const EmpleadosPage = ({ store, setStore, config }) => {
+const EmpleadosPage = ({ store, setStore, config, monthId }) => {
   const { useState, useRef, useEffect } = React;
 
-  const storeEmpleados = store.months[store.currentMonthId]?.empleados || {};
+  const activeMonthId = monthId || store.currentMonthId;
+  const storeEmpleados = store.months[activeMonthId]?.empleados || {};
 
   const tasaISS   = config?.tasaISS   ?? 3;
   const tasaAFP   = config?.tasaAFP   ?? 7.25;
@@ -29,11 +30,11 @@ const EmpleadosPage = ({ store, setStore, config }) => {
   // Sincronizar cuando el store cambia externamente (polling, cambio de mes)
   useEffect(function() {
     setLocalEmp(storeEmpleados);
-  }, [store.currentMonthId, storeEmpleados?.lista?.length, storeEmpleados?.pagos?.length, storeEmpleados?.ausencias?.length]);
+  }, [activeMonthId, storeEmpleados?.lista?.length, storeEmpleados?.pagos?.length, storeEmpleados?.ausencias?.length]);
 
   // Helper: guardar al store para persistencia
   var persistToStore = function(newEmp, extraUpdates) {
-    var mid = store.currentMonthId;
+    var mid = activeMonthId;
     var curMonth = store.months[mid];
     var monthUpdate = { empleados: newEmp };
     if (extraUpdates) {
@@ -162,7 +163,7 @@ const EmpleadosPage = ({ store, setStore, config }) => {
     setLocalEmp(newEmp);
     setShowPagoForm(false);
     // 2) Persistir al store (incluye gasto)
-    var curGas = store.months[store.currentMonthId]?.gastos || {};
+    var curGas = store.months[activeMonthId]?.gastos || {};
     persistToStore(newEmp, {
       gastos: { caja: curGas.caja || [], formal: (curGas.formal || []).concat([gastoEntry]) },
     });
@@ -170,7 +171,7 @@ const EmpleadosPage = ({ store, setStore, config }) => {
   var removePago = function(id) {
     var newEmp = { lista: lista, pagos: pagos.filter(function(x) { return x.id !== id; }), ausencias: ausencias };
     setLocalEmp(newEmp);
-    var curGas = store.months[store.currentMonthId]?.gastos || {};
+    var curGas = store.months[activeMonthId]?.gastos || {};
     var gastoId = '_g' + id.slice(1);
     persistToStore(newEmp, {
       gastos: { caja: curGas.caja || [], formal: (curGas.formal || []).filter(function(x) { return x.id !== gastoId && x.pagoEmpleadoId !== id; }) },

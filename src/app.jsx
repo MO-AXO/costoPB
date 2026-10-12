@@ -32,6 +32,7 @@ const seedStore = () => {
     months: {
       [id]: {
         label: mesLabel(id),
+        closed: false,
         insumos: [],
         subrecetas: [],
         recetas: [],
@@ -65,7 +66,7 @@ const seedStore = () => {
 };
 
 // ─── Selector de mes ──────────────────────────────────────────────────────────
-const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onClose }) => {
+const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onToggleClosed, onClose }) => {
   const ids = Object.keys(store.months).sort().reverse();
   const nxtId = siguienteMes(store.currentMonthId);
   const canCreate = !store.months[nxtId];
@@ -80,11 +81,17 @@ const MonthPicker = ({ store, viewMonthId, onView, onCreateNew, onClose }) => {
           </button>
         )}
         {ids.map(id => (
-          <button key={id} onClick={() => { onView(id); onClose(); }}
-            style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', padding:'9px 14px', border:0, borderBottom:'1px solid var(--border)', fontSize:13, background: id===viewMonthId?'var(--surface-sunk)':'transparent', color:'var(--text)', cursor:'pointer' }}>
-            <span style={{ fontWeight: id===store.currentMonthId ? 600 : 400 }}>{store.months[id].label}</span>
-            <Tag kind={id===store.currentMonthId ? 'good' : ''}>{id===store.currentMonthId ? 'Activo' : 'Cerrado'}</Tag>
-          </button>
+        <div key={id} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'9px 14px', borderBottom:'1px solid var(--border)', background: id===viewMonthId?'var(--surface-sunk)':'transparent' }}>
+            <button onClick={() => { onView(id); onClose(); }}
+              style={{ flex:1, textAlign:'left', border:0, background:'transparent', color:'var(--text)', cursor:'pointer', padding:0, fontSize:13 }}>
+              <span style={{ fontWeight: id===store.currentMonthId ? 600 : 400 }}>{store.months[id].label}</span>
+            </button>
+            <button onClick={() => onToggleClosed(id)}
+              style={{ border:0, background:'transparent', padding:0, cursor:'pointer' }}
+              title={store.months[id].closed ? 'Abrir mes' : 'Cerrar mes'}>
+              <Tag kind={store.months[id].closed ? '' : 'good'}>{store.months[id].closed ? 'Cerrado' : 'Abierto'}</Tag>
+            </button>
+          </div>
         ))}
       </div>
     </>
@@ -159,6 +166,8 @@ const App = () => {
 
       // COSTOS FIJOS: inyecta campos nuevos si no existen, preserva los que el usuario ya editó
       m.fixedCosts = { ...defaultCosts, ...(m.fixedCosts || {}) };
+      // Los meses históricos siguen cerrados por compatibilidad; el usuario puede abrirlos.
+      if (typeof m.closed !== 'boolean') m.closed = mid !== s.currentMonthId;
 
       // PLANILLA: incorpora los empleados de la tabla sin duplicar registros.
       const empleadosActuales = m.empleados || { lista: [], pagos: [], ausencias: [] };
@@ -269,42 +278,53 @@ const App = () => {
 
   const isCurrentMonth = viewMonthId === store.currentMonthId;
   const monthData = store.months[viewMonthId] || store.months[store.currentMonthId];
+  const isMonthClosed = monthData.closed === true;
   const { insumos = [], subrecetas = [], recetas = [], fixedCosts = {}, gastos, empleados, ventas } = monthData;
   const config = store.config || { tasaImpuesto: 13, tasaComision: 3 };
 
   // Setters
   const setConfig = (v) => setStore(s => ({ ...s, config: v }));
   const setVentas = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
+    const mid = viewMonthId || s.currentMonthId;
+    const cur = s.months[mid];
     const next = typeof v === 'function' ? v(cur.ventas || []) : v;
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, ventas: next } } };
+    return { ...s, months: { ...s.months, [mid]: { ...cur, ventas: next } } };
   });
   const setGastos = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
+    const mid = viewMonthId || s.currentMonthId;
+    const cur = s.months[mid];
     const next = typeof v === 'function' ? v(cur.gastos || {}) : v;
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, gastos: next } } };
+    return { ...s, months: { ...s.months, [mid]: { ...cur, gastos: next } } };
   });
   const setEmpleados = (v) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
+    const mid = viewMonthId || s.currentMonthId;
+    const cur = s.months[mid];
     const next = typeof v === 'function' ? v(cur.empleados || {}) : v;
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: next } } };
+    return { ...s, months: { ...s.months, [mid]: { ...cur, empleados: next } } };
   });
 
   // Guarda pago + gasto en una sola operación atómica
   const onSavePago = (pago, gastoEntry) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
+    const mid = viewMonthId || s.currentMonthId;
+    const cur = s.months[mid];
     const emp = { ...(cur.empleados || {}), pagos: [...(cur.empleados?.pagos || []), pago] };
     const gas = { ...(cur.gastos || {}), formal: [...(cur.gastos?.formal || []), gastoEntry] };
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: emp, gastos: gas } } };
+    return { ...s, months: { ...s.months, [mid]: { ...cur, empleados: emp, gastos: gas } } };
   });
 
   const onRemovePago = (pagoId) => setStore(s => {
-    const cur = s.months[s.currentMonthId];
+    const mid = viewMonthId || s.currentMonthId;
+    const cur = s.months[mid];
     const emp = { ...(cur.empleados || {}), pagos: (cur.empleados?.pagos || []).filter(x => x.id !== pagoId) };
     const gastoId = '_g' + pagoId.slice(1);
     const gas = { ...(cur.gastos || {}), formal: (cur.gastos?.formal || []).filter(x => x.id !== gastoId && x.pagoEmpleadoId !== pagoId) };
-    return { ...s, months: { ...s.months, [s.currentMonthId]: { ...cur, empleados: emp, gastos: gas } } };
+    return { ...s, months: { ...s.months, [mid]: { ...cur, empleados: emp, gastos: gas } } };
   });
+
+  const toggleMonthClosed = (mid) => setStore(s => ({
+    ...s,
+    months: { ...s.months, [mid]: { ...s.months[mid], closed: !s.months[mid].closed } },
+  }));
 
   const crearNuevoMes = (newId) => {
     setStore(s => {
@@ -316,6 +336,7 @@ const App = () => {
           ...s.months,
           [newId]: {
             label: mesLabel(newId),
+            closed: false,
             insumos: cur.insumos,
             subrecetas: cur.subrecetas,
             recetas: cur.recetas.map(r => ({ ...r, monthlySales: 0 })),
@@ -401,27 +422,28 @@ const App = () => {
               <MonthPicker store={store} viewMonthId={viewMonthId}
                 onView={setViewMonthId}
                 onCreateNew={crearNuevoMes}
+                onToggleClosed={toggleMonthClosed}
                 onClose={() => setShowMonthPicker(false)} />
             )}
           </div>
         </header>
 
         <div className="content">
-          {!isCurrentMonth && (
+          {isMonthClosed && (
             <div style={{ background:'var(--warn-soft)', border:'1px solid var(--warn)', borderRadius:8, padding:'10px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:10, fontSize:13, color:'var(--warn)' }}>
               <Icon name="info" size={14} />
-              <span><strong>{monthData.label}</strong> — solo lectura</span>
-              <button onClick={() => setViewMonthId(store.currentMonthId)}
+              <span><strong>{monthData.label}</strong> — mes cerrado</span>
+              <button onClick={() => toggleMonthClosed(viewMonthId)}
                 style={{ marginLeft:'auto', background:'var(--warn)', color:'#fff', border:0, borderRadius:5, padding:'4px 12px', fontSize:12, cursor:'pointer', fontWeight:500 }}>
-                Ir al mes actual →
+                Abrir mes para registrar
               </button>
             </div>
           )}
-          <div className={isCurrentMonth ? '' : 'pb-readonly'}>
+          <div className={isMonthClosed ? 'pb-readonly' : ''}>
             {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
             {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
 
-            {page === 'empleados' && <EmpleadosPage store={store} setStore={setStore} config={config} />}
+            {page === 'empleados' && <EmpleadosPage store={store} setStore={setStore} config={config} monthId={viewMonthId} />}
             {page === 'reportes' && <Reportes ventas={ventas} gastos={gastos} empleados={empleados} monthLabel={monthData.label} store={store} viewMonthId={viewMonthId} />}
             {page === 'anual' && <ReporteAnual store={store} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
