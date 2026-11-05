@@ -106,6 +106,9 @@ const App = () => {
   const [syncStatus, setSyncStatus] = useState('ok'); // 'ok' | 'saving' | 'error'
   const [page, setPage] = useState('ventas');
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [sheetGastos, setSheetGastos] = useState([]);
+  const [sheetStatus, setSheetStatus] = useState('loading');
+  const [sheetUpdatedAt, setSheetUpdatedAt] = useState(null);
   const saveTimer = useRef(null);
   const lastSavedAt = useRef(0);
   const initialized = useRef(false);
@@ -208,6 +211,27 @@ const App = () => {
       .finally(() => { setLoading(false); initialized.current = true; });
   }, []);
 
+  const syncSheetGastos = () => {
+    setSheetStatus('loading');
+    fetch('/api/gastos-sheet')
+      .then(r => {
+        if (!r.ok) throw new Error('No se pudo leer Google Sheets');
+        return r.json();
+      })
+      .then(data => {
+        setSheetGastos(data.rows || []);
+        setSheetUpdatedAt(data.updatedAt || null);
+        setSheetStatus('ok');
+      })
+      .catch(() => setSheetStatus('error'));
+  };
+
+  useEffect(() => {
+    syncSheetGastos();
+    const id = setInterval(syncSheetGastos, 60000);
+    return () => clearInterval(id);
+  }, []);
+
   // Guarda con debounce de 800ms — omite actualizaciones remotas
   useEffect(() => {
     if (!store || !initialized.current) return;
@@ -281,6 +305,12 @@ const App = () => {
   const isMonthClosed = monthData.closed === true;
   const { insumos = [], subrecetas = [], recetas = [], fixedCosts = {}, gastos, empleados, ventas } = monthData;
   const config = store.config || { tasaImpuesto: 13, tasaComision: 3 };
+  const sheetGastosDelMes = sheetGastos.filter(item => item.Fecha?.slice(0, 7) === viewMonthId);
+  const sheetGastosPorMes = sheetGastos.reduce((acc, item) => {
+    const mid = item.Fecha?.slice(0, 7);
+    if (mid) (acc[mid] ||= []).push(item);
+    return acc;
+  }, {});
 
   // Setters
   const setConfig = (v) => setStore(s => ({ ...s, config: v }));
@@ -441,11 +471,11 @@ const App = () => {
           )}
           <div className={isMonthClosed ? 'pb-readonly' : ''}>
             {page === 'ventas' && <Ventas ventas={ventas} setVentas={setVentas} monthLabel={monthData.label} config={config} />}
-            {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} />}
+            {page === 'gastos' && <GastosPage gastos={gastos} setGastos={setGastos} sheetGastos={sheetGastosDelMes} sheetStatus={sheetStatus} sheetUpdatedAt={sheetUpdatedAt} onSyncSheet={syncSheetGastos} />}
 
             {page === 'empleados' && <EmpleadosPage store={store} setStore={setStore} config={config} monthId={viewMonthId} />}
-            {page === 'reportes' && <Reportes ventas={ventas} gastos={gastos} empleados={empleados} monthLabel={monthData.label} store={store} viewMonthId={viewMonthId} />}
-            {page === 'anual' && <ReporteAnual store={store} />}
+            {page === 'reportes' && <Reportes ventas={ventas} gastos={gastos} empleados={empleados} monthLabel={monthData.label} store={store} viewMonthId={viewMonthId} sheetGastos={sheetGastosDelMes} sheetGastosPorMes={sheetGastosPorMes} />}
+            {page === 'anual' && <ReporteAnual store={store} sheetGastosPorMes={sheetGastosPorMes} />}
             {page === 'configuracion' && <Configuracion config={config} setConfig={setConfig} />}
           </div>
         </div>

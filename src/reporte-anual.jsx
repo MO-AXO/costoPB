@@ -1,5 +1,5 @@
 // Reporte Anual — comparativo mes a mes con tendencias
-const ReporteAnual = ({ store }) => {
+const ReporteAnual = ({ store, sheetGastosPorMes = {} }) => {
   const { useMemo, useState } = React;
 
   const years = useMemo(function() {
@@ -25,7 +25,7 @@ const ReporteAnual = ({ store }) => {
         continue;
       }
       var v = month.ventas || [];
-      var g = (month.gastos?.formal || []).filter(function(x) { return !x.pagoEmpleadoId; });
+      var g = [...(month.gastos?.formal || []).filter(function(x) { return !x.pagoEmpleadoId; }), ...(sheetGastosPorMes[mid] || []).map(function(item) { return { monto: Number(item['Total ($)']) || 0 }; })];
       var p = (month.empleados?.pagos || []);
       var ingresoTotal = v.reduce(function(a, x) { return a + (x.ingresoTotal || 0); }, 0);
       var ingresoNeto = v.reduce(function(a, x) { return a + (x.ingresoNeto || 0); }, 0);
@@ -37,7 +37,7 @@ const ReporteAnual = ({ store }) => {
       data.push({ mid: mid, label: MESES_LABEL[m-1], exists: true, ingresoTotal: ingresoTotal, ingresoNeto: ingresoNeto, comisiones: comisiones, impuestos: impuestos, gastos: gastos, nomina: nomina, utilidad: utilidad, ventasCount: v.length });
     }
     return data;
-  }, [store, selectedYear]);
+  }, [store, selectedYear, sheetGastosPorMes]);
 
   var activeMonths = monthlyData.filter(function(d) { return d.exists; });
 

@@ -43,6 +43,42 @@ app.post('/api/store', async (req, res) => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
+const SHEET_ID = '1pur7cS93mLA0U6oqs6bCn1WzyJ8gkHu3emLYUgLuVwg';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Datos`;
+
+const parseSheetDate = (value) => {
+  const match = typeof value === 'string' && value.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (!match) return '';
+  return `${match[1]}-${String(Number(match[2]) + 1).padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+};
+
+app.get('/api/gastos-sheet', async (req, res) => {
+  try {
+    const response = await fetch(SHEET_URL);
+    if (!response.ok) throw new Error(`Google Sheets respondió ${response.status}`);
+    const text = await response.text();
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start < 0 || end < 0) throw new Error('La hoja no devolvió datos válidos');
+    const data = JSON.parse(text.slice(start, end + 1));
+    const columns = data.table.cols.map(col => col.label);
+    const rows = data.table.rows.map(row => {
+      const item = {};
+      columns.forEach((label, index) => {
+        if (!label) return;
+        const cell = row.c?.[index];
+        item[label] = label === 'Fecha' ? parseSheetDate(cell?.v) : (cell?.v ?? '');
+      });
+      return item;
+    }).filter(item => item.Fecha && item['Total ($)'] !== '');
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ rows, updatedAt: new Date().toISOString() });
+  } catch (e) {
+    console.error('GET /api/gastos-sheet', e.message);
+    res.status(502).json({ error: 'No se pudo leer Google Sheets: ' + e.message });
+  }
+});
+
 app.get('/api/reset', async (req, res) => {
   try {
     await pool.query("DELETE FROM app_data WHERE key = 'store'");

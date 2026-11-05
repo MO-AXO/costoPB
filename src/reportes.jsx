@@ -1,10 +1,14 @@
 // Reportes — Estado de resultados mensual
-const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId }) => {
+const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId, sheetGastos = [], sheetGastosPorMes = {} }) => {
   const { useMemo } = React;
 
   // ── Datos ──
   const ventasList = ventas || [];
-  const gastosList = (gastos?.formal || []);
+  const gastosList = [...(gastos?.formal || []), ...sheetGastos.map(item => ({
+    id: `sheet-${item['Código de generación'] || item['Número de control']}`,
+    monto: Number(item['Total ($)']) || 0,
+    categoria: item.Categoría || 'Otro',
+  }))];
   const pagosList  = (empleados?.pagos || []);
   const listaEmp   = (empleados?.lista || []);
 
@@ -80,7 +84,7 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId })
     var prevMonth = store.months[ids[idx - 1]];
     if (!prevMonth) return null;
     var pVentas  = (prevMonth.ventas || []);
-    var pGastos  = (prevMonth.gastos?.formal || []).filter(g => !g.pagoEmpleadoId);
+    var pGastos  = [...(prevMonth.gastos?.formal || []).filter(g => !g.pagoEmpleadoId), ...(sheetGastosPorMes[ids[idx - 1]] || []).map(item => ({ monto: Number(item['Total ($)']) || 0 }))];
     var pPagos   = (prevMonth.empleados?.pagos || []);
     var pIngresoNeto = pVentas.reduce((a, v) => a + (v.ingresoNeto || 0), 0);
     var pGastosTotal = pGastos.reduce((a, g) => a + (g.monto || 0), 0);

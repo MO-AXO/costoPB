@@ -1,5 +1,5 @@
 // Gastos — Registro de gastos del negocio
-const GastosPage = ({ gastos, setGastos }) => {
+const GastosPage = ({ gastos, setGastos, sheetGastos = [], sheetStatus, sheetUpdatedAt, onSyncSheet }) => {
   const { useState, useRef } = React;
 
   const CATEGORIAS = [
@@ -12,6 +12,39 @@ const GastosPage = ({ gastos, setGastos }) => {
     'Pago Mano de Obra EXTRA', 'Merchandising', 'Materiales de Construcción', 'Nómina', 'Otro',
   ];
   const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque'];
+  const CATEGORIA_SHEET = {
+    'Carnes y proteínas': 'Carnes',
+    'Alquiler y servicios': 'Alquiler',
+    'Abarrotes e insumos': 'Materia Prima producción',
+    'Pan y papas': 'Panes',
+    'Desechables y empaque': 'Empaques y desechables',
+    'Combustible y vehículo': 'Combustible',
+    'Verduras y frutas': 'Vegetales',
+    'Bebidas': 'Bebidas y licores',
+    'Administración y oficina': 'Servicios contables y legales',
+    'Gas': 'Gas',
+    'Otros': 'Otro',
+    'Limpieza': 'Limpieza y desinfección',
+    'Mantenimiento y equipo': 'Mobiliario y equipo de cocina',
+  };
+  const sheetItems = sheetGastos.map((item, index) => ({
+    id: `sheet-${item['Código de generación'] || item['Número de control'] || index}`,
+    fecha: item.Fecha,
+    descripcion: item.Descripción || item.Proveedor || 'Gasto importado',
+    categoria: CATEGORIA_SHEET[item.Categoría] || 'Otro',
+    categoriaOriginal: item.Categoría || '',
+    monto: Number(item['Total ($)']) || 0,
+    metodoPago: 'Transferencia',
+    comprobante: item['Número de control'] || '',
+    nota: [item.Proveedor, item['Razón social']].filter(Boolean).join(' · '),
+    proveedor: item.Proveedor || '',
+    tipoDocumento: item['Tipo de documento'] || '',
+    subtotal: Number(item['Subtotal sin IVA ($)']) || 0,
+    iva: Number(item['IVA ($)']) || 0,
+    otrosCargos: Number(item['Otros cargos ($)']) || 0,
+    codigoGeneracion: item['Código de generación'] || '',
+    origen: 'Google Sheets',
+  }));
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -19,16 +52,16 @@ const GastosPage = ({ gastos, setGastos }) => {
   const [form, setForm] = useState({});
   const inputRef = useRef(null);
 
-  const items = (gastos?.formal || []).slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const items = [...(gastos?.formal || []), ...sheetItems].sort((a, b) => b.fecha.localeCompare(a.fecha));
   const filtered = filtroCategoria ? items.filter(i => i.categoria === filtroCategoria) : items;
 
   const totalGeneral = items.reduce((a, i) => a + (i.monto || 0), 0);
   const totalFiltrado = filtered.reduce((a, i) => a + (i.monto || 0), 0);
 
   // Resumen por categoría
-  const porCategoria = CATEGORIAS.reduce((acc, cat) => {
-    const total = items.filter(i => i.categoria === cat).reduce((a, i) => a + (i.monto || 0), 0);
-    if (total > 0) acc[cat] = total;
+  const porCategoria = items.reduce((acc, item) => {
+    const cat = item.categoria || 'Otro';
+    acc[cat] = (acc[cat] || 0) + (item.monto || 0);
     return acc;
   }, {});
 
@@ -103,6 +136,17 @@ const GastosPage = ({ gastos, setGastos }) => {
         </div>
       </div>
 
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', marginBottom:16, border:'1px solid var(--border)', borderRadius:8, background:'var(--surface-2)', fontSize:12 }}>
+        <span style={{ width:8, height:8, borderRadius:'50%', background: sheetStatus === 'error' ? 'var(--bad)' : sheetStatus === 'loading' ? 'var(--warn)' : 'var(--good)' }} />
+        <span style={{ color:'var(--text-2)' }}>
+          {sheetStatus === 'error' ? 'No se pudo conectar con Google Sheets' : sheetStatus === 'loading' ? 'Sincronizando Google Sheets…' : `${sheetItems.length} gastos importados de Google Sheets`}
+        </span>
+        {sheetUpdatedAt && sheetStatus === 'ok' && <span style={{ color:'var(--text-3)' }}>Actualizado {new Date(sheetUpdatedAt).toLocaleTimeString('es-SV', { hour:'2-digit', minute:'2-digit' })}</span>}
+        <button className="btn btn-sm" onClick={onSyncSheet} disabled={sheetStatus === 'loading'} style={{ marginLeft:'auto' }}>
+          <Icon name="refresh" size={13} /> Actualizar
+        </button>
+      </div>
+
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 20 }}>
         <div className="kpi">
@@ -126,7 +170,7 @@ const GastosPage = ({ gastos, setGastos }) => {
             <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
               style={{ fontSize: 12, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--surface)' }}>
               <option value="">Todas las categorías</option>
-              {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+              {[...new Set([...CATEGORIAS, ...Object.keys(porCategoria)])].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>
               ${totalFiltrado.toFixed(2)}
@@ -161,7 +205,10 @@ const GastosPage = ({ gastos, setGastos }) => {
                         <div style={{ fontWeight: 500, fontSize: 13 }}>{item.descripcion}</div>
                         {item.nota && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{item.nota}</div>}
                       </td>
-                      <td><span className="tag">{item.categoria}</span></td>
+                      <td>
+                        <span className="tag">{item.categoria}</span>
+                        {item.origen && <div style={{ fontSize:10, color:'var(--text-3)', marginTop:3 }}>{item.origen}</div>}
+                      </td>
                       <td style={{ fontSize: 12 }}>{item.metodoPago || '—'}</td>
                       <td style={{ fontSize: 12, color: item.comprobante ? 'var(--good)' : 'var(--text-3)' }}>
                         {item.comprobante || 'Sin comprobante'}
@@ -169,13 +216,15 @@ const GastosPage = ({ gastos, setGastos }) => {
                       <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${(item.monto || 0).toFixed(2)}</td>
                       <td className="center">
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                          <button className="icon-btn" onClick={() => openEdit(item)} data-tip="Editar">
-                            <Icon name="edit" size={13} />
-                          </button>
-                          <button className="icon-btn" onClick={() => remove(item.id)} data-tip="Eliminar"
-                            style={{ color: 'var(--bad)' }}>
-                            <Icon name="trash" size={13} />
-                          </button>
+                          {!item.origen && <>
+                            <button className="icon-btn" onClick={() => openEdit(item)} data-tip="Editar">
+                              <Icon name="edit" size={13} />
+                            </button>
+                            <button className="icon-btn" onClick={() => remove(item.id)} data-tip="Eliminar"
+                              style={{ color: 'var(--bad)' }}>
+                              <Icon name="trash" size={13} />
+                            </button>
+                          </>}
                         </div>
                       </td>
                     </tr>
