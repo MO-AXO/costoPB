@@ -3,8 +3,8 @@
 const D = window.PB_DATA;
 
 // ----- HELPERS DE CÁLCULO -----
-const fmt$ = (n) => '$' + (n ?? 0).toFixed(2);
-const fmt$0 = (n) => '$' + Math.round(n ?? 0).toLocaleString();
+const fmt$ = (n) => '$' + (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt$0 = (n) => '$' + Math.round(n ?? 0).toLocaleString('en-US');
 const fmtPct = (n, d = 1) => (n ?? 0).toFixed(d) + '%';
 
 // Costo por unidad de un insumo, ajustado por yield (rendimiento)
@@ -198,7 +198,7 @@ const Bar = ({ label, value, max, suffix }) => {
     <div className="bar-row">
       <span style={{color: 'var(--text-2)'}}>{label}</span>
       <div className="bar-track"><div className="bar-fill" style={{width: pct + '%'}} /></div>
-      <span className="num" style={{textAlign: 'right'}}>{suffix === '%' ? value.toFixed(1) + '%' : '$' + value.toFixed(2)}</span>
+      <span className="num" style={{textAlign: 'right'}}>{suffix === '%' ? value.toFixed(1) + '%' : fmt$(value)}</span>
     </div>
   );
 };

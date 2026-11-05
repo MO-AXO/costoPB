@@ -98,8 +98,8 @@ const Reportes = ({ ventas, gastos, empleados, monthLabel, store, viewMonthId, s
     return ((curr - prev) / Math.abs(prev)) * 100;
   };
 
-  const fmt$ = (n) => '$' + (n || 0).toFixed(2);
-  const fmt$0 = (n) => '$' + Math.round(n || 0).toLocaleString();
+  const fmt$ = (n) => '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt$0 = (n) => '$' + Math.round(n || 0).toLocaleString('en-US');
 
   const DeltaBadge = ({ value }) => {
     if (value == null) return null;

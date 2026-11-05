@@ -171,8 +171,8 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
     setForm(p => ({ ...p, [k]: v }));
   };
 
-  const fmt$ = (n) => '$' + (n || 0).toFixed(2);
-  const fmt$0 = (n) => '$' + Math.round(n || 0).toLocaleString();
+  const fmt$ = (n) => '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt$0 = (n) => '$' + Math.round(n || 0).toLocaleString('en-US');
 
   // Estilos
   const fl = { width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', fontSize: 13 };
@@ -339,7 +339,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                       <div className="bar-track">
                         <div className="bar-fill" style={{ width: `${(data.neto / maxBar) * 100}%`, background: 'var(--good)' }} />
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, textAlign: 'right', color: 'var(--good)' }}>${data.neto.toFixed(0)}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, textAlign: 'right', color: 'var(--good)' }}>{fmt$0(data.neto)}</div>
                     </div>
                   ))
               )}
@@ -369,7 +369,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                       <div className="bar-track">
                         <div className="bar-fill" style={{ width: `${(data.neto / maxBarMedio) * 100}%` }} />
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, textAlign: 'right' }}>${data.neto.toFixed(0)}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, textAlign: 'right' }}>{fmt$0(data.neto)}</div>
                     </div>
                   ))
               )}
@@ -440,7 +440,7 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.7fr auto', gap: 8, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
                       <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{label}</span>
                       <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{formula}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: color || 'var(--text)', fontFamily: 'var(--font-mono)' }}>${value.toFixed(2)}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: color || 'var(--text)', fontFamily: 'var(--font-mono)' }}>{fmt$(value)}</span>
                     </div>
                   );
                   return c.esTarjeta ? (
@@ -455,14 +455,14 @@ const Ventas = ({ ventas, setVentas, monthLabel, config }) => {
                       {row('IVA de la comisión', `${c.comision.toFixed(2)} × 0.13`, c.ivaComision, 'var(--bad)')}
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, paddingTop: 10 }}>
                         <span style={{ fontSize: 13, fontWeight: 600 }}>Valor a pagar al agente</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--good)' }}>${c.valorPagarAgente.toFixed(2)}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--good)' }}>{fmt$(c.valorPagarAgente)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 7 }}>
-                        Fórmula final: {c.montoBruto.toFixed(2)} − {c.comision.toFixed(2)} − {c.ivaComision.toFixed(2)} − {c.ivaPercibido.toFixed(2)} = ${c.valorPagarAgente.toFixed(2)}
+                        Fórmula final: {c.montoBruto.toFixed(2)} − {c.comision.toFixed(2)} − {c.ivaComision.toFixed(2)} − {c.ivaPercibido.toFixed(2)} = {fmt$(c.valorPagarAgente)}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 12, color: 'var(--bad)' }}>
                         <span>Total retenido (comisión + IVA comisión + IVA percibido)</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${round2(c.comision + c.ivaComision + c.ivaPercibido).toFixed(2)}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{fmt$(round2(c.comision + c.ivaComision + c.ivaPercibido))}</span>
                       </div>
                     </div>
                   ) : null;

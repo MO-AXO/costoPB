@@ -69,8 +69,8 @@ const ReporteAnual = ({ store, sheetGastosPorMes = {} }) => {
   var mejorMes = activeMonths.length > 0 ? activeMonths.reduce(function(best, d) { return d.utilidad > best.utilidad ? d : best; }) : null;
   var peorMes = activeMonths.length > 0 ? activeMonths.reduce(function(worst, d) { return d.utilidad < worst.utilidad ? d : worst; }) : null;
 
-  var fmt$ = function(n) { return '$' + (n || 0).toFixed(2); };
-  var fmt$0 = function(n) { return '$' + Math.round(n || 0).toLocaleString(); };
+  var fmt$ = function(n) { return '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var fmt$0 = function(n) { return '$' + Math.round(n || 0).toLocaleString('en-US'); };
 
   // Mini bar chart
   var maxIngreso = Math.max.apply(null, monthlyData.map(function(d) { return d.ingresoNeto; }).concat([1]));

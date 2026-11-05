@@ -5,6 +5,7 @@ const Configuracion = ({ config, setConfig }) => {
   const tasaISS  = config?.tasaISS  ?? 3;
   const tasaAFP  = config?.tasaAFP  ?? 7.25;
   const tasaRenta = config?.tasaRenta ?? 10;
+  const money = (value) => '$' + (Number(value) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const upd = (k, v) => {
     const num = parseFloat(v);
@@ -47,7 +48,7 @@ const Configuracion = ({ config, setConfig }) => {
               <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-2)' }}>%</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
-              Sobre el ingreso total de cada venta. Ej: para $100 de ingreso → ${(100 * tasaImpuesto / 100).toFixed(2)} de impuesto.
+              Sobre el ingreso total de cada venta. Ej: para $100 de ingreso → {money(100 * tasaImpuesto / 100)} de impuesto.
             </div>
           </div>
 
@@ -67,7 +68,7 @@ const Configuracion = ({ config, setConfig }) => {
               <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-2)' }}>%</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
-              Sobre el ingreso total de cada venta. Ej: para $100 de ingreso → ${(100 * tasaComision / 100).toFixed(2)} de comisión.
+              Sobre el ingreso total de cada venta. Ej: para $100 de ingreso → {money(100 * tasaComision / 100)} de comisión.
             </div>
           </div>
 
@@ -84,19 +85,19 @@ const Configuracion = ({ config, setConfig }) => {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: 'var(--bad)' }}>− Comisión ({tasaComision}%)</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>
-                  -${(100 * tasaComision / 100).toFixed(2)}
+                  -{money(100 * tasaComision / 100)}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: 'var(--warn)' }}>− Impuesto ({tasaImpuesto}%)</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--warn)' }}>
-                  -${(100 * tasaImpuesto / 100).toFixed(2)}
+                  -{money(100 * tasaImpuesto / 100)}
                 </span>
               </div>
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ fontWeight: 600, color: 'var(--good)' }}>Ingreso Neto</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--good)' }}>
-                  ${(100 - (100 * tasaComision / 100) - (100 * tasaImpuesto / 100)).toFixed(2)}
+                  {money(100 - (100 * tasaComision / 100) - (100 * tasaImpuesto / 100))}
                 </span>
               </div>
             </div>
@@ -175,20 +176,20 @@ const Configuracion = ({ config, setConfig }) => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: 'var(--bad)' }}>− ISSS ({tasaISS}%)</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-${(500 * tasaISS / 100).toFixed(2)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-{money(500 * tasaISS / 100)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: 'var(--bad)' }}>− AFP ({tasaAFP}%)</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-${(500 * tasaAFP / 100).toFixed(2)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-{money(500 * tasaAFP / 100)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: 'var(--bad)' }}>− Renta ({tasaRenta}%)</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-${(500 * tasaRenta / 100).toFixed(2)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--bad)' }}>-{money(500 * tasaRenta / 100)}</span>
               </div>
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-2)' }}>Total descuentos</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--bad)' }}>
-                  -${(500 * (tasaISS + tasaAFP + tasaRenta) / 100).toFixed(2)}
+                  -{money(500 * (tasaISS + tasaAFP + tasaRenta) / 100)}
                 </span>
               </div>
             </div>

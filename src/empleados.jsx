@@ -52,6 +52,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
 
   const uid = () => '_' + Math.random().toString(36).slice(2, 9);
   const hoy = () => new Date().toISOString().slice(0, 10);
+  const money = (value, decimals = 2) => '$' + (Number(value) || 0).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
   // ── Totales globales ──
   const activos = lista.filter(e => e.estado === 'Activo');
@@ -224,26 +225,26 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
         </div>
         <div className="kpi">
           <div className="kpi-label">Nómina mensual</div>
-          <div className="kpi-value">${totalNomina.toFixed(0)}</div>
+          <div className="kpi-value">{money(totalNomina, 0)}</div>
           <div className="kpi-foot"><span className="kpi-target">Solo activos</span></div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Total pagado</div>
-          <div className="kpi-value">${pagos.reduce((a,p)=>a+montoNeto(p),0).toFixed(0)}</div>
+          <div className="kpi-value">{money(pagos.reduce((a,p)=>a+montoNeto(p),0), 0)}</div>
           <div className="kpi-foot"><span className={`kpi-delta ${totalPagado>=totalNomina?'up':'flat'}`}>{totalNomina>0?((totalPagado/totalNomina)*100).toFixed(0):0}%</span></div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Bonos / Deducciones</div>
           <div className="kpi-value" style={{ fontSize: 18 }}>
-            <span style={{ color: 'var(--good)' }}>+${totalBonos.toFixed(0)}</span>
+            <span style={{ color: 'var(--good)' }}>+{money(totalBonos, 0)}</span>
             <span style={{ color: 'var(--text-3)', margin: '0 4px' }}>/</span>
-            <span style={{ color: 'var(--bad)' }}>-${totalDeduc.toFixed(0)}</span>
+            <span style={{ color: 'var(--bad)' }}>-{money(totalDeduc, 0)}</span>
           </div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Pendiente de pago</div>
           <div className="kpi-value" style={{ color: totalNomina-totalPagado>0?'var(--bad)':'var(--good)' }}>
-            ${Math.max(totalNomina-totalPagado,0).toFixed(0)}
+            {money(Math.max(totalNomina-totalPagado,0), 0)}
           </div>
           <div className="kpi-foot"><span className="kpi-target">Nómina − pagado</span></div>
         </div>
@@ -288,16 +289,16 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                           {emp.telefono && <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{emp.telefono}</div>}
                         </td>
                         <td style={{ fontSize: 12 }}>{emp.institucionAFP || 'AFP CONFIA'}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>${(emp.salario||0).toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.isss.toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.afp.toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>${d.rentaGravable.toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.isr.toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>${d.total.toFixed(2)}</td>
-                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--good)' }}>${d.liquido.toFixed(2)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{money(emp.salario)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>{money(d.isss)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>{money(d.afp)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{money(d.rentaGravable)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>{money(d.isr)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--bad)' }}>{money(d.total)}</td>
+                        <td className="right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--good)' }}>{money(d.liquido)}</td>
                         <td className="center">
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                            {desc > 0 && <span className="tag bad" style={{ fontSize: 10 }} data-tip={`Descuento por ausencias: $${desc.toFixed(2)}`}>-${desc.toFixed(0)}</span>}
+                            {desc > 0 && <span className="tag bad" style={{ fontSize: 10 }} data-tip={`Descuento por ausencias: ${money(desc)}`}>-{money(desc, 0)}</span>}
                             <button className="btn btn-sm" onClick={()=>{setSelectedEmpId(emp.id);setTab('pagos');}}>$</button>
                             <button className="btn btn-sm" onClick={()=>{setSelectedEmpId(emp.id);setTab('ausencias');}}>
                               <Icon name="history" size={12} />
@@ -313,13 +314,13 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                 <tfoot>
                   <tr style={{ background: 'var(--surface-2)' }}>
                     <td colSpan={4} style={{ padding: '10px 14px', fontWeight: 600 }}>Total ({empActivos} activos)</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14 }}>${totalNomina.toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.isss.toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.afp.toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14 }}>{money(totalNomina)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>{money(totalesPlanilla.isss)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>{money(totalesPlanilla.afp)}</td>
                     <td className="right" />
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.isr.toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>${totalesPlanilla.total.toFixed(2)}</td>
-                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, color: 'var(--good)' }}>${totalesPlanilla.liquido.toFixed(2)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>{money(totalesPlanilla.isr)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--bad)' }}>{money(totalesPlanilla.total)}</td>
+                    <td className="right" style={{ padding: '10px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, color: 'var(--good)' }}>{money(totalesPlanilla.liquido)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -358,7 +359,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                         <div style={{ fontSize:11,color:'var(--text-3)' }}>{emp.puesto}</div>
                       </div>
                       <div style={{ textAlign:'right',flexShrink:0 }}>
-                        <div style={{ fontFamily:'var(--font-mono)',fontSize:12,fontWeight:600,color:neto>0?'var(--good)':'var(--text-3)' }}>${neto.toFixed(0)} pagado</div>
+                        <div style={{ fontFamily:'var(--font-mono)',fontSize:12,fontWeight:600,color:neto>0?'var(--good)':'var(--text-3)' }}>{money(neto, 0)} pagado</div>
                       </div>
                     </button>
                   );
@@ -376,17 +377,17 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                 <div className="card-head">
                   <div>
                     <div className="card-title">{selectedEmp.nombre}</div>
-                    <div className="card-sub">{selectedEmp.puesto} · ${(selectedEmp.salario||0).toFixed(2)}/mes</div>
+                    <div className="card-sub">{selectedEmp.puesto} · {money(selectedEmp.salario)}/mes</div>
                   </div>
                   <button className="btn btn-primary btn-sm" onClick={()=>openPago(selectedEmpId)}><Icon name="plus" size={12}/> Registrar pago</button>
                 </div>
                 {/* Resumen */}
                 <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:0,borderBottom:'1px solid var(--border)' }}>
                   {[
-                    { l:'Nómina', v:`$${(selectedEmp.salario||0).toFixed(2)}` },
-                    { l:'Bonos', v:`+$${pagosEmp(selectedEmpId).reduce((a,p)=>a+(p.bonificacion||0),0).toFixed(2)}`, c:'var(--good)' },
-                    { l:'Deducciones', v:`-$${pagosEmp(selectedEmpId).reduce((a,p)=>a+(p.deduccion||0),0).toFixed(2)}`, c:'var(--bad)' },
-                    { l:'Neto pagado', v:`$${pagosEmp(selectedEmpId).reduce((a,p)=>a+montoNeto(p),0).toFixed(2)}` },
+                    { l:'Nómina', v: money(selectedEmp.salario) },
+                    { l:'Bonos', v: '+' + money(pagosEmp(selectedEmpId).reduce((a,p)=>a+(p.bonificacion||0),0)), c:'var(--good)' },
+                    { l:'Deducciones', v: '-' + money(pagosEmp(selectedEmpId).reduce((a,p)=>a+(p.deduccion||0),0)), c:'var(--bad)' },
+                    { l:'Neto pagado', v: money(pagosEmp(selectedEmpId).reduce((a,p)=>a+montoNeto(p),0)) },
                   ].map((k,i)=>(
                     <div key={i} style={{ padding:'10px 14px',borderRight:i<3?'1px solid var(--border)':0 }}>
                       <div style={{ fontSize:11,color:'var(--text-3)',marginBottom:4 }}>{k.l}</div>
@@ -407,14 +408,14 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                       <div style={{ fontSize:11,color:'var(--text-3)' }}>{pago.fecha}{pago.nota?` · ${pago.nota}`:''}</div>
                       {(pago.bonificacion>0||pago.deduccion>0) && (
                         <div style={{ display:'flex',gap:8,marginTop:4 }}>
-                          {pago.bonificacion>0&&<span className="tag good" style={{ fontSize:10 }}>+${pago.bonificacion.toFixed(2)} bono{pago.notaBono?`: ${pago.notaBono}`:''}</span>}
-                          {pago.deduccion>0&&<span className="tag bad" style={{ fontSize:10 }}>-${pago.deduccion.toFixed(2)} deduc{pago.notaDeduc?`: ${pago.notaDeduc}`:''}</span>}
+                          {pago.bonificacion>0&&<span className="tag good" style={{ fontSize:10 }}>+{money(pago.bonificacion)} bono{pago.notaBono?`: ${pago.notaBono}`:''}</span>}
+                          {pago.deduccion>0&&<span className="tag bad" style={{ fontSize:10 }}>-{money(pago.deduccion)} deduc{pago.notaDeduc?`: ${pago.notaDeduc}`:''}</span>}
                         </div>
                       )}
                     </div>
                     <div style={{ textAlign:'right',flexShrink:0 }}>
-                      <div style={{ fontFamily:'var(--font-mono)',fontWeight:700,fontSize:14,color:'var(--good)' }}>${montoNeto(pago).toFixed(2)}</div>
-                      <div style={{ fontSize:11,color:'var(--text-3)' }}>base ${(pago.monto||0).toFixed(2)}</div>
+                      <div style={{ fontFamily:'var(--font-mono)',fontWeight:700,fontSize:14,color:'var(--good)' }}>{money(montoNeto(pago))}</div>
+                      <div style={{ fontSize:11,color:'var(--text-3)' }}>base {money(pago.monto)}</div>
                     </div>
                     <button className="icon-btn" style={{ color:'var(--bad)',flexShrink:0 }} onClick={()=>removePago(pago.id)}><Icon name="trash" size={13}/></button>
                   </div>
@@ -446,7 +447,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                       </div>
                       <div style={{ textAlign:'right',flexShrink:0 }}>
                         <div style={{ fontSize:12,fontFamily:'var(--font-mono)' }}>{diasTotal} días</div>
-                        {descuento>0&&<div style={{ fontSize:10,color:'var(--bad)',fontFamily:'var(--font-mono)' }}>-${descuento.toFixed(0)}</div>}
+                        {descuento>0&&<div style={{ fontSize:10,color:'var(--bad)',fontFamily:'var(--font-mono)' }}>-{money(descuento, 0)}</div>}
                       </div>
                     </button>
                   );
@@ -465,7 +466,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                   <div>
                     <div className="card-title">{selectedEmp.nombre} — Ausencias</div>
                     <div className="card-sub">
-                      {ausenciasEmp(selectedEmpId).reduce((a,x)=>a+(x.dias||0),0)} días registrados · Descuento: ${descuentoAusencias(selectedEmp).toFixed(2)}
+                      {ausenciasEmp(selectedEmpId).reduce((a,x)=>a+(x.dias||0),0)} días registrados · Descuento: {money(descuentoAusencias(selectedEmp))}
                     </div>
                   </div>
                   <button className="btn btn-primary btn-sm" onClick={()=>openAus(selectedEmpId)}><Icon name="plus" size={12}/> Registrar ausencia</button>
@@ -486,7 +487,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                     </div>
                     {(aus.tipo==='Permiso sin goce'||aus.tipo==='Falta sin aviso') && (
                       <div style={{ fontFamily:'var(--font-mono)',fontSize:12,color:'var(--bad)',fontWeight:600,flexShrink:0 }}>
-                        -${((selectedEmp.salario||0)/30*(aus.dias||0)).toFixed(2)}
+                        -{money((selectedEmp.salario||0)/30*(aus.dias||0))}
                       </div>
                     )}
                     <button className="icon-btn" style={{ color:'var(--bad)',flexShrink:0 }} onClick={()=>removeAus(aus.id)}><Icon name="trash" size={13}/></button>
@@ -522,7 +523,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                   const d = calcDesc(parseFloat(form.salario));
                   return (
                     <div className="hint">
-                      <b>Descuentos:</b> ISSS ${d.isss.toFixed(2)} + AFP ${d.afp.toFixed(2)} + ISR ${d.isr.toFixed(2)} = <b>${d.total.toFixed(2)}</b>
+                      <b>Descuentos:</b> ISSS {money(d.isss)} + AFP {money(d.afp)} + ISR {money(d.isr)} = <b>{money(d.total)}</b>
                     </div>
                   );
                 })()}
@@ -577,8 +578,8 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
 
                 {/* Preview neto */}
                 <div className="hint" style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                  <span>Base: <b>${parseFloat(pagoForm.monto||0).toFixed(2)}</b> + <b style={{color:'var(--good)'}}>+${parseFloat(pagoForm.bonificacion||0).toFixed(2)}</b> − <b style={{color:'var(--bad)'}}>-${parseFloat(pagoForm.deduccion||0).toFixed(2)}</b></span>
-                  <span>Neto: <b>${(parseFloat(pagoForm.monto||0)+parseFloat(pagoForm.bonificacion||0)-parseFloat(pagoForm.deduccion||0)).toFixed(2)}</b></span>
+                  <span>Base: <b>{money(pagoForm.monto)}</b> + <b style={{color:'var(--good)'}}>+{money(pagoForm.bonificacion)}</b> − <b style={{color:'var(--bad)'}}>-{money(pagoForm.deduccion)}</b></span>
+                  <span>Neto: <b>{money(parseFloat(pagoForm.monto||0)+parseFloat(pagoForm.bonificacion||0)-parseFloat(pagoForm.deduccion||0))}</b></span>
                 </div>
 
                 <div>{lbl('Nota general')}<textarea rows={2} value={pagoForm.nota||''} onChange={e=>setPagoForm(p=>({...p,nota:e.target.value}))} style={{ ...fl,resize:'vertical' }}/></div>
@@ -612,7 +613,7 @@ const EmpleadosPage = ({ store, setStore, config, monthId }) => {
                 <div>{lbl('Nota')}<textarea rows={2} value={ausForm.nota||''} onChange={e=>setAusForm(p=>({...p,nota:e.target.value}))} style={{ ...fl,resize:'vertical' }}/></div>
                 {(ausForm.tipo==='Permiso sin goce'||ausForm.tipo==='Falta sin aviso') && ausForm.dias > 0 && (
                   <div className="hint" style={{ background:'var(--bad-soft)',borderColor:'var(--bad)' }}>
-                    <b>Descuento automático:</b> ${((selectedEmp.salario||0)/30*(ausForm.dias||0)).toFixed(2)} (${((selectedEmp.salario||0)/30).toFixed(2)}/día × {ausForm.dias} día{ausForm.dias!==1?'s':''})
+                    <b>Descuento automático:</b> {money((selectedEmp.salario||0)/30*(ausForm.dias||0))} ({money((selectedEmp.salario||0)/30)}/día × {ausForm.dias} día{ausForm.dias!==1?'s':''})
                   </div>
                 )}
                 {(ausForm.tipo==='Permiso con goce'||ausForm.tipo==='Vacaciones'||ausForm.tipo==='Enfermedad'||ausForm.tipo==='Licencia especial') && (
